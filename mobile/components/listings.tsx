@@ -5,11 +5,13 @@ import { colors, fonts, radius } from "@/theme";
 import {
   SECTOR_LABELS,
   LISTING_STATUS_LABELS,
+  VERIFICATION_STATUS_LABELS,
   formatSar,
   formatPercentage,
   formatDate,
   type Listing,
   type ListingStatus,
+  type VerificationStatus,
 } from "@/lib/constants";
 
 export function VerifiedBadge() {
@@ -56,6 +58,32 @@ export function StatusBadge({ status }: { status: ListingStatus }) {
     >
       <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: s.fg }}>
         {LISTING_STATUS_LABELS[status]}
+      </Text>
+    </View>
+  );
+}
+
+const VERIFICATION_STYLE: Record<VerificationStatus, { bg: string; fg: string }> = {
+  none: { bg: colors.paper, fg: colors.subtleText },
+  pending: { bg: "rgba(217,118,43,0.12)", fg: colors.amber },
+  verified: { bg: "rgba(15,107,102,0.1)", fg: colors.verify },
+  rejected: { bg: colors.dangerBg, fg: colors.danger },
+};
+
+export function VerificationStatusPill({ status }: { status: VerificationStatus }) {
+  const s = VERIFICATION_STYLE[status];
+  return (
+    <View
+      style={{
+        alignSelf: "flex-end",
+        backgroundColor: s.bg,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: radius.pill,
+      }}
+    >
+      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: s.fg }}>
+        {VERIFICATION_STATUS_LABELS[status]}
       </Text>
     </View>
   );

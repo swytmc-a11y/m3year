@@ -21,6 +21,12 @@ export default async function AdminLayout({
             <Link href="/admin/listings" className="hover:text-ink">
               مراجعة الإعلانات
             </Link>
+            <Link href="/admin/verification-requests" className="hover:text-ink">
+              طلبات التوثيق
+            </Link>
+            <Link href="/admin/accountants" className="hover:text-ink">
+              المحاسبون
+            </Link>
             <Link href="/dashboard" className="hover:text-ink">
               لوحتي
             </Link>

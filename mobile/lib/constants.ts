@@ -26,6 +26,13 @@ export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
   archived: "مؤرشف",
 };
 
+export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
+  none: "غير موثّق",
+  pending: "طلب التوثيق قيد المعالجة",
+  verified: "موثّق",
+  rejected: "توثيق مرفوض",
+};
+
 // Manual grouping/formatting — avoids relying on Intl locale data, which is
 // inconsistent across the Hermes engine on native devices.
 function groupThousands(value: number): string {

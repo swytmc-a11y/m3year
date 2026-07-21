@@ -3,13 +3,19 @@ import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, TopBar } from "@/components/ui";
-import { StatusBadge, VerifiedBadge, Metric } from "@/components/listings";
+import {
+  StatusBadge,
+  VerifiedBadge,
+  VerificationStatusPill,
+  Metric,
+} from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
 import {
   submitListingForReview,
   archiveListing,
 } from "@/lib/listings-actions";
+import { requestVerification } from "@/lib/verification-actions";
 import {
   SECTOR_LABELS,
   formatSar,
@@ -56,9 +62,12 @@ export default function MyListingsScreen() {
     return <Redirect href="/auth" />;
   }
 
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
   async function runAction(fn: () => Promise<{ error?: string }>, id: string) {
     setBusyId(id);
-    await fn();
+    const result = await fn();
+    setVerifyError(result.error ?? null);
     await load();
     setBusyId(null);
   }
@@ -83,6 +92,21 @@ export default function MyListingsScreen() {
         data={listings ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}
+        ListHeaderComponent={
+          verifyError ? (
+            <Text
+              style={{
+                fontFamily: fonts.body,
+                fontSize: 13,
+                color: colors.amber,
+                textAlign: "right",
+                marginBottom: 4,
+              }}
+            >
+              {verifyError}
+            </Text>
+          ) : null
+        }
         renderItem={({ item }) => (
           <MyRow
             listing={item}
@@ -94,6 +118,9 @@ export default function MyListingsScreen() {
             }
             onArchive={() =>
               runAction(() => archiveListing(item.id), item.id)
+            }
+            onRequestVerification={() =>
+              runAction(() => requestVerification(item.id), item.id)
             }
           />
         )}
@@ -146,6 +173,7 @@ function MyRow({
   onView,
   onSubmit,
   onArchive,
+  onRequestVerification,
 }: {
   listing: Listing;
   busy: boolean;
@@ -153,10 +181,14 @@ function MyRow({
   onView: () => void;
   onSubmit: () => void;
   onArchive: () => void;
+  onRequestVerification: () => void;
 }) {
   const canSubmit =
     listing.status === "draft" || listing.status === "rejected";
   const canArchive = listing.status !== "archived";
+  const canRequestVerification =
+    listing.verification_status === "none" ||
+    listing.verification_status === "rejected";
 
   return (
     <View
@@ -246,6 +278,19 @@ function MyRow({
           </Text>
         </View>
       ) : null}
+
+      <View style={{ gap: 8 }}>
+        {listing.verification_status !== "verified" ? (
+          <VerificationStatusPill status={listing.verification_status} />
+        ) : null}
+        {canRequestVerification ? (
+          <Button
+            label="اطلب التوثيق المالي"
+            variant="ghost"
+            onPress={onRequestVerification}
+          />
+        ) : null}
+      </View>
 
       <View
         style={{
