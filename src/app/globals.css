@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #171a1c;
+  --color-verify: #0f6b66;
+  --color-amber: #d9762b;
+  --color-paper: #edeee9;
+  --color-grid: #c7cbc6;
+}
+
+@theme inline {
+  --font-heading: var(--font-almarai);
+  --font-sans: var(--font-ibm-plex-sans-arabic);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+.grid-bg {
+  background-image: linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* Caliper brand mark: two opposing curved brackets, like a measuring tool's jaws. */
+.caliper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.caliper::before,
+.caliper::after {
+  content: "";
+  width: 9px;
+  height: 22px;
+  border: 2.5px solid currentColor;
+  border-radius: 2px;
+}
+.caliper::before {
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  transform: skewY(-6deg);
+}
+.caliper::after {
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  transform: skewY(6deg);
+}
