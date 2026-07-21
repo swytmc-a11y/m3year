@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // The Expo (React Native) app is a separate project with its own
     // tooling/lint setup; it must not be scanned by the web app's ESLint.
     "mobile/**",
+    // Deno runtime source (Supabase Edge Functions) uses jsr:/npm: specifiers
+    // that Next.js's Node-oriented ESLint/TS setup can't and shouldn't parse.
+    "supabase/functions/**",
   ]),
 ]);
 

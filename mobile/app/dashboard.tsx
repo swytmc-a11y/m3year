@@ -5,6 +5,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
+import { unregisterPushToken } from "@/lib/push-notifications";
 import { colors, fonts } from "@/theme";
 
 export default function DashboardScreen() {
@@ -20,6 +21,7 @@ export default function DashboardScreen() {
   }
 
   async function signOut() {
+    await unregisterPushToken();
     await supabase.auth.signOut();
     router.replace("/");
   }
@@ -96,6 +98,12 @@ export default function DashboardScreen() {
             variant="ghost"
             fullWidth
             onPress={() => router.push("/listings")}
+          />
+          <Button
+            label="الرسائل"
+            variant="ghost"
+            fullWidth
+            onPress={() => router.push("/messages")}
           />
         </View>
 

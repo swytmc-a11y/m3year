@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { I18nManager } from "react-native";
-import { Stack } from "expo-router";
+import { I18nManager, Platform } from "react-native";
+import { Stack, router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
 import {
   Almarai_700Bold,
@@ -47,6 +48,30 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  // Tapping a "new message" push notification opens that conversation
+  // directly, whether the app was backgrounded or launched cold by the tap.
+  // expo-notifications' response APIs are native-only (no web support).
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    function handleResponse(response: Notifications.NotificationResponse) {
+      const data = response.notification.request.content.data as
+        | { type?: string; conversationId?: string }
+        | undefined;
+      if (data?.type === "message" && data.conversationId) {
+        router.push(`/messages/${data.conversationId}`);
+      }
+    }
+
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) handleResponse(response);
+    });
+
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener(handleResponse);
+    return () => subscription.remove();
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;

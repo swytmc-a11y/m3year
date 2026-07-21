@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { registerForPushNotifications } from "@/lib/push-notifications";
 
 type AuthContextValue = {
   session: Session | null;
@@ -53,6 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
+  }, [session?.user?.id]);
+
+  // Register (or refresh) this device's push token once a session exists.
+  useEffect(() => {
+    if (!session?.user) return;
+    registerForPushNotifications().catch((err) => {
+      console.error("[push] registration failed", err);
+    });
   }, [session?.user?.id]);
 
   return (

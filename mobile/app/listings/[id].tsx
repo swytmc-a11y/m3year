@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/ui";
+import { TopBar, Button } from "@/components/ui";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
+import { getOrCreateConversation } from "@/lib/messaging";
 import {
   SECTOR_LABELS,
   formatSar,
@@ -17,9 +19,12 @@ import { colors, fonts, radius } from "@/theme";
 export default function ListingDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { session, user } = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [contacting, setContacting] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +50,27 @@ export default function ListingDetailScreen() {
 
   const isVerified = listing?.verification_status === "verified";
   const isPreview = listing ? listing.status !== "published" : false;
+  const isOwner = listing && user ? listing.owner_id === user.id : false;
+
+  async function onContact() {
+    if (!listing) return;
+    if (!session) {
+      router.push("/auth");
+      return;
+    }
+    setContactError(null);
+    setContacting(true);
+    const { conversationId, error: convError } = await getOrCreateConversation(
+      listing.id,
+      listing.owner_id,
+    );
+    setContacting(false);
+    if (convError || !conversationId) {
+      setContactError(convError ?? "تعذّر بدء المحادثة الآن.");
+      return;
+    }
+    router.push(`/messages/${conversationId}`);
+  }
 
   return (
     <SafeAreaView
@@ -203,24 +229,26 @@ export default function ListingDetailScreen() {
                 : "لم يُوثّق هذا الإعلان ماليًا بعد."}
             </Text>
 
-            {!isPreview ? (
-              <View
-                style={{
-                  backgroundColor: colors.paper,
-                  borderRadius: radius.md,
-                  padding: 16,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: fonts.body,
-                    fontSize: 13,
-                    color: colors.mutedText,
-                    textAlign: "center",
-                  }}
-                >
-                  التواصل الداخلي مع صاحب المشروع يُفعّل في مرحلة قادمة.
-                </Text>
+            {!isPreview && !isOwner ? (
+              <View style={{ gap: 8 }}>
+                <Button
+                  label="تواصل مع صاحب المشروع"
+                  fullWidth
+                  loading={contacting}
+                  onPress={onContact}
+                />
+                {contactError ? (
+                  <Text
+                    style={{
+                      fontFamily: fonts.body,
+                      fontSize: 13,
+                      color: colors.amber,
+                      textAlign: "center",
+                    }}
+                  >
+                    {contactError}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
           </View>
