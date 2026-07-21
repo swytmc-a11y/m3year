@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "معيار",
+    "slug": "miyar",
+    "scheme": "miyar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#EDEEE9",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.miyar.app"
+    },
+    "android": {
+      "package": "com.miyar.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#EDEEE9",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EDEEE9",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
