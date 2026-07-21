@@ -76,8 +76,28 @@ export default function DashboardScreen() {
             : user?.email
               ? `تم تسجيل دخولك بحساب ${user.email}.`
               : "تم تسجيل دخولك."}
-          {"\n"}نشر الإعلانات وطلب التوثيق سيتوفران في المراحل القادمة للجوال.
+          {"\n"}ابدأ بنشر إعلان مشروعك أو تصفّح المشاريع الموثّقة.
         </Text>
+
+        <View style={{ gap: 12, alignSelf: "stretch", maxWidth: 340, width: "100%" }}>
+          <Button
+            label="أنشئ إعلانًا"
+            fullWidth
+            onPress={() => router.push("/my-listings/new")}
+          />
+          <Button
+            label="إعلاناتي"
+            variant="ghost"
+            fullWidth
+            onPress={() => router.push("/my-listings")}
+          />
+          <Button
+            label="تصفّح المشاريع"
+            variant="ghost"
+            fullWidth
+            onPress={() => router.push("/listings")}
+          />
+        </View>
 
         {isAdmin ? (
           <View
@@ -95,7 +115,7 @@ export default function DashboardScreen() {
                 color: colors.verify,
               }}
             >
-              حساب مدير — لوحة المراجعة قريبًا
+              حساب مدير — لوحة المراجعة عبر الويب
             </Text>
           </View>
         ) : null}

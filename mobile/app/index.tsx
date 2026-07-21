@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
@@ -88,27 +88,31 @@ export default function HomeScreen() {
             <Button
               label="وثّق مشروعك"
               fullWidth
-              onPress={() => router.push(session ? "/dashboard" : "/auth")}
+              onPress={() =>
+                router.push(session ? "/my-listings/new" : "/auth")
+              }
             />
-            <View
+            <Pressable
+              onPress={() => router.push("/listings")}
               style={{
-                flexDirection: "row",
+                flexDirection: "row-reverse",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 8,
+                paddingVertical: 8,
               }}
             >
               <Caliper color={colors.verify} size={14} />
               <Text
                 style={{
-                  fontFamily: fonts.bodyMedium,
-                  fontSize: 13,
-                  color: colors.mutedText,
+                  fontFamily: fonts.bodyBold,
+                  fontSize: 14,
+                  color: colors.ink,
                 }}
               >
-                تصفّح المشاريع الموثّقة (قريبًا)
+                تصفّح المشاريع الموثّقة
               </Text>
-            </View>
+            </Pressable>
           </View>
         </View>
 

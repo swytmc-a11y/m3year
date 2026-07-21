@@ -114,6 +114,81 @@ export function Field({
   );
 }
 
+export function Chip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: radius.pill,
+        borderWidth: 1,
+        borderColor: active ? colors.ink : colors.grid,
+        backgroundColor: active ? colors.ink : colors.white,
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: fonts.bodyMedium,
+          fontSize: 13,
+          color: active ? colors.white : colors.subtleText,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function TopBar({
+  title,
+  onBack,
+  right,
+}: {
+  title?: string;
+  onBack?: () => void;
+  right?: React.ReactNode;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        backgroundColor: colors.white,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.grid,
+      }}
+    >
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
+        {onBack ? (
+          <Pressable onPress={onBack} hitSlop={10}>
+            <Text style={{ fontSize: 22, color: colors.ink }}>→</Text>
+          </Pressable>
+        ) : null}
+        {title ? (
+          <Text
+            style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink }}
+          >
+            {title}
+          </Text>
+        ) : null}
+      </View>
+      {right}
+    </View>
+  );
+}
+
 export function Card({ style, children, ...rest }: ViewProps) {
   return (
     <View
