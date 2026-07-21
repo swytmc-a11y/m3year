@@ -57,7 +57,13 @@ export default function AuthPage() {
         </form>
       </div>
 
-      <Link href="/" className="mt-8 text-sm text-ink/50 hover:text-ink">
+      <Link
+        href="/auth/demo"
+        className="mt-8 text-sm font-bold text-verify hover:underline"
+      >
+        أو جرّب المنصة بحساب تجريبي ←
+      </Link>
+      <Link href="/" className="mt-4 text-sm text-ink/50 hover:text-ink">
         العودة للرئيسية
       </Link>
     </div>

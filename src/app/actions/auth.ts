@@ -69,3 +69,25 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+// --- TEMPORARY: demo email/password login for preview -----------------------
+// Lets reviewers try the full app before an SMS provider is configured for the
+// real phone-OTP flow. REMOVE this action and the /auth/demo route (and the
+// demo accounts) before a public launch.
+const DEMO_ACCOUNTS = {
+  owner: { email: "owner@miyar.demo", password: "Demo123456" },
+  admin: { email: "admin@miyar.demo", password: "Demo123456" },
+} as const;
+
+export async function enterDemo(formData: FormData) {
+  const as = formData.get("as") === "admin" ? "admin" : "owner";
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(DEMO_ACCOUNTS[as]);
+
+  if (error) {
+    console.error("[auth] demo sign-in failed", error);
+    redirect("/auth/demo?error=1");
+  }
+
+  redirect(as === "admin" ? "/admin/listings" : "/dashboard/listings");
+}
