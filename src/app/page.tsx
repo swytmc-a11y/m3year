@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CaliperMark } from "@/components/caliper-mark";
-import { Logo } from "@/components/logo";
+import { SiteHeader } from "@/components/site-header";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      <nav className="flex items-center justify-between border-b border-grid bg-white px-6 py-5 sm:px-12">
-        <Logo />
-        <Button asChild size="sm">
-          <Link href="/auth">ابدأ الآن</Link>
-        </Button>
-      </nav>
+      <SiteHeader />
 
       <header className="grid-bg flex flex-1 flex-col items-center px-6 py-24 text-center sm:px-12">
         <div className="mb-7 flex items-center gap-2 text-verify/80">
@@ -32,10 +27,10 @@ export default function Home() {
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild size="default">
-            <Link href="/auth">وثّق مشروعك</Link>
+            <Link href="/dashboard/listings/new">وثّق مشروعك</Link>
           </Button>
           <Button asChild variant="ghost" size="default">
-            <Link href="/auth">
+            <Link href="/listings">
               <span className="inline-flex items-center gap-2">
                 <CaliperMark className="text-verify text-[13px]" />
                 تصفح المشاريع الموثّقة

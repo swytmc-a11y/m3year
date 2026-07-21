@@ -146,6 +146,8 @@ export type Database = {
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
           sector: Database["public"]["Enums"]["business_sector"]
           status: Database["public"]["Enums"]["listing_status"]
           title: string
@@ -162,6 +164,8 @@ export type Database = {
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
           sector: Database["public"]["Enums"]["business_sector"]
           status?: Database["public"]["Enums"]["listing_status"]
           title: string
@@ -178,6 +182,8 @@ export type Database = {
           monthly_revenue?: number
           offered_percentage?: number
           owner_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
           sector?: Database["public"]["Enums"]["business_sector"]
           status?: Database["public"]["Enums"]["listing_status"]
           title?: string
@@ -404,7 +410,12 @@ export type Database = {
     }
     Enums: {
       business_sector: "cafe" | "restaurant" | "retail" | "services" | "other"
-      listing_status: "draft" | "published" | "archived"
+      listing_status:
+        | "draft"
+        | "published"
+        | "archived"
+        | "pending_review"
+        | "rejected"
       user_role: "project_owner" | "investor" | "accountant" | "admin"
       verification_request_status:
         | "requested"
@@ -541,7 +552,13 @@ export const Constants = {
   public: {
     Enums: {
       business_sector: ["cafe", "restaurant", "retail", "services", "other"],
-      listing_status: ["draft", "published", "archived"],
+      listing_status: [
+        "draft",
+        "published",
+        "archived",
+        "pending_review",
+        "rejected",
+      ],
       user_role: ["project_owner", "investor", "accountant", "admin"],
       verification_request_status: [
         "requested",
