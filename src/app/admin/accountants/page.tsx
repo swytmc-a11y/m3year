@@ -26,12 +26,17 @@ export default async function AdminAccountantsPage() {
   const accountants = data as unknown as AccountantRow[] | null;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-12">
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="mb-2 font-mono text-[13px] tracking-wide text-verify">
         لوحة الإدارة
       </div>
       <h1 className="mb-8 font-heading text-2xl font-extrabold text-ink">
         المحاسبون
+        {accountants && accountants.length > 0 ? (
+          <span className="ms-2 text-base font-normal text-ink/40">
+            ({accountants.length})
+          </span>
+        ) : null}
       </h1>
 
       {error ? (
@@ -45,9 +50,9 @@ export default async function AdminAccountantsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {accountants.map((a) => (
-            <Card key={a.id}>
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div>
+            <Card key={a.id} className="p-4 sm:p-6">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
                   <h2 className="font-bold text-ink">
                     {a.profile?.full_name || "بدون اسم"}
                   </h2>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/actions/auth";
 import { Logo } from "@/components/logo";
+import { AdminNav } from "@/components/admin/admin-nav";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminLayout({
@@ -14,29 +15,24 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <nav className="flex items-center justify-between border-b border-grid bg-white px-6 py-4 sm:px-12">
-        <div className="flex items-center gap-8">
+      <nav className="flex flex-col gap-3 border-b border-grid bg-white px-4 py-3 sm:flex-row sm:items-center sm:gap-8 sm:px-12 sm:py-4">
+        <div className="flex items-center justify-between gap-4">
           <Logo />
-          <div className="flex gap-6 text-sm text-ink/60">
-            <Link href="/admin/listings" className="hover:text-ink">
-              مراجعة الإعلانات
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="hidden text-sm text-ink/50 hover:text-ink sm:inline"
+            >
+              لوحتي كمستخدم
             </Link>
-            <Link href="/admin/verification-requests" className="hover:text-ink">
-              طلبات التوثيق
-            </Link>
-            <Link href="/admin/accountants" className="hover:text-ink">
-              المحاسبون
-            </Link>
-            <Link href="/dashboard" className="hover:text-ink">
-              لوحتي
-            </Link>
+            <form action={signOut}>
+              <Button type="submit" variant="ghost" size="sm">
+                تسجيل الخروج
+              </Button>
+            </form>
           </div>
         </div>
-        <form action={signOut}>
-          <Button type="submit" variant="ghost" size="sm">
-            تسجيل الخروج
-          </Button>
-        </form>
+        <AdminNav />
       </nav>
       <main className="grid-bg flex-1">{children}</main>
     </div>

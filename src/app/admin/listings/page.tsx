@@ -45,12 +45,17 @@ export default async function AdminListingsPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-12">
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="mb-2 font-mono text-[13px] tracking-wide text-verify">
         لوحة الإدارة
       </div>
       <h1 className="mb-8 font-heading text-2xl font-extrabold text-ink">
         إعلانات بانتظار المراجعة
+        {listings && listings.length > 0 ? (
+          <span className="ms-2 text-base font-normal text-ink/40">
+            ({listings.length})
+          </span>
+        ) : null}
       </h1>
 
       {error ? (
@@ -84,9 +89,9 @@ function ReviewRow({
   confidential: ListingConfidential | null;
 }) {
   return (
-    <Card>
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
+    <Card className="p-4 sm:p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="font-bold text-ink">{listing.title}</h2>
           <p className="mt-1 text-[13px] text-ink/50">
             قطاع {SECTOR_LABELS[listing.sector]} · {listing.city} · قُدّم في{" "}
@@ -95,13 +100,13 @@ function ReviewRow({
         </div>
         <Link
           href={`/listings/${listing.id}`}
-          className="text-[13px] font-bold text-ink hover:underline"
+          className="shrink-0 text-[13px] font-bold text-ink hover:underline"
         >
           معاينة ←
         </Link>
       </div>
 
-      <div className="mb-5 flex gap-8 border-y border-dashed border-grid py-3">
+      <div className="mb-5 flex flex-wrap gap-6 border-y border-dashed border-grid py-3 sm:gap-8">
         <div>
           <div className="text-xs text-ink/50">الإيراد الشهري</div>
           <div className="font-mono font-semibold text-ink">
@@ -186,11 +191,11 @@ function TrustFields({
       <div className="mb-3 text-xs font-bold text-ink/50">
         بيانات الإفصاح والكيان
       </div>
-      <dl className="flex flex-col gap-2">
+      <dl className="flex flex-col gap-3 sm:gap-2">
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-baseline justify-between gap-4 text-[13px]"
+            className="flex flex-col gap-0.5 text-[13px] sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
           >
             <dt className="text-ink/50">{row.label}</dt>
             <dd
