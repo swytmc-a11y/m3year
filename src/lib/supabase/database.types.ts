@@ -374,34 +374,57 @@ export type Database = {
           },
         ]
       }
+      profile_contact: {
+        Row: {
+          email: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          email?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_contact_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           city: string | null
           created_at: string
-          email: string | null
           full_name: string | null
           id: string
-          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
           city?: string | null
           created_at?: string
-          email?: string | null
           full_name?: string | null
           id: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
           city?: string | null
           created_at?: string
-          email?: string | null
           full_name?: string | null
           id?: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }

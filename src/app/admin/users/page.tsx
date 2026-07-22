@@ -36,19 +36,46 @@ export default async function AdminUsersPage({
 
   const supabase = await createClient();
 
+  // email/phone live in profile_contact (select restricted to self/admin via
+  // RLS) rather than on profiles directly — profiles is row-level readable by
+  // any conversation counterpart, which would otherwise leak contact details.
+  // Since the search box needs to match on those fields too, search
+  // profile_contact first (admin can read every row) and profiles separately,
+  // then union by id — this also sidesteps building a hand-written .or()
+  // filter string across two tables from raw user input.
+  let contactMatchIds: string[] | null = null;
+  if (query) {
+    // Escape every PostgREST filter-syntax metacharacter (not just SQL LIKE's
+    // %/_), since this value is interpolated into a .or() filter expression.
+    const escaped = query.replace(/[\\,.()*%_]/g, "\\$&");
+    const { data: matches } = await supabase
+      .from("profile_contact")
+      .select("id")
+      .or(`email.ilike.%${escaped}%,phone.ilike.%${escaped}%`);
+    contactMatchIds = (matches ?? []).map((m) => m.id);
+  }
+
   let profilesQuery = supabase
     .from("profiles")
-    .select("id, full_name, email, phone, role, created_at")
+    .select("id, full_name, role, created_at")
     .order("created_at", { ascending: false });
 
   if (query) {
-    const escaped = query.replace(/[%_]/g, "\\$&");
-    profilesQuery = profilesQuery.or(
-      `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,phone.ilike.%${escaped}%`,
-    );
+    const escaped = query.replace(/[\\,.()*%_]/g, "\\$&");
+    const nameFilter = `full_name.ilike.%${escaped}%`;
+    profilesQuery =
+      contactMatchIds && contactMatchIds.length > 0
+        ? profilesQuery.or(`${nameFilter},id.in.(${contactMatchIds.join(",")})`)
+        : profilesQuery.or(nameFilter);
   }
 
   const { data: profiles, error } = await profilesQuery;
+
+  const profileIds = (profiles ?? []).map((p) => p.id);
+  const { data: contactRows } = profileIds.length
+    ? await supabase.from("profile_contact").select("id, email, phone").in("id", profileIds)
+    : { data: [] as { id: string; email: string | null; phone: string | null }[] };
+  const contactById = new Map((contactRows ?? []).map((c) => [c.id, c]));
 
   const accountantIds = (profiles ?? [])
     .filter((p) => p.role === "accountant")
@@ -60,6 +87,8 @@ export default async function AdminUsersPage({
 
   const users: ProfileRow[] = (profiles ?? []).map((p) => ({
     ...p,
+    email: contactById.get(p.id)?.email ?? null,
+    phone: contactById.get(p.id)?.phone ?? null,
     accountant: accountantById.get(p.id) ?? null,
   }));
 
