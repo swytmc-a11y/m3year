@@ -8,13 +8,17 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/ui";
+import { TopBar, Button } from "@/components/ui";
+import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
 import { sendMessage, markMessagesRead } from "@/lib/messaging";
+import { getUserRatingSummary, getMyRating, submitRating, type RatingSummary } from "@/lib/ratings";
+import { ratingFormSchema } from "@/lib/validations";
 import { colors, fonts, radius } from "@/theme";
 
 type Message = {
@@ -38,23 +42,45 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
+  const [listingId, setListingId] = useState<string | null>(null);
+  const [counterpartId, setCounterpartId] = useState<string | null>(null);
+  const [counterpartName, setCounterpartName] = useState<string | null>(null);
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary>({ average: 0, count: 0 });
+  const [rateModalOpen, setRateModalOpen] = useState(false);
+  const [myScore, setMyScore] = useState(0);
+  const [myComment, setMyComment] = useState("");
+  const [rateError, setRateError] = useState<string | undefined>();
+  const [rateSubmitting, setRateSubmitting] = useState(false);
+
   const load = useCallback(async () => {
     const { data: conv } = await supabase
       .from("conversations")
-      .select("owner_id, investor_id, listing:listings(title)")
+      .select("listing_id, owner_id, investor_id, listing:listings(title)")
       .eq("id", String(id))
       .maybeSingle();
 
     if (conv && user) {
-      const counterpartId = conv.owner_id === user.id ? conv.investor_id : conv.owner_id;
-      const { data: counterpart } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", counterpartId)
-        .maybeSingle();
+      const counterpart = conv.owner_id === user.id ? conv.investor_id : conv.owner_id;
+      setListingId(conv.listing_id);
+      setCounterpartId(counterpart);
+
+      const [{ data: counterpartProfile }, summary, myRating] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", counterpart).maybeSingle(),
+        getUserRatingSummary(counterpart),
+        getMyRating(counterpart, conv.listing_id),
+      ]);
+
       const listingTitle =
         (conv as unknown as { listing?: { title?: string } }).listing?.title ?? "";
-      setTitle(counterpart?.full_name ? `${counterpart.full_name} · ${listingTitle}` : listingTitle);
+      setCounterpartName(counterpartProfile?.full_name ?? null);
+      setTitle(
+        counterpartProfile?.full_name ? `${counterpartProfile.full_name} · ${listingTitle}` : listingTitle,
+      );
+      setRatingSummary(summary);
+      if (myRating) {
+        setMyScore(myRating.score);
+        setMyComment(myRating.comment ?? "");
+      }
     }
 
     const { data } = await supabase
@@ -125,9 +151,110 @@ export default function ChatScreen() {
     }
   }
 
+  async function onSubmitRating() {
+    if (!counterpartId || !listingId) return;
+    setRateError(undefined);
+    const parsed = ratingFormSchema.safeParse({ score: myScore, comment: myComment });
+    if (!parsed.success) {
+      setRateError(parsed.error.issues[0].message);
+      return;
+    }
+
+    setRateSubmitting(true);
+    const { error } = await submitRating({
+      ratedId: counterpartId,
+      listingId,
+      score: parsed.data.score,
+      comment: parsed.data.comment,
+    });
+    setRateSubmitting(false);
+
+    if (error) {
+      setRateError(error);
+      return;
+    }
+    setRateModalOpen(false);
+    setRatingSummary(await getUserRatingSummary(counterpartId));
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title={title || "المحادثة"} onBack={() => router.back()} />
+      <TopBar
+        title={title || "المحادثة"}
+        onBack={() => router.back()}
+        right={
+          counterpartId ? (
+            <Pressable
+              onPress={() => setRateModalOpen(true)}
+              style={{ alignItems: "flex-end", gap: 2 }}
+            >
+              <RatingSummaryLabel average={ratingSummary.average} count={ratingSummary.count} />
+              <Text style={{ fontFamily: fonts.body, fontSize: 11, color: colors.verify }}>
+                {myScore > 0 ? "عدّل تقييمك" : "قيّم"}
+              </Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
+
+      <Modal visible={rateModalOpen} transparent animationType="fade" onRequestClose={() => setRateModalOpen(false)}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(23,26,28,0.5)",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: radius.lg,
+              padding: 24,
+              gap: 16,
+            }}
+          >
+            <Text
+              style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink, textAlign: "right" }}
+            >
+              {counterpartName ? `قيّم ${counterpartName}` : "قيّم الطرف الآخر"}
+            </Text>
+
+            <View style={{ alignItems: "center" }}>
+              <RatingStarsInput value={myScore} onChange={setMyScore} />
+            </View>
+
+            <TextInput
+              value={myComment}
+              onChangeText={setMyComment}
+              placeholder="تعليق (اختياري)"
+              placeholderTextColor={colors.mutedText}
+              multiline
+              style={{
+                minHeight: 80,
+                borderWidth: 1,
+                borderColor: colors.grid,
+                borderRadius: radius.md,
+                padding: 12,
+                fontFamily: fonts.body,
+                fontSize: 14,
+                color: colors.ink,
+                textAlign: "right",
+                textAlignVertical: "top",
+              }}
+            />
+
+            {rateError ? (
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.danger, textAlign: "right" }}>
+                {rateError}
+              </Text>
+            ) : null}
+
+            <Button label="إرسال التقييم" fullWidth loading={rateSubmitting} onPress={onSubmitRating} />
+            <Button label="إلغاء" variant="ghost" fullWidth onPress={() => setRateModalOpen(false)} />
+          </View>
+        </View>
+      </Modal>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

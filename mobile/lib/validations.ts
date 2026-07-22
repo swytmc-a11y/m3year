@@ -52,3 +52,19 @@ export const listingFormSchema = z.object({
 });
 
 export type ListingFormValues = z.infer<typeof listingFormSchema>;
+
+export const ratingFormSchema = z.object({
+  score: z
+    .number({ error: "اختر تقييمًا من 1 إلى 5" })
+    .int()
+    .min(1, { error: "اختر تقييمًا من 1 إلى 5" })
+    .max(5, { error: "التقييم يجب ألا يتجاوز 5" }),
+  comment: z
+    .string()
+    .trim()
+    .max(1000, { error: "التعليق طويل جدًا" })
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+});
+
+export type RatingFormValues = z.infer<typeof ratingFormSchema>;

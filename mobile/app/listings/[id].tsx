@@ -7,6 +7,8 @@ import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
 import { getOrCreateConversation } from "@/lib/messaging";
+import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
+import { RatingSummaryLabel } from "@/components/rating-stars";
 import {
   SECTOR_LABELS,
   formatSar,
@@ -25,6 +27,7 @@ export default function ListingDetailScreen() {
   const [error, setError] = useState(false);
   const [contacting, setContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
+  const [ownerRating, setOwnerRating] = useState<RatingSummary | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -40,6 +43,10 @@ export default function ListingDetailScreen() {
         setError(true);
       } else {
         setListing(data);
+        if (data) {
+          const summary = await getUserRatingSummary(data.owner_id);
+          if (active) setOwnerRating(summary);
+        }
       }
       setLoading(false);
     })();
@@ -228,6 +235,21 @@ export default function ListingDetailScreen() {
                 ? `تحقق محاسبي: ${formatDate(listing.verified_at)}`
                 : "لم يُوثّق هذا الإعلان ماليًا بعد."}
             </Text>
+
+            {ownerRating ? (
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                  تقييم صاحب المشروع
+                </Text>
+                <RatingSummaryLabel average={ownerRating.average} count={ownerRating.count} />
+              </View>
+            ) : null}
 
             {!isPreview && !isOwner ? (
               <View style={{ gap: 8 }}>
