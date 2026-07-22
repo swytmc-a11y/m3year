@@ -5,31 +5,46 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Button, Field, Card } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
-import { signInSchema } from "@/lib/validations";
+import { signUpSchema } from "@/lib/validations";
 import { colors, fonts } from "@/theme";
 
-export default function AuthScreen() {
+export default function SignUpScreen() {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit() {
     setError(undefined);
-    const parsed = signInSchema.safeParse({ email, password });
+    const parsed = signUpSchema.safeParse({ fullName, email, phone, password });
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
     }
 
     setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        data: {
+          full_name: parsed.data.fullName,
+          phone: parsed.data.phone,
+        },
+      },
+    });
     setLoading(false);
 
-    if (signInError) {
-      console.error("[auth] signInWithPassword failed", signInError);
-      setError("البريد الإلكتروني أو كلمة السر غير صحيحة.");
+    if (signUpError) {
+      console.error("[auth] signUp failed", signUpError);
+      setError(
+        signUpError.message.includes("already registered")
+          ? "هذا البريد الإلكتروني مسجّل مسبقًا."
+          : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.",
+      );
       return;
     }
 
@@ -59,7 +74,7 @@ export default function AuthScreen() {
                 textAlign: "right",
               }}
             >
-              تسجيل الدخول
+              إنشاء حساب
             </Text>
             <Text
               style={{
@@ -70,9 +85,18 @@ export default function AuthScreen() {
                 lineHeight: 22,
               }}
             >
-              أدخل بريدك الإلكتروني وكلمة السر لتسجيل الدخول.
+              أدخل بياناتك لإنشاء حساب جديد في معيار.
             </Text>
           </View>
+
+          <Field
+            label="الاسم"
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="اسمك الكامل"
+            autoComplete="name"
+            style={{ textAlign: "right" }}
+          />
 
           <Field
             label="البريد الإلكتروني"
@@ -86,21 +110,31 @@ export default function AuthScreen() {
           />
 
           <Field
+            label="رقم الجوال"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="05xxxxxxxx"
+            keyboardType="phone-pad"
+            autoComplete="tel"
+            style={{ fontFamily: fonts.mono, textAlign: "left" }}
+          />
+
+          <Field
             label="كلمة السر"
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
             secureTextEntry
             autoCapitalize="none"
-            autoComplete="password"
+            autoComplete="password-new"
             error={error}
             style={{ textAlign: "left" }}
           />
 
-          <Button label="تسجيل الدخول" loading={loading} onPress={onSubmit} />
+          <Button label="إنشاء الحساب" loading={loading} onPress={onSubmit} />
         </Card>
 
-        <Link href="/signup" asChild>
+        <Link href="/auth" asChild>
           <Pressable>
             <Text
               style={{
@@ -109,7 +143,7 @@ export default function AuthScreen() {
                 color: colors.verify,
               }}
             >
-              ليس لديك حساب؟ إنشاء حساب ←
+              لديك حساب بالفعل؟ تسجيل الدخول ←
             </Text>
           </Pressable>
         </Link>
