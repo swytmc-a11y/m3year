@@ -26,9 +26,11 @@ function FieldError({ messages }: { messages?: string[] }) {
 export function ListingForm({
   action,
   listing,
+  isAdmin = false,
 }: {
   action: ListingFormAction;
   listing?: Listing;
+  isAdmin?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, emptyActionState);
   const errors = state.fieldErrors ?? {};
@@ -139,29 +141,33 @@ export function ListingForm({
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button
-          type="submit"
-          name="intent"
-          value="submit"
-          disabled={pending}
-        >
-          {pending ? "جارٍ الحفظ..." : "إرسال للمراجعة"}
+        <Button type="submit" name="intent" value="submit" disabled={pending}>
+          {pending ? "جارٍ الحفظ..." : isAdmin ? "حفظ التعديلات" : "إرسال للمراجعة"}
         </Button>
-        <Button
-          type="submit"
-          name="intent"
-          value="draft"
-          variant="ghost"
-          disabled={pending}
-        >
-          حفظ كمسودة
-        </Button>
+        {!isAdmin ? (
+          <Button
+            type="submit"
+            name="intent"
+            value="draft"
+            variant="ghost"
+            disabled={pending}
+          >
+            حفظ كمسودة
+          </Button>
+        ) : null}
       </div>
 
-      <p className="text-xs text-ink/50">
-        الإعلانات لا تُنشر مباشرة — يراجعها فريق معيار أولًا، ثم تظهر للعامة
-        بعد الموافقة.
-      </p>
+      {isAdmin ? (
+        <p className="text-xs text-ink/50">
+          التعديل كمدير لا يغيّر حالة الإعلان (منشور/مسودة/إلخ) — يُعدَّل
+          المحتوى فقط.
+        </p>
+      ) : (
+        <p className="text-xs text-ink/50">
+          الإعلانات لا تُنشر مباشرة — يراجعها فريق معيار أولًا، ثم تظهر للعامة
+          بعد الموافقة.
+        </p>
+      )}
     </form>
   );
 }

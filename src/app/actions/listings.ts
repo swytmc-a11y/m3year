@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser, requireAdmin } from "@/lib/auth";
+import { requireUser, requireAdmin, isCurrentUserAdmin } from "@/lib/auth";
 import { listingFormSchema, rejectionSchema } from "@/lib/validations/listing";
 import type { ActionState } from "@/lib/action-state";
 
@@ -22,6 +22,7 @@ function revalidateListingSurfaces() {
   revalidatePath("/dashboard/listings");
   revalidatePath("/listings");
   revalidatePath("/admin/listings");
+  revalidatePath("/admin/all-listings");
 }
 
 // --- Create -----------------------------------------------------------------
@@ -74,6 +75,10 @@ export async function updateListing(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  // An admin editing someone else's listing from /admin/all-listings should
+  // not trigger the owner "submit for review" status transition, and should
+  // land back on the admin dashboard rather than their own /dashboard.
+  const admin = await isCurrentUserAdmin();
   const submit = formData.get("intent") === "submit";
   const supabase = await createClient();
 
@@ -87,7 +92,7 @@ export async function updateListing(
       monthly_revenue: parsed.data.monthly_revenue,
       offered_percentage: parsed.data.offered_percentage,
       description: parsed.data.description,
-      ...(submit ? { status: "pending_review" as const } : {}),
+      ...(submit && !admin ? { status: "pending_review" as const } : {}),
     })
     .eq("id", listingId);
 
@@ -97,7 +102,7 @@ export async function updateListing(
   }
 
   revalidateListingSurfaces();
-  redirect("/dashboard/listings");
+  redirect(admin ? "/admin/all-listings" : "/dashboard/listings");
 }
 
 // --- Owner state transitions ------------------------------------------------
@@ -206,4 +211,57 @@ export async function rejectListing(
 
   revalidateListingSurfaces();
   redirect("/admin/listings");
+}
+
+// --- Admin: full listing control (all-listings dashboard) -------------------
+// These bypass the normal owner-only workflow entirely — is_admin() makes the
+// guard trigger on listings a no-op, so RLS + this requireAdmin() gate are the
+// only checks. Intended for the /admin/all-listings oversight dashboard.
+export async function adminDeleteListing(formData: FormData) {
+  await requireAdmin();
+  const listingId = String(formData.get("id"));
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("listings").delete().eq("id", listingId);
+
+  if (error) {
+    console.error("[listings] admin delete failed", error);
+  } else {
+    await supabase.rpc("log_audit", {
+      p_action: "listing.deleted",
+      p_entity_type: "listing",
+      p_entity_id: listingId,
+    });
+  }
+
+  revalidateListingSurfaces();
+  redirect("/admin/all-listings");
+}
+
+export async function adminSetVerification(formData: FormData) {
+  await requireAdmin();
+  const listingId = String(formData.get("id"));
+  const verify = formData.get("verify") === "1";
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("listings")
+    .update({
+      verification_status: verify ? "verified" : "none",
+      verified_at: verify ? new Date().toISOString() : null,
+    })
+    .eq("id", listingId);
+
+  if (error) {
+    console.error("[listings] admin set-verification failed", error);
+  } else {
+    await supabase.rpc("log_audit", {
+      p_action: verify ? "listing.admin_verified" : "listing.admin_unverified",
+      p_entity_type: "listing",
+      p_entity_id: listingId,
+    });
+  }
+
+  revalidateListingSurfaces();
+  redirect("/admin/all-listings");
 }

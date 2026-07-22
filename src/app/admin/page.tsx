@@ -6,10 +6,12 @@ export default async function AdminOverviewPage() {
   const supabase = await createClient();
 
   const [
+    { count: totalListings },
     { count: pendingListings },
     { count: openVerifications },
     { count: pendingAccountants },
   ] = await Promise.all([
+    supabase.from("listings").select("id", { count: "exact", head: true }),
     supabase
       .from("listings")
       .select("id", { count: "exact", head: true })
@@ -32,6 +34,12 @@ export default async function AdminOverviewPage() {
       urgent: (pendingListings ?? 0) > 0,
     },
     {
+      href: "/admin/all-listings",
+      label: "كل الإعلانات (تحكّم كامل)",
+      count: totalListings ?? 0,
+      urgent: false,
+    },
+    {
       href: "/admin/verification-requests",
       label: "طلبات توثيق بانتظار الإسناد",
       count: openVerifications ?? 0,
@@ -46,7 +54,7 @@ export default async function AdminOverviewPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="mb-2 font-mono text-[13px] tracking-wide text-verify">
         لوحة الإدارة
       </div>
@@ -54,7 +62,7 @@ export default async function AdminOverviewPage() {
         نظرة عامة
       </h1>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Link key={stat.href} href={stat.href}>
             <Card className="flex h-full flex-col gap-2 p-4 transition-shadow hover:shadow-sm sm:p-6">

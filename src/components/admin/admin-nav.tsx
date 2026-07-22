@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/admin", label: "نظرة عامة" },
   { href: "/admin/listings", label: "مراجعة الإعلانات" },
+  { href: "/admin/all-listings", label: "كل الإعلانات" },
   { href: "/admin/verification-requests", label: "طلبات التوثيق" },
   { href: "/admin/accountants", label: "المحاسبون" },
 ] as const;
