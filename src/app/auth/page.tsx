@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { requestOtp, type ActionState } from "@/app/actions/auth";
+import { signInWithEmail, type ActionState } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Logo } from "@/components/logo";
 const initialState: ActionState = {};
 
 export default function AuthPage() {
-  const [state, action, pending] = useActionState(requestOtp, initialState);
+  const [state, action, pending] = useActionState(signInWithEmail, initialState);
 
   return (
     <div className="grid-bg flex min-h-screen flex-col items-center justify-center px-6 py-12">
@@ -24,46 +24,54 @@ export default function AuthPage() {
           تسجيل الدخول
         </h1>
         <p className="mb-8 text-sm text-ink/60">
-          أدخل رقم جوالك وسنرسل لك رمز تحقق عبر رسالة نصية.
+          أدخل بريدك الإلكتروني وكلمة السر لتسجيل الدخول.
         </p>
 
         <form action={action} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="phone">رقم الجوال</Label>
+            <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="05xxxxxxxx"
+              id="email"
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="example@email.com"
               dir="ltr"
-              className="text-left font-mono"
+              className="text-left"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password">كلمة السر</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              dir="ltr"
+              className="text-left"
               required
               aria-invalid={Boolean(state.error)}
-              aria-describedby={state.error ? "phone-error" : undefined}
+              aria-describedby={state.error ? "auth-error" : undefined}
             />
           </div>
 
           {state.error ? (
-            <p id="phone-error" role="alert" className="text-sm text-amber">
+            <p id="auth-error" role="alert" className="text-sm text-amber">
               {state.error}
             </p>
           ) : null}
 
           <Button type="submit" disabled={pending} className="mt-2">
-            {pending ? "جارٍ الإرسال..." : "إرسال رمز التحقق"}
+            {pending ? "جارٍ الدخول..." : "تسجيل الدخول"}
           </Button>
         </form>
       </div>
 
-      <Link
-        href="/auth/demo"
-        className="mt-8 text-sm font-bold text-verify hover:underline"
-      >
-        أو جرّب المنصة بحساب تجريبي ←
-      </Link>
-      <Link href="/" className="mt-4 text-sm text-ink/50 hover:text-ink">
+      <Link href="/" className="mt-8 text-sm text-ink/50 hover:text-ink">
         العودة للرئيسية
       </Link>
     </div>

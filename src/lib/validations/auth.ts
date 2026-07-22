@@ -19,6 +19,17 @@ export const phoneSchema = z
     return `+966${digits}`;
   });
 
+export const emailSchema = z
+  .string()
+  .trim()
+  .min(1, { error: "البريد الإلكتروني مطلوب" })
+  .email({ error: "أدخل بريدًا إلكترونيًا صحيحًا" });
+
+export const signInSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, { error: "كلمة السر مطلوبة" }),
+});
+
 export const requestOtpSchema = z.object({
   phone: phoneSchema,
 });

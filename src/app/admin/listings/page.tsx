@@ -6,10 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   SECTOR_LABELS,
+  ENTITY_TYPE_LABELS,
+  REASON_FOR_SELLING_LABELS,
+  FINANCIAL_DATA_SHARING_LABELS,
   formatSar,
   formatPercentage,
   formatDate,
   type Listing,
+  type ListingConfidential,
+  type EntityType,
+  type ReasonForSelling,
+  type FinancialDataSharing,
 } from "@/lib/listings/constants";
 
 export default async function AdminListingsPage() {
@@ -21,6 +28,21 @@ export default async function AdminListingsPage() {
     .select("*")
     .eq("status", "pending_review")
     .order("created_at", { ascending: true });
+
+  // Confidential legal-entity details (entity type + CR number) live in a
+  // separate table; admins may read them via is_admin() in RLS. Fetch the
+  // matching rows in one query and index by listing_id for the review cards.
+  const listingIds = (listings ?? []).map((l) => l.id);
+  const { data: confidentialRows } = listingIds.length
+    ? await supabase
+        .from("listing_confidential")
+        .select("*")
+        .in("listing_id", listingIds)
+    : { data: [] as ListingConfidential[] };
+
+  const confidentialByListing = new Map(
+    (confidentialRows ?? []).map((c) => [c.listing_id, c]),
+  );
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -42,7 +64,11 @@ export default async function AdminListingsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {listings.map((listing) => (
-            <ReviewRow key={listing.id} listing={listing} />
+            <ReviewRow
+              key={listing.id}
+              listing={listing}
+              confidential={confidentialByListing.get(listing.id) ?? null}
+            />
           ))}
         </div>
       )}
@@ -50,7 +76,13 @@ export default async function AdminListingsPage() {
   );
 }
 
-function ReviewRow({ listing }: { listing: Listing }) {
+function ReviewRow({
+  listing,
+  confidential,
+}: {
+  listing: Listing;
+  confidential: ListingConfidential | null;
+}) {
   return (
     <Card>
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -90,6 +122,8 @@ function ReviewRow({ listing }: { listing: Listing }) {
         </p>
       ) : null}
 
+      <TrustFields listing={listing} confidential={confidential} />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <form action={approveListing}>
           <input type="hidden" name="id" value={listing.id} />
@@ -102,5 +136,73 @@ function ReviewRow({ listing }: { listing: Listing }) {
         </div>
       </div>
     </Card>
+  );
+}
+
+// Disclosure/trust fields the owner submits (the "green row") plus the
+// confidential legal-entity details — surfaced here so the admin can review
+// the full picture before approving. The CR number is confidential and shown
+// only inside this admin-gated view.
+function TrustFields({
+  listing,
+  confidential,
+}: {
+  listing: Listing;
+  confidential: ListingConfidential | null;
+}) {
+  const rows: { label: string; value: string; muted?: boolean }[] = [
+    {
+      label: "سبب البيع",
+      value: listing.reason_for_selling
+        ? REASON_FOR_SELLING_LABELS[listing.reason_for_selling as ReasonForSelling]
+        : "غير محدد",
+    },
+    {
+      label: "التزامات قانونية على المشروع",
+      value: listing.has_legal_obligations ? "يوجد" : "لا يوجد",
+    },
+    {
+      label: "مشاركة البيانات المالية",
+      value: FINANCIAL_DATA_SHARING_LABELS[
+        listing.financial_data_sharing as FinancialDataSharing
+      ],
+    },
+    {
+      label: "نوع الكيان",
+      value: confidential
+        ? ENTITY_TYPE_LABELS[confidential.entity_type as EntityType]
+        : "غير مُدخل",
+      muted: !confidential,
+    },
+    {
+      label: "رقم السجل التجاري (سرّي)",
+      value: confidential?.commercial_registration_number ?? "غير مُدخل",
+      muted: !confidential?.commercial_registration_number,
+    },
+  ];
+
+  return (
+    <div className="mb-5 rounded-lg border border-grid bg-paper/40 p-4">
+      <div className="mb-3 text-xs font-bold text-ink/50">
+        بيانات الإفصاح والكيان
+      </div>
+      <dl className="flex flex-col gap-2">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="flex items-baseline justify-between gap-4 text-[13px]"
+          >
+            <dt className="text-ink/50">{row.label}</dt>
+            <dd
+              className={
+                row.muted ? "font-medium text-ink/40" : "font-semibold text-ink"
+              }
+            >
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }

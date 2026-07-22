@@ -136,16 +136,98 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_confidential: {
+        Row: {
+          commercial_registration_number: string | null
+          created_at: string
+          entity_type: string
+          listing_id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type: string
+          listing_id: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type?: string
+          listing_id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_confidential_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_confidential_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           city: string
           created_at: string
           description: string | null
+          financial_data_sharing: string
+          has_legal_obligations: boolean
           id: string
           is_featured: boolean
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
+          photo_urls: string[]
+          reason_for_selling: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -159,11 +241,15 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          financial_data_sharing?: string
+          has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
+          photo_urls?: string[]
+          reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -177,11 +263,15 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          financial_data_sharing?: string
+          has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
           monthly_revenue?: number
           offered_percentage?: number
           owner_id?: string
+          photo_urls?: string[]
+          reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector?: Database["public"]["Enums"]["business_sector"]
@@ -237,6 +327,47 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          related_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -363,12 +494,51 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_requests: {
         Row: {
           accountant_id: string | null
           completed_at: string | null
           created_at: string
           fee_amount: number | null
+          financial_statement_path: string | null
           id: string
           listing_id: string
           notes: string | null
@@ -383,6 +553,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           fee_amount?: number | null
+          financial_statement_path?: string | null
           id?: string
           listing_id: string
           notes?: string | null
@@ -397,6 +568,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           fee_amount?: number | null
+          financial_statement_path?: string | null
           id?: string
           listing_id?: string
           notes?: string | null
@@ -435,6 +607,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          p_body: string
+          p_related_id?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       log_audit: {
         Args: {

@@ -10,6 +10,7 @@ type RequestRow = {
   status: string;
   verified_revenue: number | null;
   notes: string | null;
+  financial_statement_path: string | null;
   created_at: string;
   completed_at: string | null;
   listing: {
@@ -30,7 +31,7 @@ export default async function AdminVerificationRequestsPage() {
     supabase
       .from("verification_requests")
       .select(
-        "id, status, verified_revenue, notes, created_at, completed_at, listing:listings(id, title, monthly_revenue), accountant:accountants(id, profile:profiles(full_name))",
+        "id, status, verified_revenue, notes, financial_statement_path, created_at, completed_at, listing:listings(id, title, monthly_revenue), accountant:accountants(id, profile:profiles(full_name))",
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -45,6 +46,20 @@ export default async function AdminVerificationRequestsPage() {
     full_name: (a as unknown as { profile: { full_name: string | null } | null })
       .profile?.full_name ?? null,
   }));
+
+  // Pre-sign the private financial-statement objects (verification-docs is a
+  // private bucket; admins may read via the storage RLS is_admin() branch).
+  const statementUrls = new Map<string, string>();
+  await Promise.all(
+    (requests ?? [])
+      .filter((r) => r.financial_statement_path)
+      .map(async (r) => {
+        const { data: signed } = await supabase.storage
+          .from("verification-docs")
+          .createSignedUrl(r.financial_statement_path!, 60 * 60);
+        if (signed?.signedUrl) statementUrls.set(r.id, signed.signedUrl);
+      }),
+  );
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -91,6 +106,22 @@ export default async function AdminVerificationRequestsPage() {
                   </span>
                 </p>
               ) : null}
+
+              <p className="mb-3 text-[13px]">
+                القوائم المالية:{" "}
+                {statementUrls.has(r.id) ? (
+                  <a
+                    href={statementUrls.get(r.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-verify hover:underline"
+                  >
+                    تنزيل الملف المرفوع ←
+                  </a>
+                ) : (
+                  <span className="text-ink/40">لم تُرفع بعد</span>
+                )}
+              </p>
 
               {r.status === "completed" && r.verified_revenue != null ? (
                 <p className="mb-3 text-[13px] text-verify">

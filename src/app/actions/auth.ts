@@ -2,12 +2,40 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requestOtpSchema, verifyOtpSchema } from "@/lib/validations/auth";
+import {
+  requestOtpSchema,
+  verifyOtpSchema,
+  signInSchema,
+} from "@/lib/validations/auth";
 
 export type ActionState = {
   error?: string;
   success?: boolean;
 };
+
+export async function signInWithEmail(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = signInSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+
+  if (error) {
+    console.error("[auth] signInWithPassword failed", error);
+    return { error: "البريد الإلكتروني أو كلمة السر غير صحيحة." };
+  }
+
+  redirect("/dashboard");
+}
 
 export async function requestOtp(
   _prevState: ActionState,
@@ -68,26 +96,4 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
-}
-
-// --- TEMPORARY: demo email/password login for preview -----------------------
-// Lets reviewers try the full app before an SMS provider is configured for the
-// real phone-OTP flow. REMOVE this action and the /auth/demo route (and the
-// demo accounts) before a public launch.
-const DEMO_ACCOUNTS = {
-  owner: { email: "owner@miyar.demo", password: "Demo123456" },
-  admin: { email: "admin@miyar.demo", password: "Demo123456" },
-} as const;
-
-export async function enterDemo(formData: FormData) {
-  const as = formData.get("as") === "admin" ? "admin" : "owner";
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(DEMO_ACCOUNTS[as]);
-
-  if (error) {
-    console.error("[auth] demo sign-in failed", error);
-    redirect("/auth/demo?error=1");
-  }
-
-  redirect(as === "admin" ? "/admin/listings" : "/dashboard/listings");
 }
