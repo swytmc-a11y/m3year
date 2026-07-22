@@ -8,9 +8,9 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Chip } from "@/components/ui";
+import { Logo } from "@/components/logo";
+import { Chip } from "@/components/ui";
 import { ListingCard } from "@/components/listings";
 import { supabase } from "@/lib/supabase";
 import {
@@ -20,8 +20,7 @@ import {
 } from "@/lib/constants";
 import { colors, fonts } from "@/theme";
 
-export default function ListingsScreen() {
-  const router = useRouter();
+export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState<BusinessSector | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -47,7 +46,7 @@ export default function ListingsScreen() {
 
     const { data, error: qError } = await query;
     if (qError) {
-      console.error("[listings] load failed", qError);
+      console.error("[home] load failed", qError);
       setError(true);
       setListings(null);
     } else {
@@ -63,11 +62,21 @@ export default function ListingsScreen() {
   }, [load]);
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.paper }}
-      edges={["top"]}
-    >
-      <TopBar title="تصفّح المشاريع" onBack={() => router.back()} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 20,
+          paddingVertical: 14,
+          backgroundColor: colors.white,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.grid,
+        }}
+      >
+        <Logo size={22} />
+      </View>
 
       <FlatList
         data={listings ?? []}

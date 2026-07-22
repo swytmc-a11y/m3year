@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
-import { useRouter, useFocusEffect, Redirect } from "expo-router";
+import { useRouter, useFocusEffect, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/ui";
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui";
 import { useAuth } from "@/contexts/auth";
 import { listMyConversations, type ConversationSummary } from "@/lib/messaging";
 import { colors, fonts, radius } from "@/theme";
@@ -41,20 +42,68 @@ export default function MessagesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      load();
-    }, [load]),
+      if (session) load();
+    }, [load, session]),
   );
 
   if (authLoading) {
     return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
   }
+
   if (!session) {
-    return <Redirect href="/auth" />;
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 32,
+            gap: 16,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.heading,
+              fontSize: 18,
+              color: colors.ink,
+              textAlign: "center",
+            }}
+          >
+            سجّل الدخول لعرض محادثاتك
+          </Text>
+          <Text
+            style={{
+              fontFamily: fonts.body,
+              fontSize: 14,
+              color: colors.mutedText,
+              textAlign: "center",
+              lineHeight: 22,
+            }}
+          >
+            تحتاج حسابًا للتواصل مع أصحاب المشاريع أو الممولين.
+          </Text>
+          <Link href="/auth" asChild>
+            <Button label="تسجيل الدخول" />
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="الرسائل" onBack={() => router.back()} />
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 14,
+          backgroundColor: colors.white,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.grid,
+        }}
+      >
+        <Logo size={22} />
+      </View>
 
       <FlatList
         data={conversations ?? []}

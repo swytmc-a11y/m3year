@@ -32,7 +32,7 @@ export default function DemoScreen() {
       return;
     }
 
-    router.replace("/dashboard");
+    router.replace("/");
   }
 
   return (

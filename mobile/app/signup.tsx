@@ -48,7 +48,7 @@ export default function SignUpScreen() {
       return;
     }
 
-    router.replace("/dashboard");
+    router.replace("/");
   }
 
   return (

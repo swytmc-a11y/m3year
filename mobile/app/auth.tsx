@@ -33,7 +33,7 @@ export default function AuthScreen() {
       return;
     }
 
-    router.replace("/dashboard");
+    router.replace("/");
   }
 
   return (
