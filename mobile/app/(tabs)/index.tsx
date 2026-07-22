@@ -9,9 +9,11 @@ import {
   ScrollView,
   Pressable,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Chip } from "@/components/ui";
+import { PlusIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listings";
 import { supabase } from "@/lib/supabase";
 import {
@@ -30,6 +32,7 @@ const SORT_LABELS: Record<SortOption, string> = {
 };
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState<BusinessSector | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -94,12 +97,34 @@ export default function HomeScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 20,
-          paddingVertical: 14,
+          paddingVertical: 12,
           backgroundColor: colors.white,
           borderBottomWidth: 1,
           borderBottomColor: colors.grid,
         }}
       >
+        {/* In RTL the create action sits at the leading (top-right) corner. */}
+        <Pressable
+          onPress={() => router.push("/my-listings/new")}
+          accessibilityRole="button"
+          accessibilityLabel="إنشاء إعلان"
+          style={({ pressed }) => ({
+            flexDirection: "row-reverse",
+            alignItems: "center",
+            gap: 6,
+            backgroundColor: colors.ink,
+            paddingVertical: 9,
+            paddingHorizontal: 14,
+            borderRadius: radius.pill,
+            opacity: pressed ? 0.85 : 1,
+          })}
+        >
+          <PlusIcon color={colors.white} size={16} />
+          <Text style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.white }}>
+            إعلان جديد
+          </Text>
+        </Pressable>
+
         <Logo size={22} />
       </View>
 
