@@ -5,6 +5,53 @@ export type ListingStatus = Database["public"]["Enums"]["listing_status"];
 export type VerificationStatus =
   Database["public"]["Enums"]["verification_status"];
 export type Listing = Database["public"]["Tables"]["listings"]["Row"];
+export type ListingConfidential =
+  Database["public"]["Tables"]["listing_confidential"]["Row"];
+
+export type EntityType = "sole_proprietorship" | "company";
+export type ReasonForSelling =
+  | "retirement"
+  | "relocation"
+  | "new_venture"
+  | "partnership_dispute"
+  | "financial_distress"
+  | "other";
+export type FinancialDataSharing = "now" | "on_request" | "none";
+
+export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
+  sole_proprietorship: "مؤسسة فردية",
+  company: "شركة",
+};
+
+export const ENTITY_TYPE_OPTIONS = (
+  Object.keys(ENTITY_TYPE_LABELS) as EntityType[]
+).map((value) => ({ value, label: ENTITY_TYPE_LABELS[value] }));
+
+export const REASON_FOR_SELLING_LABELS: Record<ReasonForSelling, string> = {
+  retirement: "التقاعد",
+  relocation: "الانتقال إلى مدينة أخرى",
+  new_venture: "التفرغ لمشروع جديد",
+  partnership_dispute: "خلاف بين الشركاء",
+  financial_distress: "ضائقة مالية",
+  other: "أخرى",
+};
+
+export const REASON_FOR_SELLING_OPTIONS = (
+  Object.keys(REASON_FOR_SELLING_LABELS) as ReasonForSelling[]
+).map((value) => ({ value, label: REASON_FOR_SELLING_LABELS[value] }));
+
+export const FINANCIAL_DATA_SHARING_LABELS: Record<
+  FinancialDataSharing,
+  string
+> = {
+  now: "متاحة الآن للمستثمرين الجادين",
+  on_request: "تُشارك عند الطلب بعد التواصل",
+  none: "غير متاحة حاليًا",
+};
+
+export const FINANCIAL_DATA_SHARING_OPTIONS = (
+  Object.keys(FINANCIAL_DATA_SHARING_LABELS) as FinancialDataSharing[]
+).map((value) => ({ value, label: FINANCIAL_DATA_SHARING_LABELS[value] }));
 
 export const SECTOR_LABELS: Record<BusinessSector, string> = {
   cafe: "مقاهي",

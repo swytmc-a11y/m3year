@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -170,17 +172,62 @@ export type Database = {
           },
         ]
       }
+      listing_confidential: {
+        Row: {
+          commercial_registration_number: string | null
+          created_at: string
+          entity_type: string
+          listing_id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type: string
+          listing_id: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type?: string
+          listing_id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_confidential_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_confidential_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           city: string
           created_at: string
           description: string | null
+          financial_data_sharing: string
+          has_legal_obligations: boolean
           id: string
           is_featured: boolean
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
           photo_urls: string[]
+          reason_for_selling: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -194,12 +241,15 @@ export type Database = {
           city: string
           created_at?: string
           description?: string | null
+          financial_data_sharing?: string
+          has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
           photo_urls?: string[]
+          reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -213,12 +263,15 @@ export type Database = {
           city?: string
           created_at?: string
           description?: string | null
+          financial_data_sharing?: string
+          has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
           monthly_revenue?: number
           offered_percentage?: number
           owner_id?: string
           photo_urls?: string[]
+          reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector?: Database["public"]["Enums"]["business_sector"]
@@ -485,6 +538,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           fee_amount: number | null
+          financial_statement_path: string | null
           id: string
           listing_id: string
           notes: string | null
@@ -499,6 +553,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           fee_amount?: number | null
+          financial_statement_path?: string | null
           id?: string
           listing_id: string
           notes?: string | null
@@ -513,6 +568,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           fee_amount?: number | null
+          financial_statement_path?: string | null
           id?: string
           listing_id?: string
           notes?: string | null

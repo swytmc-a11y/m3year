@@ -12,10 +12,14 @@ import { RatingSummaryLabel } from "@/components/rating-stars";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import {
   SECTOR_LABELS,
+  REASON_FOR_SELLING_LABELS,
+  FINANCIAL_DATA_SHARING_LABELS,
   formatSar,
   formatPercentage,
   formatDate,
   type Listing,
+  type ReasonForSelling,
+  type FinancialDataSharing,
 } from "@/lib/constants";
 import { colors, fonts, radius } from "@/theme";
 
@@ -300,6 +304,56 @@ export default function ListingDetailScreen() {
                 ? `تحقق محاسبي: ${formatDate(listing.verified_at)}`
                 : "لم يُوثّق هذا الإعلان ماليًا بعد."}
             </Text>
+
+            <View style={{ gap: 10 }}>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                  سبب البيع
+                </Text>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                  {listing.reason_for_selling
+                    ? REASON_FOR_SELLING_LABELS[
+                        listing.reason_for_selling as ReasonForSelling
+                      ]
+                    : "غير محدد"}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                  التزامات قانونية على المشروع
+                </Text>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                  {listing.has_legal_obligations ? "يوجد" : "لا يوجد"}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                  مشاركة البيانات المالية
+                </Text>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                  {
+                    FINANCIAL_DATA_SHARING_LABELS[
+                      listing.financial_data_sharing as FinancialDataSharing
+                    ]
+                  }
+                </Text>
+              </View>
+            </View>
 
             {ownerRating ? (
               <View

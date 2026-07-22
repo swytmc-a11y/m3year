@@ -53,6 +53,17 @@ export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 const sectorEnum = z.enum(["cafe", "restaurant", "retail", "services", "other"]);
 
+export const entityTypeEnum = z.enum(["sole_proprietorship", "company"]);
+export const reasonForSellingEnum = z.enum([
+  "retirement",
+  "relocation",
+  "new_venture",
+  "partnership_dispute",
+  "financial_distress",
+  "other",
+]);
+export const financialDataSharingEnum = z.enum(["now", "on_request", "none"]);
+
 export const listingFormSchema = z.object({
   title: z
     .string()
@@ -79,6 +90,20 @@ export const listingFormSchema = z.object({
     .max(5000, { error: "الوصف طويل جدًا" })
     .optional()
     .transform((value) => (value && value.length > 0 ? value : null)),
+  has_legal_obligations: z.boolean(),
+  reason_for_selling: reasonForSellingEnum,
+  financial_data_sharing: financialDataSharingEnum,
+  entity_type: entityTypeEnum,
+  commercial_registration_number: z
+    .string()
+    .trim()
+    .min(5, { error: "أدخل رقم السجل التجاري كاملًا" })
+    .max(20, { error: "رقم السجل التجاري طويل جدًا" }),
+  confirm_no_branding: z
+    .boolean()
+    .refine((value) => value === true, {
+      error: "يجب تأكيد خلو الصور من أي شعار أو علامة تجارية قبل المتابعة.",
+    }),
 });
 
 export type ListingFormValues = z.infer<typeof listingFormSchema>;

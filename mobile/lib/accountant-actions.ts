@@ -11,6 +11,7 @@ export type VerificationRequestRow = {
   fee_amount: number | null;
   created_at: string;
   completed_at: string | null;
+  financial_statement_path: string | null;
   listing_title?: string;
 };
 

@@ -71,6 +71,12 @@ describe("listingFormSchema", () => {
     monthly_revenue: "48200",
     offered_percentage: "25",
     description: "",
+    has_legal_obligations: false,
+    reason_for_selling: "relocation" as const,
+    financial_data_sharing: "on_request" as const,
+    entity_type: "sole_proprietorship" as const,
+    commercial_registration_number: "1010123456",
+    confirm_no_branding: true,
   };
 
   it("accepts a valid listing", () => {

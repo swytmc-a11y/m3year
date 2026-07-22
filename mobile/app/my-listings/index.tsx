@@ -122,6 +122,9 @@ export default function MyListingsScreen() {
             onRequestVerification={() =>
               runAction(() => requestVerification(item.id), item.id)
             }
+            onManageVerification={() =>
+              router.push(`/my-listings/${item.id}/verification`)
+            }
           />
         )}
         ListEmptyComponent={
@@ -174,6 +177,7 @@ function MyRow({
   onSubmit,
   onArchive,
   onRequestVerification,
+  onManageVerification,
 }: {
   listing: Listing;
   busy: boolean;
@@ -182,6 +186,7 @@ function MyRow({
   onSubmit: () => void;
   onArchive: () => void;
   onRequestVerification: () => void;
+  onManageVerification: () => void;
 }) {
   const canSubmit =
     listing.status === "draft" || listing.status === "rejected";
@@ -189,6 +194,7 @@ function MyRow({
   const canRequestVerification =
     listing.verification_status === "none" ||
     listing.verification_status === "rejected";
+  const hasVerificationRequest = !canRequestVerification;
 
   return (
     <View
@@ -288,6 +294,13 @@ function MyRow({
             label="اطلب التوثيق المالي"
             variant="ghost"
             onPress={onRequestVerification}
+          />
+        ) : null}
+        {hasVerificationRequest ? (
+          <Button
+            label="إدارة التوثيق ورفع القوائم المالية"
+            variant="ghost"
+            onPress={onManageVerification}
           />
         ) : null}
       </View>

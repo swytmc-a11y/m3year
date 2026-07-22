@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Linking from "expo-linking";
 import { TopBar, Button, Card } from "@/components/ui";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +12,7 @@ import {
   rejectVerification,
   type VerificationRequestRow,
 } from "@/lib/accountant-actions";
+import { getVerificationDocSignedUrl } from "@/lib/storage";
 import { formatSar, type Listing } from "@/lib/constants";
 import { colors, fonts } from "@/theme";
 
@@ -27,6 +29,7 @@ export default function AccountantRequestScreen() {
 
   const [verifiedRevenue, setVerifiedRevenue] = useState("");
   const [notes, setNotes] = useState("");
+  const [openingDoc, setOpeningDoc] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,6 +97,18 @@ export default function AccountantRequestScreen() {
     router.replace("/accountant");
   }
 
+  async function onOpenFinancialStatement() {
+    if (!request?.financial_statement_path) return;
+    setOpeningDoc(true);
+    const url = await getVerificationDocSignedUrl(request.financial_statement_path);
+    setOpeningDoc(false);
+    if (!url) {
+      setError("تعذّر فتح الملف الآن.");
+      return;
+    }
+    Linking.openURL(url);
+  }
+
   async function onReject() {
     if (!request) return;
     if (notes.trim().length < 3) {
@@ -144,6 +159,19 @@ export default function AccountantRequestScreen() {
             <Button label="استلام هذا الطلب" fullWidth loading={busy} onPress={onClaim} />
           ) : isMine && (request.status === "in_review" || request.status === "assigned") ? (
             <Card style={{ gap: 14 }}>
+              {request.financial_statement_path ? (
+                <Button
+                  label="فتح القوائم المالية المرفوعة"
+                  variant="ghost"
+                  fullWidth
+                  loading={openingDoc}
+                  onPress={onOpenFinancialStatement}
+                />
+              ) : (
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right" }}>
+                  لم يرفع صاحب المشروع القوائم المالية بعد.
+                </Text>
+              )}
               <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink, textAlign: "right" }}>
                 الإيراد الشهري المُوثّق (ر.س)
               </Text>

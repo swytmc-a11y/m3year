@@ -8,7 +8,7 @@ import { ListingForm } from "@/components/listing-form";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
 import { updateListing } from "@/lib/listings-actions";
-import type { Listing } from "@/lib/constants";
+import type { Listing, ListingConfidential } from "@/lib/constants";
 import { colors, fonts, radius } from "@/theme";
 
 export default function EditListingScreen() {
@@ -16,18 +16,25 @@ export default function EditListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, loading: authLoading } = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
+  const [confidential, setConfidential] = useState<ListingConfidential | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("id", String(id))
-        .maybeSingle();
+      const [{ data }, { data: confidentialData }] = await Promise.all([
+        supabase.from("listings").select("*").eq("id", String(id)).maybeSingle(),
+        supabase
+          .from("listing_confidential")
+          .select("*")
+          .eq("listing_id", String(id))
+          .maybeSingle(),
+      ]);
       if (active) {
         setListing(data);
+        setConfidential(confidentialData);
         setLoading(false);
       }
     })();
@@ -109,6 +116,7 @@ export default function EditListingScreen() {
           )}
           <ListingForm
             listing={listing}
+            confidential={confidential ?? undefined}
             onSubmit={async (values, intent, extra) => {
               const { error } = await updateListing(
                 listing.id,
