@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/all-listings", label: "كل الإعلانات" },
   { href: "/admin/verification-requests", label: "طلبات التوثيق" },
   { href: "/admin/accountants", label: "المحاسبون" },
+  { href: "/admin/users", label: "كل الحسابات" },
 ] as const;
 
 export function AdminNav() {

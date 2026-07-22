@@ -17,6 +17,7 @@ import type { ActionState } from "@/lib/action-state";
 function revalidateVerificationSurfaces() {
   revalidatePath("/admin/verification-requests");
   revalidatePath("/admin/accountants");
+  revalidatePath("/admin/users");
   revalidatePath("/accountant/requests");
   revalidatePath("/dashboard/listings");
   revalidatePath("/listings");
@@ -85,6 +86,40 @@ export async function activateAccountant(formData: FormData) {
 
   revalidateVerificationSurfaces();
   redirect("/admin/accountants");
+}
+
+// --- Admin: grant accountant access directly to any registered user --------
+// Unlike the self-apply flow (applyAsAccountant -> is_active: false, pending
+// admin activation), an admin-initiated grant is active immediately — the
+// admin is explicitly vouching for this user, there's no separate approval
+// step left to do.
+export async function grantAccountantAccess(formData: FormData) {
+  await requireAdmin();
+  const userId = String(formData.get("id"));
+  const supabase = await createClient();
+
+  const { error: roleError } = await supabase
+    .from("profiles")
+    .update({ role: "accountant" })
+    .eq("id", userId);
+  if (roleError) console.error("[verification] grant: set role failed", roleError);
+
+  const { error } = await supabase
+    .from("accountants")
+    .upsert({ id: userId, is_active: true });
+
+  if (error) {
+    console.error("[verification] grant accountant access failed", error);
+  } else {
+    await supabase.rpc("log_audit", {
+      p_action: "accountant.granted_by_admin",
+      p_entity_type: "accountant",
+      p_entity_id: userId,
+    });
+  }
+
+  revalidateVerificationSurfaces();
+  redirect("/admin/users");
 }
 
 export async function deactivateAccountant(formData: FormData) {

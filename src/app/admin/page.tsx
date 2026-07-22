@@ -10,6 +10,7 @@ export default async function AdminOverviewPage() {
     { count: pendingListings },
     { count: openVerifications },
     { count: pendingAccountants },
+    { count: totalUsers },
   ] = await Promise.all([
     supabase.from("listings").select("id", { count: "exact", head: true }),
     supabase
@@ -24,6 +25,7 @@ export default async function AdminOverviewPage() {
       .from("accountants")
       .select("id", { count: "exact", head: true })
       .eq("is_active", false),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
   ]);
 
   const stats = [
@@ -51,6 +53,12 @@ export default async function AdminOverviewPage() {
       count: pendingAccountants ?? 0,
       urgent: (pendingAccountants ?? 0) > 0,
     },
+    {
+      href: "/admin/users",
+      label: "كل الحسابات",
+      count: totalUsers ?? 0,
+      urgent: false,
+    },
   ];
 
   return (
@@ -62,7 +70,7 @@ export default async function AdminOverviewPage() {
         نظرة عامة
       </h1>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => (
           <Link key={stat.href} href={stat.href}>
             <Card className="flex h-full flex-col gap-2 p-4 transition-shadow hover:shadow-sm sm:p-6">
