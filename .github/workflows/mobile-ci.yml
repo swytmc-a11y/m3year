@@ -1,0 +1,26 @@
+name: mobile-ci
+
+on:
+  push:
+    paths:
+      - "mobile/**"
+  pull_request:
+    paths:
+      - "mobile/**"
+
+jobs:
+  typecheck-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm install --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test

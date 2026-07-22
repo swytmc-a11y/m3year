@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, Text, ScrollView, ActivityIndicator, Image, Pressable, Share } from "react-native";
+import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar, Button } from "@/components/ui";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { getOrCreateConversation } from "@/lib/messaging";
 import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
 import { RatingSummaryLabel } from "@/components/rating-stars";
+import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import {
   SECTOR_LABELS,
   formatSar,
@@ -28,6 +29,8 @@ export default function ListingDetailScreen() {
   const [contacting, setContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [ownerRating, setOwnerRating] = useState<RatingSummary | null>(null);
+  const [favorited, setFavorited] = useState(false);
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -44,8 +47,14 @@ export default function ListingDetailScreen() {
       } else {
         setListing(data);
         if (data) {
-          const summary = await getUserRatingSummary(data.owner_id);
-          if (active) setOwnerRating(summary);
+          const [summary, favorite] = await Promise.all([
+            getUserRatingSummary(data.owner_id),
+            isFavorited(data.id),
+          ]);
+          if (active) {
+            setOwnerRating(summary);
+            setFavorited(favorite);
+          }
         }
       }
       setLoading(false);
@@ -79,12 +88,52 @@ export default function ListingDetailScreen() {
     router.push(`/messages/${conversationId}`);
   }
 
+  async function onToggleFavorite() {
+    if (!listing) return;
+    if (!session) {
+      router.push("/auth");
+      return;
+    }
+    setFavoriteError(null);
+    const { favorited: next, error: favError } = await toggleFavorite(listing.id, favorited);
+    setFavorited(next);
+    if (favError) setFavoriteError(favError);
+  }
+
+  async function onShare() {
+    if (!listing) return;
+    try {
+      await Share.share({
+        message: `${listing.title} — عبر معيار\nhttps://miyar.app/listings/${listing.id}`,
+      });
+    } catch (err) {
+      console.error("[listing] share failed", err);
+    }
+  }
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.paper }}
       edges={["top"]}
     >
-      <TopBar title="تفاصيل المشروع" onBack={() => router.back()} />
+      <TopBar
+        title="تفاصيل المشروع"
+        onBack={() => router.back()}
+        right={
+          listing ? (
+            <View style={{ flexDirection: "row-reverse", gap: 16 }}>
+              <Pressable onPress={onShare} hitSlop={10}>
+                <Text style={{ fontSize: 18 }}>⇪</Text>
+              </Pressable>
+              <Pressable onPress={onToggleFavorite} hitSlop={10}>
+                <Text style={{ fontSize: 18, color: favorited ? colors.amber : colors.mutedText }}>
+                  {favorited ? "♥" : "♡"}
+                </Text>
+              </Pressable>
+            </View>
+          ) : undefined
+        }
+      />
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -141,6 +190,22 @@ export default function ListingDetailScreen() {
               </Text>
               <StatusBadge status={listing.status} />
             </View>
+          ) : null}
+
+          {listing.photo_urls && listing.photo_urls.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}
+            >
+              {listing.photo_urls.map((url) => (
+                <Image
+                  key={url}
+                  source={{ uri: url }}
+                  style={{ width: 260, height: 180, borderRadius: radius.lg, backgroundColor: colors.white }}
+                />
+              ))}
+            </ScrollView>
           ) : null}
 
           <View
@@ -251,6 +316,12 @@ export default function ListingDetailScreen() {
               </View>
             ) : null}
 
+            {favoriteError ? (
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right" }}>
+                {favoriteError}
+              </Text>
+            ) : null}
+
             {!isPreview && !isOwner ? (
               <View style={{ gap: 8 }}>
                 <Button
@@ -274,6 +345,16 @@ export default function ListingDetailScreen() {
               </View>
             ) : null}
           </View>
+
+          {!isOwner ? (
+            <Link href={{ pathname: "/report", params: { targetType: "listing", targetId: listing.id } }} asChild>
+              <Pressable style={{ alignSelf: "center" }}>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.danger }}>
+                  الإبلاغ عن هذا الإعلان
+                </Text>
+              </Pressable>
+            </Link>
+          ) : null}
 
           <Text
             style={{

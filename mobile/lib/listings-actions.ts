@@ -8,8 +8,10 @@ import type { ListingFormValues } from "@/lib/validations";
 type Result = { error?: string };
 
 export async function createListing(
+  id: string,
   values: ListingFormValues,
   intent: "draft" | "submit",
+  photoUrls: string[],
 ): Promise<Result> {
   const {
     data: { user },
@@ -17,6 +19,7 @@ export async function createListing(
   if (!user) return { error: "انتهت الجلسة. سجّل الدخول مرة أخرى." };
 
   const { error } = await supabase.from("listings").insert({
+    id,
     owner_id: user.id,
     title: values.title,
     sector: values.sector,
@@ -25,6 +28,7 @@ export async function createListing(
     offered_percentage: values.offered_percentage,
     description: values.description,
     status: intent === "submit" ? "pending_review" : "draft",
+    photo_urls: photoUrls,
   });
 
   if (error) {
@@ -38,6 +42,7 @@ export async function updateListing(
   id: string,
   values: ListingFormValues,
   intent: "draft" | "submit",
+  photoUrls: string[],
 ): Promise<Result> {
   const { error } = await supabase
     .from("listings")
@@ -48,6 +53,7 @@ export async function updateListing(
       monthly_revenue: values.monthly_revenue,
       offered_percentage: values.offered_percentage,
       description: values.description,
+      photo_urls: photoUrls,
       ...(intent === "submit" ? { status: "pending_review" as const } : {}),
     })
     .eq("id", id);

@@ -1,16 +1,25 @@
-import { View, Text, ScrollView } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { View, Text, ScrollView, Pressable } from "react-native";
+import { Link, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
 import { unregisterPushToken } from "@/lib/push-notifications";
+import { getUnreadNotificationCount } from "@/lib/notifications";
 import { colors, fonts } from "@/theme";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { session, user, isAdmin, loading } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session) getUnreadNotificationCount().then(setUnreadCount);
+    }, [session]),
+  );
 
   if (loading) {
     return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
@@ -47,6 +56,18 @@ export default function ProfileScreen() {
             </Link>
             <Link href="/signup" asChild>
               <Button label="إنشاء حساب" variant="ghost" fullWidth />
+            </Link>
+          </View>
+          <View style={{ flexDirection: "row-reverse", gap: 16 }}>
+            <Link href="/legal/terms">
+              <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
+                الشروط والأحكام
+              </Text>
+            </Link>
+            <Link href="/legal/privacy">
+              <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
+                سياسة الخصوصية
+              </Text>
             </Link>
           </View>
         </View>
@@ -144,7 +165,55 @@ export default function ProfileScreen() {
             onPress={() => router.push("/my-listings")}
           />
         </View>
+
+        <MenuSection
+          items={[
+            { label: "المفضلة", onPress: () => router.push("/favorites") },
+            {
+              label: unreadCount > 0 ? `الإشعارات (${unreadCount})` : "الإشعارات",
+              onPress: () => router.push("/notifications"),
+            },
+            { label: "لوحة المحاسب", onPress: () => router.push("/accountant") },
+            { label: "الشروط والأحكام", onPress: () => router.push("/legal/terms") },
+            { label: "سياسة الخصوصية", onPress: () => router.push("/legal/privacy") },
+          ]}
+        />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function MenuSection({ items }: { items: { label: string; onPress: () => void }[] }) {
+  return (
+    <View
+      style={{
+        backgroundColor: colors.white,
+        borderColor: colors.grid,
+        borderWidth: 1,
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {items.map((item, idx) => (
+        <Pressable
+          key={item.label}
+          onPress={item.onPress}
+          style={{
+            flexDirection: "row-reverse",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 18,
+            paddingVertical: 16,
+            borderTopWidth: idx === 0 ? 0 : 1,
+            borderTopColor: colors.grid,
+          }}
+        >
+          <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink }}>
+            {item.label}
+          </Text>
+          <Text style={{ fontSize: 16, color: colors.mutedText }}>←</Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }

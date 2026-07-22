@@ -7,6 +7,7 @@ import {
   Switch,
   ActivityIndicator,
   ScrollView,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
@@ -18,12 +19,24 @@ import {
   type Listing,
   type BusinessSector,
 } from "@/lib/constants";
-import { colors, fonts } from "@/theme";
+import { colors, fonts, radius } from "@/theme";
+
+type SortOption = "newest" | "revenue_desc" | "percentage_desc";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: "الأحدث",
+  revenue_desc: "الأعلى إيرادًا",
+  percentage_desc: "الأعلى نسبة مطروحة",
+};
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState<BusinessSector | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sort, setSort] = useState<SortOption>("newest");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [minRevenue, setMinRevenue] = useState("");
+  const [maxRevenue, setMaxRevenue] = useState("");
 
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [error, setError] = useState(false);
@@ -35,14 +48,26 @@ export default function HomeScreen() {
     let query = supabase
       .from("listings")
       .select("*")
-      .eq("status", "published")
-      .order("is_featured", { ascending: false })
-      .order("created_at", { ascending: false });
+      .eq("status", "published");
 
     if (sector) query = query.eq("sector", sector);
     if (verifiedOnly) query = query.eq("verification_status", "verified");
     const q = search.trim();
     if (q) query = query.ilike("title", `%${q}%`);
+
+    const min = Number(minRevenue);
+    if (minRevenue && !Number.isNaN(min)) query = query.gte("monthly_revenue", min);
+    const max = Number(maxRevenue);
+    if (maxRevenue && !Number.isNaN(max)) query = query.lte("monthly_revenue", max);
+
+    query = query.order("is_featured", { ascending: false });
+    if (sort === "revenue_desc") {
+      query = query.order("monthly_revenue", { ascending: false });
+    } else if (sort === "percentage_desc") {
+      query = query.order("offered_percentage", { ascending: false });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
 
     const { data, error: qError } = await query;
     if (qError) {
@@ -53,9 +78,9 @@ export default function HomeScreen() {
       setListings(data);
     }
     setLoading(false);
-  }, [sector, verifiedOnly, search]);
+  }, [sector, verifiedOnly, search, sort, minRevenue, maxRevenue]);
 
-  // Debounce so typing in search doesn't fire a query per keystroke.
+  // Debounce so typing in search/range fields doesn't fire a query per keystroke.
   useEffect(() => {
     const t = setTimeout(load, 300);
     return () => clearTimeout(t);
@@ -122,28 +147,115 @@ export default function HomeScreen() {
                 />
               ))}
             </ScrollView>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}
+            >
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((opt) => (
+                <Chip
+                  key={opt}
+                  label={SORT_LABELS[opt]}
+                  active={sort === opt}
+                  onPress={() => setSort(opt)}
+                />
+              ))}
+            </ScrollView>
+
             <View
               style={{
                 flexDirection: "row-reverse",
                 alignItems: "center",
-                gap: 8,
+                justifyContent: "space-between",
               }}
             >
-              <Switch
-                value={verifiedOnly}
-                onValueChange={setVerifiedOnly}
-                trackColor={{ true: colors.verify, false: colors.grid }}
-              />
-              <Text
+              <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
+                <Switch
+                  value={verifiedOnly}
+                  onValueChange={setVerifiedOnly}
+                  trackColor={{ true: colors.verify, false: colors.grid }}
+                />
+                <Text
+                  style={{
+                    fontFamily: fonts.bodyMedium,
+                    fontSize: 14,
+                    color: colors.subtleText,
+                  }}
+                >
+                  الموثّقة فقط
+                </Text>
+              </View>
+
+              <Pressable onPress={() => setShowAdvanced((v) => !v)}>
+                <Text
+                  style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.verify }}
+                >
+                  {showAdvanced ? "إخفاء الفلاتر المتقدمة" : "فلاتر متقدمة"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {showAdvanced ? (
+              <View
                 style={{
-                  fontFamily: fonts.bodyMedium,
-                  fontSize: 14,
-                  color: colors.subtleText,
+                  flexDirection: "row-reverse",
+                  gap: 10,
+                  backgroundColor: colors.white,
+                  borderColor: colors.grid,
+                  borderWidth: 1,
+                  borderRadius: radius.md,
+                  padding: 12,
                 }}
               >
-                الموثّقة فقط
-              </Text>
-            </View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText, textAlign: "right" }}>
+                    الحد الأدنى للإيراد
+                  </Text>
+                  <TextInput
+                    value={minRevenue}
+                    onChangeText={setMinRevenue}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor={colors.mutedText}
+                    style={{
+                      height: 40,
+                      borderWidth: 1,
+                      borderColor: colors.grid,
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                      fontFamily: fonts.mono,
+                      fontSize: 14,
+                      color: colors.ink,
+                      textAlign: "left",
+                    }}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText, textAlign: "right" }}>
+                    الحد الأقصى للإيراد
+                  </Text>
+                  <TextInput
+                    value={maxRevenue}
+                    onChangeText={setMaxRevenue}
+                    keyboardType="number-pad"
+                    placeholder="بلا حد"
+                    placeholderTextColor={colors.mutedText}
+                    style={{
+                      height: 40,
+                      borderWidth: 1,
+                      borderColor: colors.grid,
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                      fontFamily: fonts.mono,
+                      fontSize: 14,
+                      color: colors.ink,
+                      textAlign: "left",
+                    }}
+                  />
+                </View>
+              </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={

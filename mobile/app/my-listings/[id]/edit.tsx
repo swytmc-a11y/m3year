@@ -109,8 +109,13 @@ export default function EditListingScreen() {
           )}
           <ListingForm
             listing={listing}
-            onSubmit={async (values, intent) => {
-              const { error } = await updateListing(listing.id, values, intent);
+            onSubmit={async (values, intent, extra) => {
+              const { error } = await updateListing(
+                listing.id,
+                values,
+                intent,
+                extra.photoUrls,
+              );
               if (error) throw new Error(error);
               router.replace("/my-listings");
             }}

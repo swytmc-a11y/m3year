@@ -37,8 +37,13 @@ export default function NewListingScreen() {
           اعرض مشروعك أمام الشركاء الممولين المحتملين.
         </Text>
         <ListingForm
-          onSubmit={async (values, intent) => {
-            const { error } = await createListing(values, intent);
+          onSubmit={async (values, intent, extra) => {
+            const { error } = await createListing(
+              extra.listingId,
+              values,
+              intent,
+              extra.photoUrls,
+            );
             if (error) throw new Error(error);
             router.replace("/my-listings");
           }}

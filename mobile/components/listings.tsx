@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Caliper } from "@/components/caliper";
 import { colors, fonts, radius } from "@/theme";
@@ -141,6 +141,19 @@ export function ListingCard({ listing }: { listing: Listing }) {
         opacity: pressed ? 0.9 : 1,
       })}
     >
+      {listing.photo_urls?.[0] ? (
+        <Image
+          source={{ uri: listing.photo_urls[0] }}
+          style={{
+            width: "100%",
+            height: 140,
+            borderRadius: radius.md,
+            marginBottom: 14,
+            backgroundColor: colors.paper,
+          }}
+        />
+      ) : null}
+
       <View
         style={{
           flexDirection: "row-reverse",

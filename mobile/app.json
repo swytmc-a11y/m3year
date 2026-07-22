@@ -44,6 +44,12 @@
           "icon": "./assets/icon.png",
           "color": "#0F6B66"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يستخدم معيار صورك لإضافتها إلى إعلان مشروعك."
+        }
       ]
     ],
     "experiments": {
