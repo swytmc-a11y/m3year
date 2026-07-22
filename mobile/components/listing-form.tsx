@@ -145,7 +145,12 @@ export function ListingForm({
   const [crNumber, setCrNumber] = useState(
     confidential?.commercial_registration_number ?? "",
   );
-  const [confirmNoBranding, setConfirmNoBranding] = useState(false);
+  // Editing an existing listing that already has photos means this gate was
+  // already satisfied at least once for those same photos — only demand a
+  // fresh confirmation when new photos are added (see removePhoto/pickPhoto).
+  const [confirmNoBranding, setConfirmNoBranding] = useState(
+    () => (listing?.photo_urls.length ?? 0) > 0,
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | undefined>();
@@ -178,6 +183,7 @@ export function ListingForm({
       return;
     }
     setPhotoUrls((prev) => [...prev, url]);
+    setConfirmNoBranding(false);
   }
 
   async function removePhoto(url: string) {

@@ -93,9 +93,21 @@ export default function AuthScreen() {
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password"
-            error={error}
             style={{ textAlign: "left" }}
           />
+
+          {error ? (
+            <Text
+              style={{
+                fontFamily: fonts.body,
+                fontSize: 13,
+                color: colors.amber,
+                textAlign: "right",
+              }}
+            >
+              {error}
+            </Text>
+          ) : null}
 
           <Button label="تسجيل الدخول" loading={loading} onPress={onSubmit} />
         </Card>

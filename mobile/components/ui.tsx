@@ -126,13 +126,19 @@ export function Chip({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+      hitSlop={6}
       style={{
         paddingHorizontal: 14,
         paddingVertical: 8,
+        minHeight: 36,
         borderRadius: radius.pill,
         borderWidth: 1,
         borderColor: active ? colors.ink : colors.grid,
         backgroundColor: active ? colors.ink : colors.white,
+        justifyContent: "center",
       }}
     >
       <Text
@@ -172,7 +178,12 @@ export function TopBar({
     >
       <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
         {onBack ? (
-          <Pressable onPress={onBack} hitSlop={10}>
+          <Pressable
+            onPress={onBack}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="رجوع"
+          >
             <Text style={{ fontSize: 22, color: colors.ink }}>→</Text>
           </Pressable>
         ) : null}

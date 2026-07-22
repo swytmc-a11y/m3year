@@ -126,10 +126,21 @@ export default function ListingDetailScreen() {
         right={
           listing ? (
             <View style={{ flexDirection: "row-reverse", gap: 16 }}>
-              <Pressable onPress={onShare} hitSlop={10}>
+              <Pressable
+                onPress={onShare}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="مشاركة الإعلان"
+              >
                 <Text style={{ fontSize: 18 }}>⇪</Text>
               </Pressable>
-              <Pressable onPress={onToggleFavorite} hitSlop={10}>
+              <Pressable
+                onPress={onToggleFavorite}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={favorited ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
+                accessibilityState={{ selected: favorited }}
+              >
                 <Text style={{ fontSize: 18, color: favorited ? colors.amber : colors.mutedText }}>
                   {favorited ? "♥" : "♡"}
                 </Text>

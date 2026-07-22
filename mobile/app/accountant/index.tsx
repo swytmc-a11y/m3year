@@ -32,14 +32,25 @@ export default function AccountantHomeScreen() {
   const [open, setOpen] = useState<VerificationRequestRow[]>([]);
   const [mine, setMine] = useState<VerificationRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roleCheckError, setRoleCheckError] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
     setCheckingRole(true);
-    const [{ data: profile }, { data: accountant }] = await Promise.all([
+    setRoleCheckError(false);
+    const [
+      { data: profile, error: profileError },
+      { data: accountant, error: accountantError },
+    ] = await Promise.all([
       supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
       supabase.from("accountants").select("id, is_active").eq("id", user.id).maybeSingle(),
     ]);
+    if (profileError || accountantError) {
+      console.error("[accountant] role check failed", profileError, accountantError);
+      setRoleCheckError(true);
+      setCheckingRole(false);
+      return;
+    }
     setIsAccountantRole(profile?.role === "accountant");
     setHasProfile(!!accountant);
     setIsActive(accountant?.is_active === true);
@@ -85,6 +96,13 @@ export default function AccountantHomeScreen() {
       {checkingRole ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator color={colors.ink} />
+        </View>
+      ) : roleCheckError ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center" }}>
+            تعذّر التحقق من صلاحياتك الآن.
+          </Text>
+          <Button label="إعادة المحاولة" variant="ghost" onPress={() => load()} />
         </View>
       ) : !isAccountantRole ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 }}>

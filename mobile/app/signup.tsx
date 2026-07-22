@@ -14,14 +14,21 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit() {
     setError(undefined);
+    setFieldErrors({});
     const parsed = signUpSchema.safeParse({ fullName, email, phone, password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      const errors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errors[key]) errors[key] = issue.message;
+      }
+      setFieldErrors(errors);
       return;
     }
 
@@ -95,6 +102,7 @@ export default function SignUpScreen() {
             onChangeText={setFullName}
             placeholder="اسمك الكامل"
             autoComplete="name"
+            error={fieldErrors.fullName}
             style={{ textAlign: "right" }}
           />
 
@@ -106,6 +114,7 @@ export default function SignUpScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            error={fieldErrors.email}
             style={{ textAlign: "left" }}
           />
 
@@ -116,6 +125,7 @@ export default function SignUpScreen() {
             placeholder="05xxxxxxxx"
             keyboardType="phone-pad"
             autoComplete="tel"
+            error={fieldErrors.phone}
             style={{ fontFamily: fonts.mono, textAlign: "left" }}
           />
 
@@ -127,9 +137,22 @@ export default function SignUpScreen() {
             secureTextEntry
             autoCapitalize="none"
             autoComplete="password-new"
-            error={error}
+            error={fieldErrors.password}
             style={{ textAlign: "left" }}
           />
+
+          {error ? (
+            <Text
+              style={{
+                fontFamily: fonts.body,
+                fontSize: 13,
+                color: colors.amber,
+                textAlign: "right",
+              }}
+            >
+              {error}
+            </Text>
+          ) : null}
 
           <Button label="إنشاء الحساب" loading={loading} onPress={onSubmit} />
         </Card>

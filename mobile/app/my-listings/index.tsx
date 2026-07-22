@@ -31,6 +31,7 @@ export default function MyListingsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session?.user) return;
@@ -61,8 +62,6 @@ export default function MyListingsScreen() {
   if (!session) {
     return <Redirect href="/auth" />;
   }
-
-  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   async function runAction(fn: () => Promise<{ error?: string }>, id: string) {
     setBusyId(id);

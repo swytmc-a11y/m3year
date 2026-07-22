@@ -10,7 +10,7 @@ import {
   Platform,
   Modal,
 } from "react-native";
-import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TopBar, Button } from "@/components/ui";
 import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
@@ -38,6 +38,7 @@ export default function ChatScreen() {
   const [title, setTitle] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
@@ -52,50 +53,81 @@ export default function ChatScreen() {
   const [rateError, setRateError] = useState<string | undefined>();
   const [rateSubmitting, setRateSubmitting] = useState(false);
 
-  const load = useCallback(async () => {
-    const { data: conv } = await supabase
-      .from("conversations")
-      .select("listing_id, owner_id, investor_id, listing:listings(title)")
-      .eq("id", String(id))
-      .maybeSingle();
+  const load = useCallback(
+    async (isActive: () => boolean = () => true) => {
+      setLoadError(false);
+      const { data: conv, error: convError } = await supabase
+        .from("conversations")
+        .select("listing_id, owner_id, investor_id, listing:listings(title)")
+        .eq("id", String(id))
+        .maybeSingle();
 
-    if (conv && user) {
-      const counterpart = conv.owner_id === user.id ? conv.investor_id : conv.owner_id;
-      setListingId(conv.listing_id);
-      setCounterpartId(counterpart);
+      if (!isActive()) return;
 
-      const [{ data: counterpartProfile }, summary, myRating] = await Promise.all([
-        supabase.from("profiles").select("full_name").eq("id", counterpart).maybeSingle(),
-        getUserRatingSummary(counterpart),
-        getMyRating(counterpart, conv.listing_id),
-      ]);
-
-      const listingTitle =
-        (conv as unknown as { listing?: { title?: string } }).listing?.title ?? "";
-      setCounterpartName(counterpartProfile?.full_name ?? null);
-      setTitle(
-        counterpartProfile?.full_name ? `${counterpartProfile.full_name} · ${listingTitle}` : listingTitle,
-      );
-      setRatingSummary(summary);
-      if (myRating) {
-        setMyScore(myRating.score);
-        setMyComment(myRating.comment ?? "");
+      if (convError) {
+        console.error("[messages] load conversation failed", convError);
+        setLoadError(true);
+        setLoading(false);
+        return;
       }
-    }
 
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", String(id))
-      .order("created_at", { ascending: true });
+      if (conv && user) {
+        const counterpart = conv.owner_id === user.id ? conv.investor_id : conv.owner_id;
+        setListingId(conv.listing_id);
+        setCounterpartId(counterpart);
 
-    setMessages(data ?? []);
-    setLoading(false);
-  }, [id, user]);
+        const [{ data: counterpartProfile }, summary, myRating] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("id", counterpart).maybeSingle(),
+          getUserRatingSummary(counterpart),
+          getMyRating(counterpart, conv.listing_id),
+        ]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+        if (!isActive()) return;
+
+        const listingTitle =
+          (conv as unknown as { listing?: { title?: string } }).listing?.title ?? "";
+        setCounterpartName(counterpartProfile?.full_name ?? null);
+        setTitle(
+          counterpartProfile?.full_name ? `${counterpartProfile.full_name} · ${listingTitle}` : listingTitle,
+        );
+        setRatingSummary(summary);
+        if (myRating) {
+          setMyScore(myRating.score);
+          setMyComment(myRating.comment ?? "");
+        }
+      }
+
+      const { data, error: messagesError } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", String(id))
+        .order("created_at", { ascending: true });
+
+      if (!isActive()) return;
+
+      if (messagesError) {
+        console.error("[messages] load messages failed", messagesError);
+        setLoadError(true);
+      } else {
+        setMessages(data ?? []);
+      }
+      setLoading(false);
+    },
+    [id, user],
+  );
+
+  // Runs on mount and every time the screen regains focus, so messages that
+  // arrived while backgrounded are caught up (the realtime channel below
+  // only covers updates while this screen is actively mounted/open).
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      load(() => active);
+      return () => {
+        active = false;
+      };
+    }, [load]),
+  );
 
   // Live updates while the thread is open.
   useEffect(() => {
@@ -264,6 +296,13 @@ export default function ChatScreen() {
         {loading ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <ActivityIndicator color={colors.ink} />
+          </View>
+        ) : loadError ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24, gap: 12 }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center" }}>
+              تعذّر تحميل المحادثة الآن.
+            </Text>
+            <Button label="إعادة المحاولة" variant="ghost" onPress={() => load()} />
           </View>
         ) : (
           <FlatList
