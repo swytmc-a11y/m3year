@@ -15,6 +15,12 @@ function parseListingForm(formData: FormData) {
     monthly_revenue: formData.get("monthly_revenue"),
     offered_percentage: formData.get("offered_percentage"),
     description: formData.get("description"),
+    asking_price: formData.get("asking_price"),
+    price_negotiable: formData.get("price_negotiable"),
+    monthly_profit: formData.get("monthly_profit"),
+    show_profit: formData.get("show_profit"),
+    founding_year: formData.get("founding_year"),
+    employee_count: formData.get("employee_count"),
   });
 }
 
@@ -50,6 +56,12 @@ export async function createListing(
     monthly_revenue: parsed.data.monthly_revenue,
     offered_percentage: parsed.data.offered_percentage,
     description: parsed.data.description,
+    asking_price: parsed.data.asking_price ?? null,
+    price_negotiable: parsed.data.price_negotiable,
+    monthly_profit: parsed.data.monthly_profit ?? null,
+    show_profit: parsed.data.show_profit,
+    founding_year: parsed.data.founding_year ?? null,
+    employee_count: parsed.data.employee_count ?? null,
     status,
   });
 
@@ -92,6 +104,12 @@ export async function updateListing(
       monthly_revenue: parsed.data.monthly_revenue,
       offered_percentage: parsed.data.offered_percentage,
       description: parsed.data.description,
+      asking_price: parsed.data.asking_price ?? null,
+      price_negotiable: parsed.data.price_negotiable,
+      monthly_profit: parsed.data.monthly_profit ?? null,
+      show_profit: parsed.data.show_profit,
+      founding_year: parsed.data.founding_year ?? null,
+      employee_count: parsed.data.employee_count ?? null,
       ...(submit && !admin ? { status: "pending_review" as const } : {}),
     })
     .eq("id", listingId);

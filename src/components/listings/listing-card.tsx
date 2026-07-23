@@ -26,7 +26,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         {isVerified ? <VerifiedBadge /> : null}
       </div>
 
-      <div className="my-4 flex gap-8 border-y border-dashed border-grid py-4">
+      <div className="my-4 flex flex-wrap gap-8 border-y border-dashed border-grid py-4">
         <div>
           <div className="mb-1 text-xs text-ink/50">الإيراد الشهري</div>
           <div className="font-mono text-lg font-semibold text-ink">
@@ -39,6 +39,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {formatPercentage(listing.offered_percentage)}
           </div>
         </div>
+        {listing.asking_price != null ? (
+          <div>
+            <div className="mb-1 text-xs text-ink/50">
+              السعر المطلوب{listing.price_negotiable ? " (قابل للتفاوض)" : ""}
+            </div>
+            <div className="font-mono text-lg font-semibold text-ink">
+              {formatSar(listing.asking_price)}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between">

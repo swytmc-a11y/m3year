@@ -121,6 +121,97 @@ export function ListingForm({
         </div>
       </div>
 
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="asking_price">سعر البيع أو المبلغ المطلوب (ر.س، اختياري)</Label>
+          <Input
+            id="asking_price"
+            name="asking_price"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="1"
+            placeholder="500000"
+            dir="ltr"
+            className="text-left font-mono"
+            defaultValue={listing?.asking_price ?? ""}
+          />
+          <FieldError messages={errors.asking_price} />
+          <label className="flex items-center gap-2 text-sm text-ink/70">
+            <input
+              type="checkbox"
+              name="price_negotiable"
+              defaultChecked={listing?.price_negotiable ?? true}
+              className="h-4 w-4 rounded border-grid"
+            />
+            السعر قابل للتفاوض
+          </label>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="monthly_profit">صافي الربح الشهري (ر.س، اختياري)</Label>
+          <Input
+            id="monthly_profit"
+            name="monthly_profit"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="1"
+            placeholder="15000"
+            dir="ltr"
+            className="text-left font-mono"
+            defaultValue={listing?.monthly_profit ?? ""}
+          />
+          <FieldError messages={errors.monthly_profit} />
+          <label className="flex items-center gap-2 text-sm text-ink/70">
+            <input
+              type="checkbox"
+              name="show_profit"
+              defaultChecked={listing?.show_profit ?? false}
+              className="h-4 w-4 rounded border-grid"
+            />
+            إظهار الرقم مباشرة (بدل «متاح عند التواصل»)
+          </label>
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="founding_year">سنة التأسيس (اختياري)</Label>
+          <Input
+            id="founding_year"
+            name="founding_year"
+            type="number"
+            inputMode="numeric"
+            min={1950}
+            max={2100}
+            step="1"
+            placeholder="2019"
+            dir="ltr"
+            className="text-left font-mono"
+            defaultValue={listing?.founding_year ?? ""}
+          />
+          <FieldError messages={errors.founding_year} />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="employee_count">عدد الموظفين (اختياري)</Label>
+          <Input
+            id="employee_count"
+            name="employee_count"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step="1"
+            placeholder="6"
+            dir="ltr"
+            className="text-left font-mono"
+            defaultValue={listing?.employee_count ?? ""}
+          />
+          <FieldError messages={errors.employee_count} />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="description">وصف المشروع (اختياري)</Label>
         <Textarea

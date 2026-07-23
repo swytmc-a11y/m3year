@@ -84,6 +84,24 @@ export default async function ListingDetailPage({
                   {formatPercentage(listing.offered_percentage)}
                 </div>
               </div>
+              {listing.asking_price != null ? (
+                <div>
+                  <div className="mb-1 text-xs text-ink/50">
+                    السعر المطلوب{listing.price_negotiable ? " (قابل للتفاوض)" : ""}
+                  </div>
+                  <div className="font-mono text-2xl font-semibold text-ink">
+                    {formatSar(listing.asking_price)}
+                  </div>
+                </div>
+              ) : null}
+              {listing.show_profit && listing.monthly_profit != null ? (
+                <div>
+                  <div className="mb-1 text-xs text-ink/50">صافي الربح الشهري</div>
+                  <div className="font-mono text-2xl font-semibold text-ink">
+                    {formatSar(listing.monthly_profit)}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {listing.description ? (
@@ -92,10 +110,21 @@ export default async function ListingDetailPage({
               </p>
             ) : null}
 
-            <div className="mb-6 text-[13px] text-ink/50">
-              {isVerified && listing.verified_at
-                ? `تحقق محاسبي: ${formatDate(listing.verified_at)}`
-                : "لم يُوثّق هذا الإعلان ماليًا بعد."}
+            <div className="mb-6 flex flex-col gap-1 text-[13px] text-ink/50">
+              {listing.monthly_profit != null && !listing.show_profit ? (
+                <div>صافي الربح الشهري: متاح عند التواصل</div>
+              ) : null}
+              {listing.founding_year != null ? (
+                <div>سنة التأسيس: {listing.founding_year}</div>
+              ) : null}
+              {listing.employee_count != null ? (
+                <div>عدد الموظفين: {listing.employee_count}</div>
+              ) : null}
+              <div>
+                {isVerified && listing.verified_at
+                  ? `تحقق محاسبي: ${formatDate(listing.verified_at)}`
+                  : "لم يُوثّق هذا الإعلان ماليًا بعد."}
+              </div>
             </div>
 
             {isPreview ? null : (
