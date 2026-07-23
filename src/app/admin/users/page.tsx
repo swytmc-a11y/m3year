@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { grantAccountantAccess, activateAccountant, deactivateAccountant } from "@/app/actions/verification";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ type ProfileRow = {
   phone: string | null;
   role: UserRole;
   created_at: string;
+  is_blocked: boolean;
   accountant: { is_active: boolean } | null;
 };
 
@@ -57,7 +59,7 @@ export default async function AdminUsersPage({
 
   let profilesQuery = supabase
     .from("profiles")
-    .select("id, full_name, role, created_at")
+    .select("id, full_name, role, created_at, is_blocked")
     .order("created_at", { ascending: false });
 
   if (query) {
@@ -148,9 +150,9 @@ function UserRow({ user }: { user: ProfileRow }) {
     <Card className="p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-bold text-ink">
+          <Link href={`/admin/users/${user.id}`} className="font-bold text-ink hover:underline">
             {user.full_name || "بدون اسم"}
-          </h2>
+          </Link>
           <p className="mt-1 text-[13px] text-ink/50">
             {user.email || "—"}
             {user.phone ? ` · ${user.phone}` : ""} · انضم في{" "}
@@ -161,6 +163,7 @@ function UserRow({ user }: { user: ProfileRow }) {
           <Badge variant={user.role === "admin" ? "verify" : "neutral"}>
             {ROLE_LABELS[user.role]}
           </Badge>
+          {user.is_blocked ? <Badge variant="danger">محظور</Badge> : null}
           {isAccountant ? (
             <Badge variant={user.accountant!.is_active ? "verify" : "amber"}>
               {user.accountant!.is_active ? "مفعّل" : "بانتظار التفعيل"}
@@ -169,7 +172,10 @@ function UserRow({ user }: { user: ProfileRow }) {
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/admin/users/${user.id}`}>معاينة</Link>
+        </Button>
         {!isAccountant && user.role !== "admin" ? (
           <form action={grantAccountantAccess}>
             <input type="hidden" name="id" value={user.id} />
