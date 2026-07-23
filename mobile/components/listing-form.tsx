@@ -124,6 +124,22 @@ export function ListingForm({
   const [percentage, setPercentage] = useState(
     listing ? String(listing.offered_percentage) : "",
   );
+  const [askingPrice, setAskingPrice] = useState(
+    listing?.asking_price != null ? String(listing.asking_price) : "",
+  );
+  const [priceNegotiable, setPriceNegotiable] = useState(
+    listing?.price_negotiable ?? true,
+  );
+  const [monthlyProfit, setMonthlyProfit] = useState(
+    listing?.monthly_profit != null ? String(listing.monthly_profit) : "",
+  );
+  const [showProfit, setShowProfit] = useState(listing?.show_profit ?? false);
+  const [foundingYear, setFoundingYear] = useState(
+    listing?.founding_year != null ? String(listing.founding_year) : "",
+  );
+  const [employeeCount, setEmployeeCount] = useState(
+    listing?.employee_count != null ? String(listing.employee_count) : "",
+  );
   const [description, setDescription] = useState(listing?.description ?? "");
   const [photoUrls, setPhotoUrls] = useState<string[]>(listing?.photo_urls ?? []);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -199,6 +215,12 @@ export function ListingForm({
       city,
       monthly_revenue: revenue,
       offered_percentage: percentage,
+      asking_price: askingPrice,
+      price_negotiable: priceNegotiable,
+      monthly_profit: monthlyProfit,
+      show_profit: showProfit,
+      founding_year: foundingYear,
+      employee_count: employeeCount,
       description,
       has_legal_obligations: hasLegalObligations,
       reason_for_selling: reasonForSelling,
@@ -299,6 +321,65 @@ export function ListingForm({
         error={errors.offered_percentage}
         style={{ fontFamily: fonts.mono, textAlign: "left" }}
       />
+
+      <View style={{ gap: 8 }}>
+        <Field
+          label="سعر البيع أو المبلغ المطلوب (ر.س، اختياري)"
+          value={askingPrice}
+          onChangeText={setAskingPrice}
+          placeholder="500000"
+          keyboardType="number-pad"
+          error={errors.asking_price}
+          style={{ fontFamily: fonts.mono, textAlign: "left" }}
+        />
+        <ToggleRow
+          checked={priceNegotiable}
+          label="السعر قابل للتفاوض"
+          onPress={() => setPriceNegotiable((prev) => !prev)}
+        />
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <Field
+          label="صافي الربح الشهري (ر.س، اختياري)"
+          value={monthlyProfit}
+          onChangeText={setMonthlyProfit}
+          placeholder="15000"
+          keyboardType="number-pad"
+          error={errors.monthly_profit}
+          style={{ fontFamily: fonts.mono, textAlign: "left" }}
+        />
+        <ToggleRow
+          checked={showProfit}
+          label="إظهار الرقم مباشرة للزوار (بدل «متاح عند التواصل»)"
+          onPress={() => setShowProfit((prev) => !prev)}
+        />
+      </View>
+
+      <View style={{ flexDirection: "row-reverse", gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="سنة التأسيس (اختياري)"
+            value={foundingYear}
+            onChangeText={setFoundingYear}
+            placeholder="2019"
+            keyboardType="number-pad"
+            error={errors.founding_year}
+            style={{ fontFamily: fonts.mono, textAlign: "left" }}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Field
+            label="عدد الموظفين (اختياري)"
+            value={employeeCount}
+            onChangeText={setEmployeeCount}
+            placeholder="6"
+            keyboardType="number-pad"
+            error={errors.employee_count}
+            style={{ fontFamily: fonts.mono, textAlign: "left" }}
+          />
+        </View>
+      </View>
 
       <Field
         label="وصف المشروع (اختياري)"

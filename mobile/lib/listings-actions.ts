@@ -32,6 +32,12 @@ export async function createListing(
     has_legal_obligations: values.has_legal_obligations,
     reason_for_selling: values.reason_for_selling,
     financial_data_sharing: values.financial_data_sharing,
+    asking_price: values.asking_price ?? null,
+    price_negotiable: values.price_negotiable,
+    monthly_profit: values.monthly_profit ?? null,
+    show_profit: values.show_profit,
+    founding_year: values.founding_year ?? null,
+    employee_count: values.employee_count ?? null,
   });
 
   if (error) {
@@ -79,6 +85,12 @@ export async function updateListing(
       has_legal_obligations: values.has_legal_obligations,
       reason_for_selling: values.reason_for_selling,
       financial_data_sharing: values.financial_data_sharing,
+      asking_price: values.asking_price ?? null,
+      price_negotiable: values.price_negotiable,
+      monthly_profit: values.monthly_profit ?? null,
+      show_profit: values.show_profit,
+      founding_year: values.founding_year ?? null,
+      employee_count: values.employee_count ?? null,
       ...(intent === "submit" ? { status: "pending_review" as const } : {}),
     })
     .eq("id", id);

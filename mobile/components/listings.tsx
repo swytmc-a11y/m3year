@@ -192,6 +192,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       <View
         style={{
           flexDirection: "row-reverse",
+          flexWrap: "wrap",
           gap: 32,
           borderTopWidth: 1,
           borderBottomWidth: 1,
@@ -207,6 +208,12 @@ export function ListingCard({ listing }: { listing: Listing }) {
           value={formatPercentage(listing.offered_percentage)}
           amber
         />
+        {listing.asking_price != null ? (
+          <Metric
+            label={listing.price_negotiable ? "السعر المطلوب (قابل للتفاوض)" : "السعر المطلوب"}
+            value={formatSar(listing.asking_price)}
+          />
+        ) : null}
       </View>
 
       <View

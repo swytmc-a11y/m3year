@@ -70,6 +70,8 @@ describe("listingFormSchema", () => {
     city: "جدة",
     monthly_revenue: "48200",
     offered_percentage: "25",
+    price_negotiable: true,
+    show_profit: false,
     description: "",
     has_legal_obligations: false,
     reason_for_selling: "relocation" as const,
@@ -98,6 +100,24 @@ describe("listingFormSchema", () => {
   it("rejects negative monthly revenue", () => {
     expect(
       listingFormSchema.safeParse({ ...base, monthly_revenue: "-10" }).success,
+    ).toBe(false);
+  });
+
+  it("treats a blank asking price as not provided, not zero", () => {
+    const result = listingFormSchema.safeParse({ ...base, asking_price: "" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.asking_price).toBeUndefined();
+  });
+
+  it("accepts a numeric asking price", () => {
+    const result = listingFormSchema.safeParse({ ...base, asking_price: "500000" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.asking_price).toBe(500000);
+  });
+
+  it("rejects a negative monthly profit", () => {
+    expect(
+      listingFormSchema.safeParse({ ...base, monthly_profit: "-1" }).success,
     ).toBe(false);
   });
 });

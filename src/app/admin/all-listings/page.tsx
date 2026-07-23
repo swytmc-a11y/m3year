@@ -167,6 +167,16 @@ function AllListingsRow({ listing }: { listing: ListingWithOwner }) {
             {formatPercentage(listing.offered_percentage)}
           </div>
         </div>
+        {listing.asking_price != null ? (
+          <div>
+            <div className="text-xs text-ink/50">
+              السعر المطلوب{listing.price_negotiable ? " (قابل للتفاوض)" : ""}
+            </div>
+            <div className="font-mono font-semibold text-ink">
+              {formatSar(listing.asking_price)}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {listing.status === "rejected" && listing.rejection_reason ? (

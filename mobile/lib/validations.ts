@@ -64,6 +64,15 @@ export const reasonForSellingEnum = z.enum([
 ]);
 export const financialDataSharingEnum = z.enum(["now", "on_request", "none"]);
 
+// Coerces to a number, but treats an empty/blank string as "not provided"
+// rather than letting z.coerce.number() turn "" into 0.
+function optionalNumber(schema: z.ZodNumber) {
+  return z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    return value.trim() === "" ? undefined : Number(value);
+  }, schema.optional());
+}
+
 export const listingFormSchema = z.object({
   title: z
     .string()
@@ -90,6 +99,34 @@ export const listingFormSchema = z.object({
     .max(5000, { error: "الوصف طويل جدًا" })
     .optional()
     .transform((value) => (value && value.length > 0 ? value : null)),
+  asking_price: optionalNumber(
+    z
+      .number({ error: "أدخل السعر المطلوب كرقم" })
+      .min(0, { error: "السعر المطلوب لا يمكن أن يكون سالبًا" })
+      .max(1_000_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  price_negotiable: z.boolean(),
+  monthly_profit: optionalNumber(
+    z
+      .number({ error: "أدخل صافي الربح الشهري كرقم" })
+      .min(0, { error: "صافي الربح لا يمكن أن يكون سالبًا" })
+      .max(1_000_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  show_profit: z.boolean(),
+  founding_year: optionalNumber(
+    z
+      .number({ error: "أدخل سنة التأسيس كرقم" })
+      .int()
+      .min(1950, { error: "أدخل سنة تأسيس صحيحة" })
+      .max(2100, { error: "أدخل سنة تأسيس صحيحة" }),
+  ),
+  employee_count: optionalNumber(
+    z
+      .number({ error: "أدخل عدد الموظفين كرقم" })
+      .int()
+      .min(0, { error: "عدد الموظفين لا يمكن أن يكون سالبًا" })
+      .max(100_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
   has_legal_obligations: z.boolean(),
   reason_for_selling: reasonForSellingEnum,
   financial_data_sharing: financialDataSharingEnum,

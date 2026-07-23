@@ -216,21 +216,27 @@ export type Database = {
       }
       listings: {
         Row: {
+          asking_price: number | null
           city: string
           created_at: string
           description: string | null
+          employee_count: number | null
           financial_data_sharing: string
+          founding_year: number | null
           has_legal_obligations: boolean
           id: string
           is_featured: boolean
+          monthly_profit: number | null
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
           photo_urls: string[]
+          price_negotiable: boolean
           reason_for_selling: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           sector: Database["public"]["Enums"]["business_sector"]
+          show_profit: boolean
           status: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at: string
@@ -238,21 +244,27 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          asking_price?: number | null
           city: string
           created_at?: string
           description?: string | null
+          employee_count?: number | null
           financial_data_sharing?: string
+          founding_year?: number | null
           has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
+          monthly_profit?: number | null
           monthly_revenue: number
           offered_percentage: number
           owner_id: string
           photo_urls?: string[]
+          price_negotiable?: boolean
           reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector: Database["public"]["Enums"]["business_sector"]
+          show_profit?: boolean
           status?: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at?: string
@@ -260,21 +272,27 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          asking_price?: number | null
           city?: string
           created_at?: string
           description?: string | null
+          employee_count?: number | null
           financial_data_sharing?: string
+          founding_year?: number | null
           has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
+          monthly_profit?: number | null
           monthly_revenue?: number
           offered_percentage?: number
           owner_id?: string
           photo_urls?: string[]
+          price_negotiable?: boolean
           reason_for_selling?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector?: Database["public"]["Enums"]["business_sector"]
+          show_profit?: boolean
           status?: Database["public"]["Enums"]["listing_status"]
           title?: string
           updated_at?: string

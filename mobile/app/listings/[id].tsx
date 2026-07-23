@@ -270,6 +270,7 @@ export default function ListingDetailScreen() {
             <View
               style={{
                 flexDirection: "row-reverse",
+                flexWrap: "wrap",
                 gap: 40,
                 borderTopWidth: 1,
                 borderBottomWidth: 1,
@@ -287,6 +288,22 @@ export default function ListingDetailScreen() {
                 value={formatPercentage(listing.offered_percentage)}
                 amber
               />
+              {listing.asking_price != null ? (
+                <Metric
+                  label={
+                    listing.price_negotiable
+                      ? "السعر المطلوب (قابل للتفاوض)"
+                      : "السعر المطلوب"
+                  }
+                  value={formatSar(listing.asking_price)}
+                />
+              ) : null}
+              {listing.show_profit && listing.monthly_profit != null ? (
+                <Metric
+                  label="صافي الربح الشهري"
+                  value={formatSar(listing.monthly_profit)}
+                />
+              ) : null}
             </View>
 
             {listing.description ? (
@@ -317,6 +334,51 @@ export default function ListingDetailScreen() {
             </Text>
 
             <View style={{ gap: 10 }}>
+              {listing.monthly_profit != null && !listing.show_profit ? (
+                <View
+                  style={{
+                    flexDirection: "row-reverse",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                    صافي الربح الشهري
+                  </Text>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                    متاح عند التواصل
+                  </Text>
+                </View>
+              ) : null}
+              {listing.founding_year != null ? (
+                <View
+                  style={{
+                    flexDirection: "row-reverse",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                    سنة التأسيس
+                  </Text>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                    {listing.founding_year}
+                  </Text>
+                </View>
+              ) : null}
+              {listing.employee_count != null ? (
+                <View
+                  style={{
+                    flexDirection: "row-reverse",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
+                    عدد الموظفين
+                  </Text>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.ink }}>
+                    {listing.employee_count}
+                  </Text>
+                </View>
+              ) : null}
               <View
                 style={{
                   flexDirection: "row-reverse",
