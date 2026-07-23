@@ -54,14 +54,17 @@ jobs:
         working-directory: mobile/ios
         run: |
           workspace=$(ls -d *.xcworkspace | head -n1)
-          scheme=$(xcodebuild -workspace "$workspace" -list \
-            | awk '/Schemes:/{flag=1;next}/^$/{flag=0}flag' \
-            | sed -e 's/^[[:space:]]*//' | head -n1)
+          # The app scheme matches the generated .xcodeproj name (e.g. mayar),
+          # NOT the first scheme xcodebuild -list prints (which is a Pod).
+          project=$(ls -d *.xcodeproj | head -n1)
+          scheme="${project%.xcodeproj}"
           echo "workspace=$workspace" >> "$GITHUB_OUTPUT"
           echo "scheme=$scheme" >> "$GITHUB_OUTPUT"
           echo "Resolved workspace=$workspace scheme=$scheme"
+          echo "All schemes:"
+          xcodebuild -workspace "$workspace" -list || true
 
-      - name: Build unsigned .app
+      - name: Archive unsigned app
         working-directory: mobile/ios
         run: |
           xcodebuild \
@@ -69,23 +72,30 @@ jobs:
             -scheme "${{ steps.xc.outputs.scheme }}" \
             -configuration ${{ inputs.configuration }} \
             -sdk iphoneos \
-            -derivedDataPath build \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Miyar.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            build
+            archive
 
       - name: Package unsigned .ipa
         working-directory: mobile/ios
         run: |
           set -e
-          app_path=$(find build/Build/Products -maxdepth 2 -name "*.app" | head -n1)
+          app_path=$(find build/Miyar.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -n1)
+          if [ -z "$app_path" ]; then
+            echo "No .app in archive; searching derived data..." >&2
+            app_path=$(find build -maxdepth 6 -name "*.app" -path "*iphoneos*" | head -n1)
+          fi
           if [ -z "$app_path" ]; then
             echo "No .app product found" >&2
+            find build -name "*.app" || true
             exit 1
           fi
+          echo "Using app: $app_path"
           mkdir -p Payload
           cp -R "$app_path" Payload/
           zip -r ../../miyar-unsigned.ipa Payload
