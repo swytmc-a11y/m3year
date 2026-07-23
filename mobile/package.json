@@ -34,6 +34,8 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "babel-preset-expo": "~57.0.3",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "react-dom": "^19.2.3",
     "react-native-web": "^0.21.2",
     "typescript": "~6.0.3",
@@ -45,7 +47,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "postinstall": "patch-package"
   },
   "private": true
 }
