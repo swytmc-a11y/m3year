@@ -1,0 +1,67 @@
+name: expo-setup-updates
+
+# One-time setup: creates/links the EAS project (writes projectId + updates.url
+# into app.json), commits it back to main, and publishes the first OTA update.
+# Run manually once after EXPO_TOKEN is set. Safe to re-run (idempotent).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Link EAS project and configure updates URL
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -e
+          npx eas-cli@latest init --non-interactive --force
+          node -e "
+            const fs=require('fs');
+            const p='./app.json';
+            const j=JSON.parse(fs.readFileSync(p,'utf8'));
+            const pid=j.expo.extra.eas.projectId;
+            if(!pid){ console.error('No projectId written by eas init'); process.exit(1); }
+            j.expo.updates=j.expo.updates||{};
+            j.expo.updates.url='https://u.expo.dev/'+pid;
+            fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n');
+            console.log('projectId='+pid);
+            console.log('updates.url='+j.expo.updates.url);
+          "
+
+      - name: Commit configuration back to main
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add mobile/app.json
+          if git diff --cached --quiet; then
+            echo "No config changes to commit."
+          else
+            git commit -m "Configure EAS Update projectId + updates.url"
+            git push origin main
+          fi
+
+      - name: Publish initial OTA update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest update --branch production --message "Initial OTA update" --non-interactive
