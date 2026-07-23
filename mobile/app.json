@@ -9,6 +9,12 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "backgroundColor": "#EDEEE9",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.miyar.app"

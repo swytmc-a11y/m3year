@@ -1,0 +1,55 @@
+name: expo-ota-update
+
+# Publishes a JS/asset over-the-air (OTA) update to the "production" branch on
+# EAS Update. Any installed IPA that was built WITH expo-updates configured
+# (updates.url + channel=production) will pick it up on next launch — no
+# rebuild or reinstall needed for JS-only changes.
+#
+# Requires an EXPO_TOKEN repository secret (Expo account access token).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Update message"
+        required: false
+        default: "Manual OTA update"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Verify EXPO_TOKEN is set
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "EXPO_TOKEN secret is not set. Add it in the repo settings" >&2
+            echo "(Settings → Secrets and variables → Actions) before OTA works." >&2
+            exit 1
+          fi
+
+      - name: Publish OTA update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          MSG="${{ github.event.inputs.message }}"
+          [ -z "$MSG" ] && MSG="${{ github.event.head_commit.message }}"
+          npx eas-cli@latest update --branch production --message "$MSG" --non-interactive

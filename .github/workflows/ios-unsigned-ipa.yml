@@ -39,6 +39,19 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform ios --clean --no-install
 
+      - name: Pin EAS Update channel (production)
+        working-directory: mobile
+        run: |
+          plist=$(find ios -name Expo.plist | head -n1)
+          if [ -n "$plist" ]; then
+            /usr/libexec/PlistBuddy -c "Add :EXUpdatesRequestHeaders dict" "$plist" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :EXUpdatesRequestHeaders:expo-channel-name string production" "$plist" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Set :EXUpdatesRequestHeaders:expo-channel-name production" "$plist"
+            echo "Pinned OTA channel=production in $plist"
+          else
+            echo "No Expo.plist found (updates not fully configured yet); skipping."
+          fi
+
       - name: Install CocoaPods
         working-directory: mobile/ios
         run: |
