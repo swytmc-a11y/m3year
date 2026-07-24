@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Chip } from "@/components/ui";
+import { FadeInView } from "@/components/motion";
 import { PlusIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listings";
 import { supabase } from "@/lib/supabase";
@@ -131,7 +132,11 @@ export default function HomeScreen() {
       <FlatList
         data={listings ?? []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ListingCard listing={item} />}
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index, 8) * 45}>
+            <ListingCard listing={item} />
+          </FadeInView>
+        )}
         contentContainerStyle={{ padding: 20, gap: 16 }}
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 4 }}>

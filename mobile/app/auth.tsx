@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Logo } from "@/components/logo";
-import { Button, Field, Card } from "@/components/ui";
+import { LogoMark } from "@/components/logo";
+import { FadeInView } from "@/components/motion";
+import { Button, Field } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
 import { signInSchema } from "@/lib/validations";
 import { colors, fonts } from "@/theme";
@@ -38,108 +46,138 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          gap: 32,
-        }}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Logo />
-
-        <Card style={{ width: "100%", maxWidth: 380, gap: 20 }}>
-          <View style={{ gap: 8 }}>
-            <Text
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <FadeInView style={{ alignItems: "center", marginBottom: 36, gap: 14 }}>
+            <View
               style={{
-                fontFamily: fonts.heading,
-                fontSize: 22,
-                color: colors.ink,
-                textAlign: "right",
+                width: 84,
+                height: 84,
+                borderRadius: 22,
+                backgroundColor: colors.white,
+                borderWidth: 1,
+                borderColor: colors.grid,
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              تسجيل الدخول
+              <LogoMark size={52} />
+            </View>
+            <Text style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.ink }}>
+              معيار
             </Text>
             <Text
               style={{
                 fontFamily: fonts.body,
                 fontSize: 14,
                 color: colors.mutedText,
-                textAlign: "right",
-                lineHeight: 22,
+                textAlign: "center",
               }}
             >
-              أدخل بريدك الإلكتروني وكلمة السر لتسجيل الدخول.
+              منصة إعلانات وتوثيق فرص الشراكة
             </Text>
-          </View>
+          </FadeInView>
 
-          <Field
-            label="البريد الإلكتروني"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="example@email.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            style={{ textAlign: "left" }}
-          />
+          <FadeInView delay={120} style={{ gap: 20, width: "100%", maxWidth: 400, alignSelf: "center" }}>
+            <View style={{ gap: 4 }}>
+              <Text
+                style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}
+              >
+                أهلًا بعودتك
+              </Text>
+              <Text
+                style={{
+                  fontFamily: fonts.body,
+                  fontSize: 14,
+                  color: colors.mutedText,
+                  textAlign: "right",
+                  lineHeight: 22,
+                }}
+              >
+                سجّل دخولك لمتابعة إعلاناتك ومحادثاتك.
+              </Text>
+            </View>
 
-          <Field
-            label="كلمة السر"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            secureTextEntry
-            autoCapitalize="none"
-            autoComplete="password"
-            style={{ textAlign: "left" }}
-          />
+            <Field
+              label="البريد الإلكتروني"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="example@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              returnKeyType="next"
+              style={{ textAlign: "left" }}
+            />
 
-          {error ? (
-            <Text
+            <Field
+              label="كلمة السر"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+              autoCapitalize="none"
+              autoComplete="password"
+              returnKeyType="go"
+              onSubmitEditing={onSubmit}
+              style={{ textAlign: "left" }}
+            />
+
+            {error ? (
+              <Text
+                style={{
+                  fontFamily: fonts.bodyMedium,
+                  fontSize: 13,
+                  color: colors.danger,
+                  textAlign: "right",
+                }}
+              >
+                {error}
+              </Text>
+            ) : null}
+
+            <Button label="تسجيل الدخول" fullWidth loading={loading} onPress={onSubmit} />
+
+            <View
               style={{
-                fontFamily: fonts.body,
-                fontSize: 13,
-                color: colors.amber,
-                textAlign: "right",
+                flexDirection: "row-reverse",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 4,
               }}
             >
-              {error}
-            </Text>
-          ) : null}
+              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
+                ليس لديك حساب؟
+              </Text>
+              <Link href="/signup" asChild>
+                <Pressable hitSlop={8}>
+                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
+                    أنشئ حسابًا
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
+          </FadeInView>
 
-          <Button label="تسجيل الدخول" loading={loading} onPress={onSubmit} />
-        </Card>
-
-        <Link href="/signup" asChild>
-          <Pressable>
-            <Text
-              style={{
-                fontFamily: fonts.bodyBold,
-                fontSize: 14,
-                color: colors.verify,
-              }}
-            >
-              ليس لديك حساب؟ إنشاء حساب ←
-            </Text>
-          </Pressable>
-        </Link>
-
-        <Link href="/" asChild>
-          <Pressable>
-            <Text
-              style={{
-                fontFamily: fonts.body,
-                fontSize: 14,
-                color: colors.mutedText,
-              }}
-            >
-              العودة للرئيسية
-            </Text>
-          </Pressable>
-        </Link>
-      </ScrollView>
+          <FadeInView delay={220} style={{ alignItems: "center", marginTop: 28 }}>
+            <Link href="/" asChild>
+              <Pressable hitSlop={8}>
+                <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
+                  تصفّح دون تسجيل الدخول
+                </Text>
+              </Pressable>
+            </Link>
+          </FadeInView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

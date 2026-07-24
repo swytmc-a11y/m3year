@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui";
+import { FadeInView } from "@/components/motion";
 import { useAuth } from "@/contexts/auth";
 import { listMyConversations, type ConversationSummary } from "@/lib/messaging";
 import { colors, fonts, radius } from "@/theme";
@@ -109,7 +110,8 @@ export default function MessagesScreen() {
         data={conversations ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index, 8) * 45}>
           <Pressable
             onPress={() => router.push(`/messages/${item.id}`)}
             style={({ pressed }) => ({
@@ -201,6 +203,7 @@ export default function MessagesScreen() {
               ) : null}
             </View>
           </Pressable>
+          </FadeInView>
         )}
         ListEmptyComponent={
           loading ? (
