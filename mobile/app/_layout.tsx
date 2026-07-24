@@ -1,11 +1,12 @@
-import { useEffect } from "react";
-import { I18nManager, Platform } from "react-native";
+import { useEffect, useState } from "react";
+import { I18nManager, Platform, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
+import { AppSplash } from "@/components/app-splash";
 import {
   Almarai_700Bold,
   Almarai_800ExtraBold,
@@ -32,6 +33,7 @@ if (!I18nManager.isRTL) {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [splashDone, setSplashDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Almarai_700Bold,
     Almarai_800ExtraBold,
@@ -81,13 +83,16 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.paper },
-            animation: "slide_from_left",
-          }}
-        />
+        <View style={{ flex: 1, backgroundColor: colors.paper }}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.paper },
+              animation: "slide_from_left",
+            }}
+          />
+          {!splashDone ? <AppSplash onDone={() => setSplashDone(true)} /> : null}
+        </View>
       </AuthProvider>
     </SafeAreaProvider>
   );

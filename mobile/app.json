@@ -22,7 +22,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miyar.app"
+      "bundleIdentifier": "com.miyar.app",
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.miyar.app",

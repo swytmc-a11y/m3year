@@ -80,3 +80,51 @@ export async function getVerificationDocSignedUrl(
   }
   return data.signedUrl;
 }
+
+/**
+ * Uploads a chat attachment to the private message-attachments bucket. The
+ * path's first segment is the conversation id, which storage RLS uses to
+ * restrict access to that conversation's two participants. Returns the stored
+ * path (not a URL) — resolve it with getMessageAttachmentSignedUrl on render.
+ */
+export async function uploadMessageAttachment(
+  conversationId: string,
+  localUri: string,
+  fileName: string,
+): Promise<{ path?: string; error?: string }> {
+  try {
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+    const safeName = fileName.replace(/[^\w.\-]+/g, "_").slice(-80) || "file";
+    const path = `${conversationId}/${Date.now()}-${safeName}`;
+
+    const { error } = await supabase.storage
+      .from("message-attachments")
+      .upload(path, blob, {
+        contentType: blob.type || "application/octet-stream",
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("[storage] message attachment upload failed", error);
+      return { error: "تعذّر رفع المرفق الآن." };
+    }
+    return { path };
+  } catch (err) {
+    console.error("[storage] message attachment upload threw", err);
+    return { error: "تعذّر رفع المرفق الآن." };
+  }
+}
+
+export async function getMessageAttachmentSignedUrl(
+  path: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("message-attachments")
+    .createSignedUrl(path, 60 * 60);
+  if (error) {
+    console.error("[storage] message attachment signed url failed", error);
+    return null;
+  }
+  return data.signedUrl;
+}

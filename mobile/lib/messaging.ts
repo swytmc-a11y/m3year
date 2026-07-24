@@ -85,7 +85,7 @@ export async function listMyConversations(): Promise<{
           supabase.from("profiles").select("full_name").eq("id", counterpartId).maybeSingle(),
           supabase
             .from("messages")
-            .select("body, created_at")
+            .select("body, attachment_type, created_at")
             .eq("conversation_id", c.id)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -107,7 +107,13 @@ export async function listMyConversations(): Promise<{
         listing_title:
           (c as unknown as { listing?: { title?: string } }).listing?.title ?? "إعلان",
         counterpart_name: counterpart?.full_name ?? null,
-        last_message: lastMessage?.body ?? null,
+        last_message:
+          lastMessage?.body ??
+          (lastMessage?.attachment_type === "image"
+            ? "📷 صورة"
+            : lastMessage?.attachment_type === "file"
+              ? "📎 ملف"
+              : null),
         last_message_at: lastMessage?.created_at ?? null,
         unread_count: unreadCount ?? 0,
       } satisfies ConversationSummary;
@@ -117,9 +123,16 @@ export async function listMyConversations(): Promise<{
   return { data: summaries };
 }
 
+export type OutgoingAttachment = {
+  path: string;
+  type: "image" | "file";
+  name: string;
+};
+
 export async function sendMessage(
   conversationId: string,
   body: string,
+  attachment?: OutgoingAttachment,
 ): Promise<{ error?: string }> {
   const {
     data: { user },
@@ -128,7 +141,14 @@ export async function sendMessage(
 
   const { data: message, error } = await supabase
     .from("messages")
-    .insert({ conversation_id: conversationId, sender_id: user.id, body })
+    .insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      body: body.length > 0 ? body : null,
+      attachment_path: attachment?.path ?? null,
+      attachment_type: attachment?.type ?? null,
+      attachment_name: attachment?.name ?? null,
+    })
     .select("id")
     .single();
 
