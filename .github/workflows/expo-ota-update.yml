@@ -49,7 +49,14 @@ jobs:
       - name: Publish OTA update
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          # Passed as env vars (not interpolated into the script) so quotes,
+          # backticks, $()  etc. in a commit message can never break — or
+          # inject into — this shell command.
+          INPUT_MESSAGE: ${{ github.event.inputs.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          MSG="${{ github.event.inputs.message }}"
-          [ -z "$MSG" ] && MSG="${{ github.event.head_commit.message }}"
+          MSG="$INPUT_MESSAGE"
+          [ -z "$MSG" ] && MSG="$COMMIT_MESSAGE"
+          # eas update only accepts a single-line message.
+          MSG="$(printf '%s' "$MSG" | head -n1)"
           npx eas-cli@latest update --branch production --message "$MSG" --non-interactive
