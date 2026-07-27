@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Switch } from "react-native";
 import { useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Button, Field, Card } from "@/components/ui";
+import { Field } from "@/components/ui";
+import { Button, Card, IconButton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import { updateMyProfile } from "@/lib/profile-actions";
-import { colors, fonts } from "@/theme";
+import { fonts } from "@/theme";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t, isDark, toggleDark } = useTheme();
   const { session, user, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [city, setCity] = useState("");
@@ -39,7 +43,7 @@ export default function SettingsScreen() {
   }, [user?.id]);
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -66,69 +70,44 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="الإعدادات" onBack={() => router.back()} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الإعدادات</Text>
+      </View>
+
       {loading ? (
-        <View style={{ flex: 1, backgroundColor: colors.paper }} />
+        <View style={{ flex: 1, backgroundColor: t.bg }} />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-          <Card style={{ gap: 16 }}>
-            <Text
-              style={{ fontFamily: fonts.bodyBold, fontSize: 15, color: colors.ink, textAlign: "right" }}
-            >
+        <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }}>
+          <Card style={{ padding: 20, gap: 16 }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
               بيانات الحساب
             </Text>
-            <Field
-              label="الاسم الكامل"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="اسمك"
-              maxLength={80}
-              textAlign="right"
-            />
-            <Field
-              label="المدينة"
-              value={city}
-              onChangeText={setCity}
-              placeholder="مدينتك"
-              maxLength={60}
-              textAlign="right"
-            />
+            <Field label="الاسم الكامل" value={fullName} onChangeText={setFullName} placeholder="اسمك" maxLength={80} textAlign="right" />
+            <Field label="المدينة" value={city} onChangeText={setCity} placeholder="مدينتك" maxLength={60} textAlign="right" />
             {user?.email ? (
               <View style={{ gap: 6 }}>
-                <Text
-                  style={{
-                    fontFamily: fonts.bodyMedium,
-                    fontSize: 14,
-                    color: colors.ink,
-                    textAlign: "right",
-                  }}
-                >
-                  البريد الإلكتروني
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: fonts.body,
-                    fontSize: 14,
-                    color: colors.mutedText,
-                    textAlign: "right",
-                  }}
-                >
-                  {user.email}
-                </Text>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.text, textAlign: "right" }}>البريد الإلكتروني</Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right" }}>{user.email}</Text>
               </View>
             ) : null}
             {error ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right" }}>
-                {error}
-              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.danger, textAlign: "right" }}>{error}</Text>
             ) : null}
             {saved ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.verify, textAlign: "right" }}>
-                تم حفظ التعديلات.
-              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.success, textAlign: "right" }}>تم حفظ التعديلات.</Text>
             ) : null}
             <Button label="حفظ التعديلات" fullWidth loading={saving} onPress={onSave} />
+          </Card>
+
+          <Card style={{ padding: 4 }}>
+            <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, minHeight: 44 }}>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13.5, color: t.text }}>الوضع الغامق</Text>
+              <Switch value={isDark} onValueChange={toggleDark} trackColor={{ true: t.primary, false: t.border }} />
+            </View>
           </Card>
         </ScrollView>
       )}

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Card, Chip } from "@/components/ui";
-import { colors, fonts, radius } from "@/theme";
+import { Card, Chip, IconButton, Tappable } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
+import { useTheme } from "@/contexts/theme";
+import { fonts, radius } from "@/theme";
 
 type FaqItem = { q: string; a: string };
 type FaqGroup = { title: string; items: FaqItem[] };
@@ -87,19 +89,22 @@ const TIPS = [
 
 export default function FaqScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const groups = [GENERAL, FOR_INVESTORS, FOR_OWNERS];
   const [activeGroup, setActiveGroup] = useState(0);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="الأسئلة الشائعة" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}
-        >
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الأسئلة الشائعة</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
           {groups.map((g, idx) => (
             <Chip
               key={g.title}
@@ -113,88 +118,41 @@ export default function FaqScreen() {
           ))}
         </ScrollView>
 
-        <Card style={{ gap: 4, padding: 0, overflow: "hidden" }}>
+        <Card style={{ padding: 0, overflow: "hidden" }}>
           {groups[activeGroup].items.map((item, idx) => {
             const open = openIndex === idx;
             return (
-              <Pressable
-                key={item.q}
-                onPress={() => setOpenIndex(open ? null : idx)}
-                style={{
-                  padding: 18,
-                  borderTopWidth: idx === 0 ? 0 : 1,
-                  borderTopColor: colors.grid,
-                  gap: open ? 10 : 0,
-                }}
-              >
-                <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", gap: 12 }}>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontFamily: fonts.bodyBold,
-                      fontSize: 14,
-                      color: colors.ink,
-                      textAlign: "right",
-                    }}
-                  >
-                    {item.q}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: colors.mutedText }}>{open ? "−" : "+"}</Text>
+              <Tappable key={item.q} haptic="none" onPress={() => setOpenIndex(open ? null : idx)}>
+                <View style={{ padding: 18, borderTopWidth: idx === 0 ? 0 : 1, borderTopColor: t.border, gap: open ? 10 : 0 }}>
+                  <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", gap: 12 }}>
+                    <Text style={{ flex: 1, fontFamily: fonts.displayBold, fontSize: 13.5, color: t.text, textAlign: "right" }}>
+                      {item.q}
+                    </Text>
+                    <Text style={{ fontSize: 14, color: t.primary }}>{open ? "−" : "+"}</Text>
+                  </View>
+                  {open ? (
+                    <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
+                      {item.a}
+                    </Text>
+                  ) : null}
                 </View>
-                {open ? (
-                  <Text
-                    style={{
-                      fontFamily: fonts.body,
-                      fontSize: 13,
-                      color: colors.mutedText,
-                      textAlign: "right",
-                      lineHeight: 22,
-                    }}
-                  >
-                    {item.a}
-                  </Text>
-                ) : null}
-              </Pressable>
+              </Tappable>
             );
           })}
         </Card>
 
         <View style={{ gap: 10 }}>
-          <Text
-            style={{ fontFamily: fonts.bodyBold, fontSize: 15, color: colors.ink, textAlign: "right" }}
-          >
-            نصائح سريعة
-          </Text>
-          <View
-            style={{
-              backgroundColor: colors.white,
-              borderColor: colors.grid,
-              borderWidth: 1,
-              borderRadius: radius.lg,
-              padding: 18,
-              gap: 12,
-            }}
-          >
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>نصائح سريعة</Text>
+          <Card style={{ padding: 18, gap: 12 }}>
             {TIPS.map((tip) => (
               <View key={tip} style={{ flexDirection: "row-reverse", gap: 8 }}>
-                <Text style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.verify }}>
-                  ●
-                </Text>
-                <Text
-                  style={{
-                    flex: 1,
-                    fontFamily: fonts.body,
-                    fontSize: 13,
-                    color: colors.ink,
-                    textAlign: "right",
-                    lineHeight: 21,
-                  }}
-                >
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.success }}>●</Text>
+                <Text style={{ flex: 1, fontFamily: fonts.body, fontSize: 12.5, color: t.text, textAlign: "right", lineHeight: 21 }}>
                   {tip}
                 </Text>
               </View>
             ))}
-          </View>
+          </Card>
         </View>
       </ScrollView>
     </SafeAreaView>

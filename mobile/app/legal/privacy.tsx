@@ -1,8 +1,10 @@
 import { ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/ui";
-import { colors, fonts } from "@/theme";
+import { IconButton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
+import { useTheme } from "@/contexts/theme";
+import { fonts } from "@/theme";
 
 const SECTIONS: { title: string; body: string }[] = [
   {
@@ -29,16 +31,22 @@ const SECTIONS: { title: string; body: string }[] = [
 
 export default function PrivacyScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="سياسة الخصوصية" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>سياسة الخصوصية</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18, gap: 20 }}>
         {SECTIONS.map((s) => (
           <View key={s.title} style={{ gap: 8 }}>
-            <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink, textAlign: "right" }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
               {s.title}
             </Text>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 24, color: colors.subtleText, textAlign: "right" }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 23, color: t.textMuted, textAlign: "right" }}>
               {s.body}
             </Text>
           </View>
