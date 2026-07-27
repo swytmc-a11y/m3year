@@ -21,6 +21,13 @@ export const otpCodeSchema = z
   .trim()
   .regex(/^\d{6}$/, { error: "أدخل رمز التحقق المكوّن من 6 أرقام" });
 
+// Authentica's WhatsApp OTP is 4 digits (confirmed against a real send — not
+// the 6-digit convention used elsewhere), so it needs its own schema.
+export const whatsappOtpCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}$/, { error: "أدخل رمز التحقق المكوّن من 4 أرقام" });
+
 export const emailSchema = z
   .string()
   .trim()

@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field } from "@/components/ui";
-import { phoneSchema, otpCodeSchema } from "@/lib/validations";
+import { phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
 import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsapp-auth";
 import { colors, fonts } from "@/theme";
 
@@ -63,7 +63,7 @@ export default function AuthScreen() {
 
   async function onVerifyCode() {
     setError(undefined);
-    const parsed = otpCodeSchema.safeParse(code);
+    const parsed = whatsappOtpCodeSchema.safeParse(code);
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
@@ -174,7 +174,7 @@ export default function AuthScreen() {
                     أدخل رمز التحقق
                   </Text>
                   <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}>
-                    أرسلنا رمزًا مكوّنًا من 6 أرقام عبر واتساب إلى {normalizedPhone}
+                    أرسلنا رمزًا مكوّنًا من 4 أرقام عبر واتساب إلى {normalizedPhone}
                   </Text>
                 </View>
 
@@ -182,9 +182,9 @@ export default function AuthScreen() {
                   label="رمز التحقق"
                   value={code}
                   onChangeText={setCode}
-                  placeholder="000000"
+                  placeholder="0000"
                   keyboardType="number-pad"
-                  maxLength={6}
+                  maxLength={4}
                   style={{ fontFamily: fonts.mono, textAlign: "center", fontSize: 22, letterSpacing: 6 }}
                 />
 
