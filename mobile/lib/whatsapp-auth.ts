@@ -9,7 +9,7 @@ export async function sendWhatsAppOtp(phone: string): Promise<SendResult> {
   });
   if (error) {
     console.error("[whatsapp-auth] send failed", error);
-    return { error: extractMessage(error) ?? "تعذّر إرسال رمز التحقق الآن." };
+    return { error: (await extractServerMessage(error)) ?? "تعذّر إرسال رمز التحقق الآن." };
   }
   if (data?.error) return { error: data.error };
   return {};
@@ -32,7 +32,7 @@ export async function verifyWhatsAppOtp(
   });
   if (error) {
     console.error("[whatsapp-auth] verify failed", error);
-    return { error: extractMessage(error) ?? "تعذّر التحقق من الرمز الآن." };
+    return { error: (await extractServerMessage(error)) ?? "تعذّر التحقق من الرمز الآن." };
   }
   if (data?.error) return { error: data.error };
   if (data?.needsName) return { needsName: true };
@@ -50,7 +50,20 @@ export async function verifyWhatsAppOtp(
   return { error: "استجابة غير متوقعة من خادم التحقق." };
 }
 
-function extractMessage(error: unknown): string | undefined {
+// supabase-js's FunctionsHttpError.message is a generic, unhelpful string
+// ("Edge Function returned a non-2xx status code") — it does NOT surface the
+// JSON body our functions actually return (e.g. rate-limit or invalid-code
+// messages). The real body is on error.context, a Response object.
+async function extractServerMessage(error: unknown): Promise<string | undefined> {
+  const context = (error as { context?: Response } | undefined)?.context;
+  if (context && typeof context.json === "function") {
+    try {
+      const body = await context.clone().json();
+      if (typeof body?.error === "string") return body.error;
+    } catch {
+      // response body wasn't JSON — fall through
+    }
+  }
   if (error && typeof error === "object" && "message" in error) {
     return String((error as { message: unknown }).message);
   }
