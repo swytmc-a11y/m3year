@@ -161,6 +161,8 @@ export const ratingFormSchema = z.object({
 
 export type RatingFormValues = z.infer<typeof ratingFormSchema>;
 
+const franchiseTypeEnum = z.enum(["single_unit", "area_development"]);
+
 export const franchiseFormSchema = z.object({
   brand_name: z
     .string()
@@ -168,6 +170,14 @@ export const franchiseFormSchema = z.object({
     .min(3, { error: "اسم العلامة يجب أن يكون 3 أحرف على الأقل" })
     .max(140, { error: "اسم العلامة يجب ألا يتجاوز 140 حرفًا" }),
   sector: sectorEnum,
+  franchise_type: franchiseTypeEnum,
+  contract_duration_years: optionalNumber(
+    z
+      .number({ error: "أدخل مدة العقد كرقم" })
+      .int()
+      .min(1, { error: "أدخل مدة عقد صحيحة" })
+      .max(50, { error: "أدخل مدة عقد صحيحة" }),
+  ),
   city: z
     .string()
     .trim()

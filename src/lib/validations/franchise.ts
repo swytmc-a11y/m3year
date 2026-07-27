@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const sectorEnum = z.enum(["cafe", "restaurant", "retail", "services", "other"]);
+const franchiseTypeEnum = z.enum(["single_unit", "area_development"]);
 
 function optionalNumber(schema: z.ZodNumber) {
   return z.preprocess((value) => {
@@ -16,6 +17,10 @@ export const franchiseFormSchema = z.object({
     .min(3, { error: "اسم العلامة يجب أن يكون 3 أحرف على الأقل" })
     .max(140, { error: "اسم العلامة يجب ألا يتجاوز 140 حرفًا" }),
   sector: sectorEnum,
+  franchise_type: franchiseTypeEnum,
+  contract_duration_years: optionalNumber(
+    z.number({ error: "أدخل رقمًا" }).int().min(1).max(50),
+  ),
   city: z
     .string()
     .trim()

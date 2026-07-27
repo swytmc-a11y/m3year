@@ -24,6 +24,8 @@ export async function createFranchise(
     owner_id: user.id,
     brand_name: values.brand_name,
     sector: values.sector,
+    franchise_type: values.franchise_type,
+    contract_duration_years: values.contract_duration_years ?? null,
     city: values.city,
     cities_available: values.cities_available,
     countries_available: values.countries_available,
@@ -83,6 +85,8 @@ export async function updateFranchise(
     .update({
       brand_name: values.brand_name,
       sector: values.sector,
+      franchise_type: values.franchise_type,
+      contract_duration_years: values.contract_duration_years ?? null,
       city: values.city,
       cities_available: values.cities_available,
       countries_available: values.countries_available,

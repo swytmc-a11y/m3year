@@ -14,11 +14,36 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { session, user, isAdmin, loading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isActiveAccountant, setIsActiveAccountant] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       if (session) getUnreadNotificationCount().then(setUnreadCount);
     }, [session]),
+  );
+
+  // "لوحة المحاسب" must only appear for users who are actually an active,
+  // approved accountant — not every signed-in user (this was previously
+  // shown unconditionally to everyone).
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) {
+        setIsActiveAccountant(false);
+        return;
+      }
+      let active = true;
+      supabase
+        .from("accountants")
+        .select("is_active")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (active) setIsActiveAccountant(data?.is_active === true);
+        });
+      return () => {
+        active = false;
+      };
+    }, [user?.id]),
   );
 
   if (loading) {
@@ -152,34 +177,93 @@ export default function ProfileScreen() {
           ) : null}
         </View>
 
-        <View style={{ gap: 12 }}>
-          <Button
-            label="أنشئ إعلانًا"
-            fullWidth
-            onPress={() => router.push("/my-listings/new")}
-          />
-          <Button
-            label="إعلاناتي"
-            variant="ghost"
-            fullWidth
-            onPress={() => router.push("/my-listings")}
+        <View style={{ gap: 10 }}>
+          <SectionLabel>أنشئ عرضًا</SectionLabel>
+          <View style={{ flexDirection: "row-reverse", gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Button label="إعلان جديد" fullWidth onPress={() => router.push("/my-listings/new")} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="امتياز جديد"
+                fullWidth
+                onPress={() => router.push("/my-franchises/new")}
+              />
+            </View>
+          </View>
+          <View style={{ flexDirection: "row-reverse", gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="إعلاناتي"
+                variant="ghost"
+                fullWidth
+                onPress={() => router.push("/my-listings")}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="امتيازاتي"
+                variant="ghost"
+                fullWidth
+                onPress={() => router.push("/my-franchises")}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ gap: 10 }}>
+          <SectionLabel>نشاطي</SectionLabel>
+          <MenuSection
+            items={[
+              { label: "المفضلة", onPress: () => router.push("/favorites") },
+              {
+                label: unreadCount > 0 ? `الإشعارات (${unreadCount})` : "الإشعارات",
+                onPress: () => router.push("/notifications"),
+              },
+            ]}
           />
         </View>
 
-        <MenuSection
-          items={[
-            { label: "المفضلة", onPress: () => router.push("/favorites") },
-            {
-              label: unreadCount > 0 ? `الإشعارات (${unreadCount})` : "الإشعارات",
-              onPress: () => router.push("/notifications"),
-            },
-            { label: "لوحة المحاسب", onPress: () => router.push("/accountant") },
-            { label: "الشروط والأحكام", onPress: () => router.push("/legal/terms") },
-            { label: "سياسة الخصوصية", onPress: () => router.push("/legal/privacy") },
-          ]}
-        />
+        <View style={{ gap: 10 }}>
+          <SectionLabel>الحساب</SectionLabel>
+          <MenuSection
+            items={[
+              { label: "الإعدادات", onPress: () => router.push("/settings") },
+              ...(isActiveAccountant
+                ? [{ label: "لوحة المحاسب", onPress: () => router.push("/accountant") }]
+                : []),
+            ]}
+          />
+        </View>
+
+        <View style={{ gap: 10 }}>
+          <SectionLabel>الدعم والمعلومات</SectionLabel>
+          <MenuSection
+            items={[
+              { label: "الأسئلة الشائعة", onPress: () => router.push("/faq") },
+              { label: "حول التطبيق", onPress: () => router.push("/about") },
+              { label: "الشروط والأحكام", onPress: () => router.push("/legal/terms") },
+              { label: "سياسة الخصوصية", onPress: () => router.push("/legal/privacy") },
+            ]}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text
+      style={{
+        fontFamily: fonts.bodyBold,
+        fontSize: 13,
+        color: colors.mutedText,
+        textAlign: "right",
+      }}
+    >
+      {children}
+    </Text>
   );
 }
 

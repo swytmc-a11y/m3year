@@ -6,7 +6,12 @@ import { VerifiedBadge } from "@/components/listings/verified-badge";
 import { ListingStatusBadge } from "@/components/listings/status-badge";
 import { Button } from "@/components/ui/button";
 import { SECTOR_LABELS } from "@/lib/listings/constants";
-import { formatSar, formatSarRange, formatDate } from "@/lib/franchises/constants";
+import {
+  formatSar,
+  formatSarRange,
+  formatDate,
+  FRANCHISE_TYPE_LABELS,
+} from "@/lib/franchises/constants";
 
 export default async function FranchiseDetailPage({
   params,
@@ -87,6 +92,14 @@ export default async function FranchiseDetailPage({
                   </div>
                 </div>
               ) : null}
+              {franchise.contract_duration_years != null ? (
+                <div>
+                  <div className="mb-1 text-xs text-ink/50">مدة عقد الامتياز</div>
+                  <div className="font-mono text-2xl font-semibold text-ink">
+                    {franchise.contract_duration_years} سنوات
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {franchise.description ? (
@@ -96,6 +109,7 @@ export default async function FranchiseDetailPage({
             ) : null}
 
             <div className="mb-6 flex flex-col gap-1 text-[13px] text-ink/50">
+              <div>نوع الامتياز: {FRANCHISE_TYPE_LABELS[franchise.franchise_type as "single_unit" | "area_development"]}</div>
               {franchise.current_branches_count != null ? (
                 <div>عدد الفروع الحالية: {franchise.current_branches_count}</div>
               ) : null}

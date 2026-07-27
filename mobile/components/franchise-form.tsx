@@ -9,7 +9,12 @@ import {
   type BusinessSector,
   type EntityType,
 } from "@/lib/constants";
-import type { Franchise, FranchiseConfidential } from "@/lib/franchise-constants";
+import {
+  FRANCHISE_TYPE_OPTIONS,
+  type Franchise,
+  type FranchiseConfidential,
+  type FranchiseType,
+} from "@/lib/franchise-constants";
 import { uploadFranchisePhoto, deleteFranchisePhoto } from "@/lib/storage";
 import { uuidv4 } from "@/lib/uuid";
 import { colors, fonts, radius } from "@/theme";
@@ -98,6 +103,14 @@ export function FranchiseForm({
   const [franchiseId] = useState(() => franchise?.id ?? uuidv4());
   const [brandName, setBrandName] = useState(franchise?.brand_name ?? "");
   const [sector, setSector] = useState<BusinessSector>(franchise?.sector ?? "cafe");
+  const [franchiseType, setFranchiseType] = useState<FranchiseType>(
+    (franchise?.franchise_type as FranchiseType | undefined) ?? "single_unit",
+  );
+  const [contractDurationYears, setContractDurationYears] = useState(
+    franchise?.contract_duration_years != null
+      ? String(franchise.contract_duration_years)
+      : "",
+  );
   const [city, setCity] = useState(franchise?.city ?? "");
   const [citiesAvailable, setCitiesAvailable] = useState(
     (franchise?.cities_available ?? []).join("، "),
@@ -233,6 +246,8 @@ export function FranchiseForm({
     const parsed = franchiseFormSchema.safeParse({
       brand_name: brandName,
       sector,
+      franchise_type: franchiseType,
+      contract_duration_years: contractDurationYears,
       city,
       cities_available: citiesAvailable
         .split(/[،,]/)
@@ -306,6 +321,30 @@ export function FranchiseForm({
           ))}
         </View>
       </View>
+
+      <View style={{ gap: 8 }}>
+        <FieldLabel>نوع الامتياز</FieldLabel>
+        <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 }}>
+          {FRANCHISE_TYPE_OPTIONS.map((opt) => (
+            <Chip
+              key={opt.value}
+              label={opt.label}
+              active={franchiseType === opt.value}
+              onPress={() => setFranchiseType(opt.value)}
+            />
+          ))}
+        </View>
+      </View>
+
+      <Field
+        label="مدة عقد الامتياز (بالسنوات)"
+        value={contractDurationYears}
+        onChangeText={setContractDurationYears}
+        placeholder="5"
+        keyboardType="number-pad"
+        error={errors.contract_duration_years}
+        style={{ fontFamily: fonts.mono, textAlign: "left" }}
+      />
 
       <Field
         label="مدينة المقر الرئيسي"

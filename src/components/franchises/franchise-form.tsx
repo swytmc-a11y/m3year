@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SECTOR_OPTIONS } from "@/lib/listings/constants";
-import type { Franchise } from "@/lib/franchises/constants";
+import { FRANCHISE_TYPE_OPTIONS, type Franchise } from "@/lib/franchises/constants";
 import { emptyActionState, type ActionState } from "@/lib/action-state";
 
 type FranchiseFormAction = (
@@ -64,6 +64,40 @@ export function FranchiseForm({
           <Label htmlFor="city">مدينة المقر الرئيسي</Label>
           <Input id="city" name="city" defaultValue={franchise.city} maxLength={60} required />
           <FieldError messages={errors.city} />
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="franchise_type">نوع الامتياز</Label>
+          <Select
+            id="franchise_type"
+            name="franchise_type"
+            defaultValue={franchise.franchise_type}
+            required
+          >
+            {FRANCHISE_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <FieldError messages={errors.franchise_type} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="contract_duration_years">مدة عقد الامتياز (بالسنوات، اختياري)</Label>
+          <Input
+            id="contract_duration_years"
+            name="contract_duration_years"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={50}
+            dir="ltr"
+            className="text-left font-mono"
+            defaultValue={franchise.contract_duration_years ?? ""}
+          />
+          <FieldError messages={errors.contract_duration_years} />
         </div>
       </div>
 

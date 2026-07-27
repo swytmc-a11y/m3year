@@ -1,17 +1,31 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Image, Pressable, Share } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Pressable,
+  Share,
+  Modal,
+} from "react-native";
 import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Button } from "@/components/ui";
+import { TopBar, Button, Field } from "@/components/ui";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/lib/supabase";
-import { getOrCreateFranchiseConversation } from "@/lib/messaging";
+import { getOrCreateFranchiseConversation, sendMessage } from "@/lib/messaging";
 import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
 import { RatingSummaryLabel } from "@/components/rating-stars";
 import { isFranchiseFavorited, toggleFranchiseFavorite } from "@/lib/favorites";
 import { SECTOR_LABELS, formatSar, formatDate } from "@/lib/constants";
-import { formatSarRange, type Franchise } from "@/lib/franchise-constants";
+import {
+  formatSarRange,
+  FRANCHISE_TYPE_LABELS,
+  type Franchise,
+  type FranchiseType,
+} from "@/lib/franchise-constants";
 import { colors, fonts, radius } from "@/theme";
 
 export default function FranchiseDetailScreen() {
@@ -23,6 +37,10 @@ export default function FranchiseDetailScreen() {
   const [error, setError] = useState(false);
   const [contacting, setContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [requestCapital, setRequestCapital] = useState("");
+  const [requestCity, setRequestCity] = useState("");
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [ownerRating, setOwnerRating] = useState<RatingSummary | null>(null);
   const [favorited, setFavorited] = useState(false);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
@@ -63,23 +81,45 @@ export default function FranchiseDetailScreen() {
   const isPreview = franchise ? franchise.status !== "published" : false;
   const isOwner = franchise && user ? franchise.owner_id === user.id : false;
 
-  async function onContact() {
+  function onOpenRequest() {
     if (!franchise) return;
     if (!session) {
       router.push("/auth");
       return;
     }
+    setRequestError(null);
+    setRequestModalOpen(true);
+  }
+
+  async function onSubmitRequest() {
+    if (!franchise) return;
+    const capital = Number(requestCapital.replace(/[^\d.]/g, ""));
+    if (!requestCapital.trim() || Number.isNaN(capital) || capital <= 0) {
+      setRequestError("أدخل رأس المال المتاح كرقم صحيح.");
+      return;
+    }
+    if (!requestCity.trim()) {
+      setRequestError("أدخل المدينة المفضّلة للتشغيل.");
+      return;
+    }
+    setRequestError(null);
     setContactError(null);
     setContacting(true);
     const { conversationId, error: convError } = await getOrCreateFranchiseConversation(
       franchise.id,
       franchise.owner_id,
     );
-    setContacting(false);
     if (convError || !conversationId) {
+      setContacting(false);
       setContactError(convError ?? "تعذّر بدء المحادثة الآن.");
       return;
     }
+    await sendMessage(
+      conversationId,
+      `طلب فرصة امتياز جديد\nرأس المال المتاح: ${formatSar(capital)}\nالمدينة المفضّلة: ${requestCity.trim()}`,
+    );
+    setContacting(false);
+    setRequestModalOpen(false);
     router.push(`/messages/${conversationId}`);
   }
 
@@ -252,6 +292,12 @@ export default function FranchiseDetailScreen() {
               {franchise.royalty_percentage != null ? (
                 <Metric label="نسبة الإتاوة" value={`${franchise.royalty_percentage}٪`} />
               ) : null}
+              {franchise.contract_duration_years != null ? (
+                <Metric
+                  label="مدة عقد الامتياز"
+                  value={`${franchise.contract_duration_years} سنوات`}
+                />
+              ) : null}
             </View>
 
             {franchise.description ? (
@@ -267,6 +313,10 @@ export default function FranchiseDetailScreen() {
             </Text>
 
             <View style={{ gap: 10 }}>
+              <Row
+                label="نوع الامتياز"
+                value={FRANCHISE_TYPE_LABELS[franchise.franchise_type as FranchiseType]}
+              />
               {franchise.current_branches_count != null ? (
                 <Row label="عدد الفروع الحالية" value={String(franchise.current_branches_count)} />
               ) : null}
@@ -308,7 +358,7 @@ export default function FranchiseDetailScreen() {
 
             {!isPreview && !isOwner ? (
               <View style={{ gap: 8 }}>
-                <Button label="تواصل مع صاحب الامتياز" fullWidth loading={contacting} onPress={onContact} />
+                <Button label="طلب فرصة" fullWidth loading={contacting} onPress={onOpenRequest} />
                 {contactError ? (
                   <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "center" }}>
                     {contactError}
@@ -333,6 +383,68 @@ export default function FranchiseDetailScreen() {
           </Text>
         </ScrollView>
       )}
+
+      <Modal
+        visible={requestModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRequestModalOpen(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(23,26,28,0.5)",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: radius.lg,
+              padding: 24,
+              gap: 16,
+            }}
+          >
+            <Text style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink, textAlign: "right" }}>
+              طلب فرصة الامتياز
+            </Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right", lineHeight: 20 }}>
+              معلوماتك تُرسل مباشرة كرسالة أولى لصاحب الامتياز، ثم تقدر تكمل المحادثة معه.
+            </Text>
+
+            <Field
+              label="رأس المال المتاح لديك (ر.س)"
+              value={requestCapital}
+              onChangeText={setRequestCapital}
+              placeholder="500000"
+              keyboardType="number-pad"
+              style={{ fontFamily: fonts.mono, textAlign: "left" }}
+            />
+            <Field
+              label="المدينة المفضّلة للتشغيل"
+              value={requestCity}
+              onChangeText={setRequestCity}
+              placeholder="جدة"
+              textAlign="right"
+            />
+
+            {requestError ? (
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right" }}>
+                {requestError}
+              </Text>
+            ) : null}
+
+            <Button label="إرسال الطلب" fullWidth loading={contacting} onPress={onSubmitRequest} />
+            <Button
+              label="إلغاء"
+              variant="ghost"
+              fullWidth
+              onPress={() => setRequestModalOpen(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

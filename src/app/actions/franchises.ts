@@ -11,6 +11,8 @@ function parseFranchiseForm(formData: FormData) {
   return franchiseFormSchema.safeParse({
     brand_name: formData.get("brand_name"),
     sector: formData.get("sector"),
+    franchise_type: formData.get("franchise_type"),
+    contract_duration_years: formData.get("contract_duration_years"),
     city: formData.get("city"),
     description: formData.get("description"),
     franchise_fee: formData.get("franchise_fee"),
@@ -53,6 +55,8 @@ export async function adminUpdateFranchise(
     .update({
       brand_name: parsed.data.brand_name,
       sector: parsed.data.sector,
+      franchise_type: parsed.data.franchise_type,
+      contract_duration_years: parsed.data.contract_duration_years ?? null,
       city: parsed.data.city,
       description: parsed.data.description,
       franchise_fee: parsed.data.franchise_fee,

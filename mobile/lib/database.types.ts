@@ -289,6 +289,7 @@ export type Database = {
           brand_name: string
           cities_available: string[]
           city: string
+          contract_duration_years: number | null
           countries_available: string[]
           created_at: string
           current_branches_count: number | null
@@ -296,6 +297,7 @@ export type Database = {
           expected_payback_months: number | null
           founding_year: number | null
           franchise_fee: number
+          franchise_type: string
           id: string
           initial_investment_max: number | null
           initial_investment_min: number | null
@@ -321,6 +323,7 @@ export type Database = {
           brand_name: string
           cities_available?: string[]
           city: string
+          contract_duration_years?: number | null
           countries_available?: string[]
           created_at?: string
           current_branches_count?: number | null
@@ -328,6 +331,7 @@ export type Database = {
           expected_payback_months?: number | null
           founding_year?: number | null
           franchise_fee: number
+          franchise_type?: string
           id?: string
           initial_investment_max?: number | null
           initial_investment_min?: number | null
@@ -353,6 +357,7 @@ export type Database = {
           brand_name?: string
           cities_available?: string[]
           city?: string
+          contract_duration_years?: number | null
           countries_available?: string[]
           created_at?: string
           current_branches_count?: number | null
@@ -360,6 +365,7 @@ export type Database = {
           expected_payback_months?: number | null
           founding_year?: number | null
           franchise_fee?: number
+          franchise_type?: string
           id?: string
           initial_investment_max?: number | null
           initial_investment_min?: number | null
