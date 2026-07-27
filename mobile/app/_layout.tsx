@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
 import { AppSplash } from "@/components/app-splash";
+import { ErrorBoundary } from "@/components/error-boundary";
 import {
   Almarai_700Bold,
   Almarai_800ExtraBold,
@@ -80,20 +81,22 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar style="dark" />
-        <View style={{ flex: 1, backgroundColor: colors.paper }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.paper },
-              animation: "slide_from_left",
-            }}
-          />
-          {!splashDone ? <AppSplash onDone={() => setSplashDone(true)} /> : null}
-        </View>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <StatusBar style="dark" />
+          <View style={{ flex: 1, backgroundColor: colors.paper }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.paper },
+                animation: "slide_from_left",
+              }}
+            />
+            {!splashDone ? <AppSplash onDone={() => setSplashDone(true)} /> : null}
+          </View>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

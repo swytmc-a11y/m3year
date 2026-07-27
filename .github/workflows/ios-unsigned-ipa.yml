@@ -39,6 +39,13 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform ios --clean --no-install
 
+      # A stale Metro/babel transform cache can bake `undefined` in place of
+      # EXPO_PUBLIC_* values, producing a bundle that throws at module load
+      # and hard-aborts the app on launch. Start every build from a clean one.
+      - name: Clear bundler caches
+        working-directory: mobile
+        run: rm -rf node_modules/.cache "$TMPDIR/metro-cache" "$TMPDIR/haste-map-"* 2>/dev/null || true
+
       - name: Install CocoaPods
         working-directory: mobile/ios
         run: |
