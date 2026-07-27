@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -11,13 +10,16 @@ import { useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
-import { Button, Field } from "@/components/ui";
+import { Field } from "@/components/ui";
+import { Button, Tappable } from "@/components/kit";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import { signUpSchema } from "@/lib/validations";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,11 +69,8 @@ export default function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
           keyboardShouldPersistTaps="handled"
@@ -82,37 +81,24 @@ export default function SignUpScreen() {
               style={{
                 width: 72,
                 height: 72,
-                borderRadius: 20,
-                backgroundColor: colors.white,
-                borderWidth: 1,
-                borderColor: colors.grid,
+                borderRadius: radius.xl,
+                backgroundColor: t.surface,
                 alignItems: "center",
                 justifyContent: "center",
+                ...t.shadowSm,
               }}
             >
               <LogoMark size={44} />
             </View>
-            <Text style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.ink }}>
-              انضم إلى معيار
-            </Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 22, color: t.text }}>انضم إلى معيار</Text>
           </FadeInView>
 
           <FadeInView delay={120} style={{ gap: 18, width: "100%", maxWidth: 400, alignSelf: "center" }}>
             <View style={{ gap: 4 }}>
-              <Text
-                style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}
-              >
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
                 إنشاء حساب جديد
               </Text>
-              <Text
-                style={{
-                  fontFamily: fonts.body,
-                  fontSize: 14,
-                  color: colors.mutedText,
-                  textAlign: "right",
-                  lineHeight: 22,
-                }}
-              >
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
                 اعرض مشروعك أو ابحث عن فرصة شراكة موثّقة.
               </Text>
             </View>
@@ -147,7 +133,7 @@ export default function SignUpScreen() {
               keyboardType="phone-pad"
               autoComplete="tel"
               error={fieldErrors.phone}
-              style={{ fontFamily: fonts.mono, textAlign: "left" }}
+              style={{ fontFamily: fonts.numeric, textAlign: "left" }}
             />
 
             <Field
@@ -163,38 +149,17 @@ export default function SignUpScreen() {
             />
 
             {error ? (
-              <Text
-                style={{
-                  fontFamily: fonts.bodyMedium,
-                  fontSize: 13,
-                  color: colors.danger,
-                  textAlign: "right",
-                }}
-              >
-                {error}
-              </Text>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.danger, textAlign: "right" }}>{error}</Text>
             ) : null}
 
             <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onSubmit} />
 
-            <View
-              style={{
-                flexDirection: "row-reverse",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 4,
-              }}
-            >
-              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                لديك حساب بالفعل؟
-              </Text>
+            <View style={{ flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>لديك حساب بالفعل؟</Text>
               <Link href="/auth-email" asChild>
-                <Pressable hitSlop={8}>
-                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
-                    سجّل الدخول
-                  </Text>
-                </Pressable>
+                <Tappable haptic="none">
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.primary }}>سجّل الدخول</Text>
+                </Tappable>
               </Link>
             </View>
           </FadeInView>

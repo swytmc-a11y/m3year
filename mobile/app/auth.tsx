@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -11,15 +10,18 @@ import { useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
-import { Button, Field } from "@/components/ui";
+import { Field } from "@/components/ui";
+import { Button, Tappable } from "@/components/kit";
+import { useTheme } from "@/contexts/theme";
 import { phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
 import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsapp-auth";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 type Step = "phone" | "code" | "name";
 
 export default function AuthScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [normalizedPhone, setNormalizedPhone] = useState("");
@@ -99,11 +101,8 @@ export default function AuthScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
           keyboardShouldPersistTaps="handled"
@@ -114,27 +113,17 @@ export default function AuthScreen() {
               style={{
                 width: 84,
                 height: 84,
-                borderRadius: 22,
-                backgroundColor: colors.white,
-                borderWidth: 1,
-                borderColor: colors.grid,
+                borderRadius: radius.xxl,
+                backgroundColor: t.surface,
                 alignItems: "center",
                 justifyContent: "center",
+                ...t.shadowSm,
               }}
             >
               <LogoMark size={52} />
             </View>
-            <Text style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.ink }}>
-              معيار
-            </Text>
-            <Text
-              style={{
-                fontFamily: fonts.body,
-                fontSize: 14,
-                color: colors.mutedText,
-                textAlign: "center",
-              }}
-            >
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>معيار</Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
               منصة إعلانات وتوثيق فرص الشراكة
             </Text>
           </FadeInView>
@@ -143,10 +132,10 @@ export default function AuthScreen() {
             {step === "phone" ? (
               <>
                 <View style={{ gap: 4 }}>
-                  <Text style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
                     الدخول برقم الجوال
                   </Text>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
                     راح نرسل لك رمز تحقق عبر واتساب.
                   </Text>
                 </View>
@@ -158,7 +147,7 @@ export default function AuthScreen() {
                   placeholder="05xxxxxxxx"
                   keyboardType="phone-pad"
                   autoComplete="tel"
-                  style={{ fontFamily: fonts.mono, textAlign: "left" }}
+                  style={{ fontFamily: fonts.numeric, textAlign: "left" }}
                 />
 
                 {error ? <ErrorText text={error} /> : null}
@@ -170,10 +159,10 @@ export default function AuthScreen() {
             {step === "code" ? (
               <>
                 <View style={{ gap: 4 }}>
-                  <Text style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
                     أدخل رمز التحقق
                   </Text>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
                     أرسلنا رمزًا مكوّنًا من 4 أرقام عبر واتساب إلى {normalizedPhone}
                   </Text>
                 </View>
@@ -185,7 +174,7 @@ export default function AuthScreen() {
                   placeholder="0000"
                   keyboardType="number-pad"
                   maxLength={4}
-                  style={{ fontFamily: fonts.mono, textAlign: "center", fontSize: 22, letterSpacing: 6 }}
+                  style={{ fontFamily: fonts.numeric, textAlign: "center", fontSize: 22, letterSpacing: 6 }}
                 />
 
                 {error ? <ErrorText text={error} /> : null}
@@ -193,22 +182,14 @@ export default function AuthScreen() {
                 <Button label="تأكيد" fullWidth loading={loading} onPress={onVerifyCode} />
 
                 <View style={{ flexDirection: "row-reverse", justifyContent: "center", gap: 8 }}>
-                  <Pressable hitSlop={8} disabled={resendCooldown} onPress={onResend}>
-                    <Text
-                      style={{
-                        fontFamily: fonts.bodyBold,
-                        fontSize: 13,
-                        color: resendCooldown ? colors.mutedText : colors.verify,
-                      }}
-                    >
+                  <Tappable haptic="none" disabled={resendCooldown} onPress={onResend}>
+                    <Text style={{ fontFamily: fonts.displayBold, fontSize: 12.5, color: resendCooldown ? t.textMuted : t.primary }}>
                       {resendCooldown ? "أعد الإرسال بعد قليل" : "إعادة إرسال الرمز"}
                     </Text>
-                  </Pressable>
-                  <Pressable hitSlop={8} onPress={() => setStep("phone")}>
-                    <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText }}>
-                      تغيير الرقم
-                    </Text>
-                  </Pressable>
+                  </Tappable>
+                  <Tappable haptic="none" onPress={() => setStep("phone")}>
+                    <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted }}>تغيير الرقم</Text>
+                  </Tappable>
                 </View>
               </>
             ) : null}
@@ -216,22 +197,15 @@ export default function AuthScreen() {
             {step === "name" ? (
               <>
                 <View style={{ gap: 4 }}>
-                  <Text style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
                     أكمل حسابك
                   </Text>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
                     رقمك موثّق. بس خبرنا اسمك ونكمل.
                   </Text>
                 </View>
 
-                <Field
-                  label="الاسم الكامل"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="اسمك"
-                  autoComplete="name"
-                  style={{ textAlign: "right" }}
-                />
+                <Field label="الاسم الكامل" value={fullName} onChangeText={setFullName} placeholder="اسمك" autoComplete="name" style={{ textAlign: "right" }} />
 
                 {error ? <ErrorText text={error} /> : null}
 
@@ -240,21 +214,11 @@ export default function AuthScreen() {
             ) : null}
 
             {step === "phone" ? (
-              <View
-                style={{
-                  flexDirection: "row-reverse",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 6,
-                  marginTop: 4,
-                }}
-              >
+              <View style={{ flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
                 <Link href="/auth-email" asChild>
-                  <Pressable hitSlop={8}>
-                    <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
-                      الدخول بالبريد الإلكتروني
-                    </Text>
-                  </Pressable>
+                  <Tappable haptic="none">
+                    <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.primary }}>الدخول بالبريد الإلكتروني</Text>
+                  </Tappable>
                 </Link>
               </View>
             ) : null}
@@ -263,30 +227,16 @@ export default function AuthScreen() {
           {step === "phone" ? (
             <FadeInView delay={220} style={{ alignItems: "center", marginTop: 28, gap: 12 }}>
               <Link href="/" asChild>
-                <Pressable hitSlop={8}>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                    تصفّح دون تسجيل الدخول
-                  </Text>
-                </Pressable>
+                <Tappable haptic="none">
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>تصفّح دون تسجيل الدخول</Text>
+                </Tappable>
               </Link>
-              <View
-                style={{
-                  flexDirection: "row-reverse",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 6,
-                  marginTop: 6,
-                }}
-              >
-                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
-                  ليس لديك حساب؟
-                </Text>
+              <View style={{ flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted }}>ليس لديك حساب؟</Text>
                 <Link href="/signup" asChild>
-                  <Pressable hitSlop={8}>
-                    <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: colors.verify }}>
-                      أنشئ حسابًا
-                    </Text>
-                  </Pressable>
+                  <Tappable haptic="none">
+                    <Text style={{ fontFamily: fonts.displayBold, fontSize: 11.5, color: t.primary }}>أنشئ حسابًا</Text>
+                  </Tappable>
                 </Link>
               </View>
             </FadeInView>
@@ -298,15 +248,9 @@ export default function AuthScreen() {
 }
 
 function ErrorText({ text }: { text: string }) {
+  const { t } = useTheme();
   return (
-    <Text
-      style={{
-        fontFamily: fonts.bodyMedium,
-        fontSize: 13,
-        color: colors.danger,
-        textAlign: "right",
-      }}
-    >
+    <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.danger, textAlign: "right" }}>
       {text}
     </Text>
   );
