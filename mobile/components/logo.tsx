@@ -1,13 +1,21 @@
 import { View, Text, Image } from "react-native";
-import { colors, fonts } from "@/theme";
+import { fonts } from "@/theme";
+import { useTheme } from "@/contexts/theme";
 
-const MARK = require("../assets/logo-mark.png");
+const MARK_LIGHT = require("../assets/logo-mark.png");
+const MARK_DARK = require("../assets/logo-mark-dark.png");
 
-/** The brand mark on its own (the two teal brackets), sourced from the real logo. */
+/**
+ * The brand mark on its own (the measuring brackets), sourced from the real
+ * logo. Two pre-tinted assets (not one dynamically-tinted image) because a
+ * flat indigo #4338CA reads too muted against the near-black dark surface —
+ * dark mode uses the lighter #7C74E8 that matches darkTokens.primary.
+ */
 export function LogoMark({ size = 28 }: { size?: number }) {
+  const { isDark } = useTheme();
   return (
     <Image
-      source={MARK}
+      source={isDark ? MARK_DARK : MARK_LIGHT}
       style={{ width: size, height: size }}
       resizeMode="contain"
       accessibilityIgnoresInvertColors
@@ -17,13 +25,14 @@ export function LogoMark({ size = 28 }: { size?: number }) {
 
 /** Brand mark + "معيار" wordmark, laid out for RTL. */
 export function Logo({ size = 26 }: { size?: number }) {
+  const { t } = useTheme();
   return (
     <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}>
       <Text
         style={{
-          fontFamily: fonts.heading,
+          fontFamily: fonts.displayBold,
           fontSize: size,
-          color: colors.ink,
+          color: t.text,
         }}
       >
         معيار
