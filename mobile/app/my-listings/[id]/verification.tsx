@@ -3,15 +3,17 @@ import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
-import { TopBar, Button, Card } from "@/components/ui";
+import { Button, Card, IconButton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import {
   getLatestVerificationRequest,
   setFinancialStatementPath,
 } from "@/lib/verification-actions";
 import { uploadFinancialStatement, getVerificationDocSignedUrl } from "@/lib/storage";
 import type { VerificationRequestRow } from "@/lib/accountant-actions";
-import { colors, fonts } from "@/theme";
+import { fonts } from "@/theme";
 import * as Linking from "expo-linking";
 
 const REQUEST_STATUS_LABELS: Record<VerificationRequestRow["status"], string> = {
@@ -24,6 +26,7 @@ const REQUEST_STATUS_LABELS: Record<VerificationRequestRow["status"], string> = 
 
 export default function OwnerVerificationScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, loading: authLoading } = useAuth();
 
@@ -48,7 +51,7 @@ export default function OwnerVerificationScreen() {
   );
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -71,11 +74,7 @@ export default function OwnerVerificationScreen() {
 
     const asset = result.assets[0];
     setBusy(true);
-    const { path, error: uploadError } = await uploadFinancialStatement(
-      request.id,
-      asset.uri,
-      asset.name,
-    );
+    const { path, error: uploadError } = await uploadFinancialStatement(request.id, asset.uri, asset.name);
     if (uploadError || !path) {
       setBusy(false);
       setError(uploadError ?? "تعذّر رفع الملف الآن.");
@@ -102,41 +101,41 @@ export default function OwnerVerificationScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="التوثيق المالي" onBack={() => router.back()} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>التوثيق المالي</Text>
+      </View>
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator color={colors.ink} />
+          <ActivityIndicator color={t.text} />
         </View>
       ) : !request ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
-          <Text style={{ fontFamily: fonts.body, fontSize: 15, color: colors.mutedText, textAlign: "center" }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: t.textMuted, textAlign: "center" }}>
             لا يوجد طلب توثيق لهذا الإعلان بعد.
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-          <Card style={{ gap: 8 }}>
-            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right" }}>
-              حالة الطلب
-            </Text>
-            <Text style={{ fontFamily: fonts.bodyBold, fontSize: 17, color: colors.ink, textAlign: "right" }}>
+        <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }}>
+          <Card style={{ padding: 20, gap: 8 }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>حالة الطلب</Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 16, color: t.text, textAlign: "right" }}>
               {REQUEST_STATUS_LABELS[request.status]}
             </Text>
           </Card>
 
-          <Card style={{ gap: 14 }}>
-            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink, textAlign: "right" }}>
-              القوائم المالية
-            </Text>
-            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}>
-              يظهر هذا الملف فقط لك وللمحاسب المكلَّف بمراجعة طلبك، ولا يُنشر
-              للعامة أبدًا.
+          <Card style={{ padding: 20, gap: 14 }}>
+            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.text, textAlign: "right" }}>القوائم المالية</Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
+              يظهر هذا الملف فقط لك وللمحاسب المكلَّف بمراجعة طلبك، ولا يُنشر للعامة أبدًا.
             </Text>
             {request.financial_statement_path ? (
               <Button
                 label="فتح الملف المرفوع"
-                variant="ghost"
+                variant="secondary"
                 fullWidth
                 loading={openingDoc}
                 onPress={() => onOpenDoc(request.financial_statement_path!)}
@@ -149,9 +148,7 @@ export default function OwnerVerificationScreen() {
               onPress={onPickAndUpload}
             />
             {error ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right" }}>
-                {error}
-              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right" }}>{error}</Text>
             ) : null}
           </Card>
         </ScrollView>

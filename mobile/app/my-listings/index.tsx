@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, TopBar } from "@/components/ui";
+import { Button, Card, IconButton, Skeleton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import {
   StatusBadge,
   VerifiedBadge,
@@ -10,6 +11,7 @@ import {
   Metric,
 } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import {
   submitListingForReview,
@@ -22,10 +24,11 @@ import {
   formatPercentage,
   type Listing,
 } from "@/lib/constants";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 export default function MyListingsScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { session, loading: authLoading } = useAuth();
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export default function MyListingsScreen() {
   );
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -72,36 +75,24 @@ export default function MyListingsScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.paper }}
-      edges={["top"]}
-    >
-      <TopBar
-        title="إعلاناتي"
-        onBack={() => router.back()}
-        right={
-          <Button
-            label="إعلان جديد"
-            onPress={() => router.push("/my-listings/new")}
-          />
-        }
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 10 }}>
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>إعلاناتي</Text>
+        </View>
+        <Button label="إعلان جديد" onPress={() => router.push("/my-listings/new")} />
+      </View>
 
       <FlatList
         data={listings ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16, flexGrow: 1 }}
         ListHeaderComponent={
           verifyError ? (
-            <Text
-              style={{
-                fontFamily: fonts.body,
-                fontSize: 13,
-                color: colors.amber,
-                textAlign: "right",
-                marginBottom: 4,
-              }}
-            >
+            <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right", marginBottom: 4 }}>
               {verifyError}
             </Text>
           ) : null
@@ -112,55 +103,24 @@ export default function MyListingsScreen() {
             busy={busyId === item.id}
             onEdit={() => router.push(`/my-listings/${item.id}/edit`)}
             onView={() => router.push(`/listings/${item.id}`)}
-            onSubmit={() =>
-              runAction(() => submitListingForReview(item.id), item.id)
-            }
-            onArchive={() =>
-              runAction(() => archiveListing(item.id), item.id)
-            }
-            onRequestVerification={() =>
-              runAction(() => requestVerification(item.id), item.id)
-            }
-            onManageVerification={() =>
-              router.push(`/my-listings/${item.id}/verification`)
-            }
+            onSubmit={() => runAction(() => submitListingForReview(item.id), item.id)}
+            onArchive={() => runAction(() => archiveListing(item.id), item.id)}
+            onRequestVerification={() => runAction(() => requestVerification(item.id), item.id)}
+            onManageVerification={() => router.push(`/my-listings/${item.id}/verification`)}
           />
         )}
         ListEmptyComponent={
           loading ? (
-            <View style={{ paddingVertical: 48, alignItems: "center" }}>
-              <ActivityIndicator color={colors.ink} />
+            <View style={{ gap: 16 }}>
+              <Skeleton width="100%" height={160} radius={radius.xl} />
             </View>
           ) : (
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderColor: colors.grid,
-                borderWidth: 1,
-                borderRadius: 12,
-                padding: 40,
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: fonts.body,
-                  fontSize: 14,
-                  color: colors.mutedText,
-                }}
-              >
-                {error
-                  ? "تعذّر تحميل إعلاناتك الآن."
-                  : "لم تنشئ أي إعلان بعد."}
+            <Card style={{ alignItems: "center", gap: 16, paddingVertical: 40 }}>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>
+                {error ? "تعذّر تحميل إعلاناتك الآن." : "لم تنشئ أي إعلان بعد."}
               </Text>
-              {!error ? (
-                <Button
-                  label="أنشئ أول إعلان"
-                  onPress={() => router.push("/my-listings/new")}
-                />
-              ) : null}
-            </View>
+              {!error ? <Button label="أنشئ أول إعلان" onPress={() => router.push("/my-listings/new")} /> : null}
+            </Card>
           )
         }
       />
@@ -187,53 +147,21 @@ function MyRow({
   onRequestVerification: () => void;
   onManageVerification: () => void;
 }) {
-  const canSubmit =
-    listing.status === "draft" || listing.status === "rejected";
+  const { t } = useTheme();
+  const canSubmit = listing.status === "draft" || listing.status === "rejected";
   const canArchive = listing.status !== "archived";
   const canRequestVerification =
-    listing.verification_status === "none" ||
-    listing.verification_status === "rejected";
+    listing.verification_status === "none" || listing.verification_status === "rejected";
   const hasVerificationRequest = !canRequestVerification;
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.white,
-        borderColor: colors.grid,
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 20,
-        gap: 14,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-        }}
-      >
+    <Card style={{ padding: 20, gap: 14 }}>
+      <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontFamily: fonts.bodyBold,
-              fontSize: 16,
-              color: colors.ink,
-              textAlign: "right",
-            }}
-          >
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
             {listing.title}
           </Text>
-          <Text
-            style={{
-              fontFamily: fonts.body,
-              fontSize: 13,
-              color: colors.mutedText,
-              marginTop: 4,
-              textAlign: "right",
-            }}
-          >
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
             قطاع {SECTOR_LABELS[listing.sector]} · {listing.city}
           </Text>
         </View>
@@ -249,80 +177,36 @@ function MyRow({
           gap: 32,
           borderTopWidth: 1,
           borderBottomWidth: 1,
-          borderColor: colors.grid,
-          borderStyle: "dashed",
+          borderColor: t.border,
           paddingVertical: 12,
         }}
       >
         <Metric label="الإيراد الشهري" value={formatSar(listing.monthly_revenue)} />
-        <Metric
-          label="النسبة المطروحة"
-          value={formatPercentage(listing.offered_percentage)}
-          amber
-        />
+        <Metric label="النسبة المطروحة" value={formatPercentage(listing.offered_percentage)} amber />
       </View>
 
       {listing.status === "rejected" && listing.rejection_reason ? (
-        <View
-          style={{
-            backgroundColor: colors.dangerBg,
-            borderRadius: 8,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: fonts.body,
-              fontSize: 13,
-              color: colors.danger,
-              textAlign: "right",
-            }}
-          >
+        <View style={{ backgroundColor: t.dangerTint, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right" }}>
             سبب الرفض: {listing.rejection_reason}
           </Text>
         </View>
       ) : null}
 
       <View style={{ gap: 8 }}>
-        {listing.verification_status !== "verified" ? (
-          <VerificationStatusPill status={listing.verification_status} />
-        ) : null}
-        {canRequestVerification ? (
-          <Button
-            label="اطلب التوثيق المالي"
-            variant="ghost"
-            onPress={onRequestVerification}
-          />
-        ) : null}
+        {listing.verification_status !== "verified" ? <VerificationStatusPill status={listing.verification_status} /> : null}
+        {canRequestVerification ? <Button label="اطلب التوثيق المالي" variant="secondary" onPress={onRequestVerification} /> : null}
         {hasVerificationRequest ? (
-          <Button
-            label="إدارة التوثيق ورفع القوائم المالية"
-            variant="ghost"
-            onPress={onManageVerification}
-          />
+          <Button label="إدارة التوثيق ورفع القوائم المالية" variant="secondary" onPress={onManageVerification} />
         ) : null}
       </View>
 
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          flexWrap: "wrap",
-          gap: 8,
-          opacity: busy ? 0.5 : 1,
-        }}
-      >
-        <Button label="تعديل" variant="ghost" onPress={onEdit} />
-        {listing.status === "published" ? (
-          <Button label="عرض عام" variant="ghost" onPress={onView} />
-        ) : null}
-        {canSubmit ? (
-          <Button label="إرسال للمراجعة" variant="verify" onPress={onSubmit} />
-        ) : null}
-        {canArchive ? (
-          <Button label="أرشفة" variant="ghost" onPress={onArchive} />
-        ) : null}
+      <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, opacity: busy ? 0.5 : 1 }}>
+        <Button label="تعديل" variant="secondary" onPress={onEdit} />
+        {listing.status === "published" ? <Button label="عرض عام" variant="secondary" onPress={onView} /> : null}
+        {canSubmit ? <Button label="إرسال للمراجعة" onPress={onSubmit} /> : null}
+        {canArchive ? <Button label="أرشفة" variant="secondary" onPress={onArchive} /> : null}
       </View>
-    </View>
+    </Card>
   );
 }

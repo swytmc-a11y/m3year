@@ -1,19 +1,22 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, TopBar } from "@/components/ui";
+import { Button, Card, IconButton, Skeleton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import { StatusBadge, VerifiedBadge, VerificationStatusPill, Metric } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import { submitFranchiseForReview, archiveFranchise } from "@/lib/franchises-actions";
 import { requestFranchiseVerification } from "@/lib/verification-actions";
 import { SECTOR_LABELS, formatSar } from "@/lib/constants";
 import { formatSarRange, type Franchise } from "@/lib/franchise-constants";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 export default function MyFranchisesScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { session, loading: authLoading } = useAuth();
   const [franchises, setFranchises] = useState<Franchise[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +48,7 @@ export default function MyFranchisesScreen() {
   );
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -60,20 +63,24 @@ export default function MyFranchisesScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar
-        title="امتيازاتي"
-        onBack={() => router.back()}
-        right={<Button label="امتياز جديد" onPress={() => router.push("/my-franchises/new")} />}
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 10 }}>
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>امتيازاتي</Text>
+        </View>
+        <Button label="امتياز جديد" onPress={() => router.push("/my-franchises/new")} />
+      </View>
 
       <FlatList
         data={franchises ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16, flexGrow: 1 }}
         ListHeaderComponent={
           verifyError ? (
-            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right", marginBottom: 4 }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right", marginBottom: 4 }}>
               {verifyError}
             </Text>
           ) : null
@@ -86,36 +93,20 @@ export default function MyFranchisesScreen() {
             onView={() => router.push(`/franchises/${item.id}`)}
             onSubmit={() => runAction(() => submitFranchiseForReview(item.id), item.id)}
             onArchive={() => runAction(() => archiveFranchise(item.id), item.id)}
-            onRequestVerification={() =>
-              runAction(() => requestFranchiseVerification(item.id), item.id)
-            }
+            onRequestVerification={() => runAction(() => requestFranchiseVerification(item.id), item.id)}
             onManageVerification={() => router.push(`/my-franchises/${item.id}/verification`)}
           />
         )}
         ListEmptyComponent={
           loading ? (
-            <View style={{ paddingVertical: 48, alignItems: "center" }}>
-              <ActivityIndicator color={colors.ink} />
-            </View>
+            <Skeleton width="100%" height={160} radius={radius.xl} />
           ) : (
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderColor: colors.grid,
-                borderWidth: 1,
-                borderRadius: 12,
-                padding: 40,
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
+            <Card style={{ alignItems: "center", gap: 16, paddingVertical: 40 }}>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>
                 {error ? "تعذّر تحميل امتيازاتك الآن." : "لم تنشئ أي امتياز بعد."}
               </Text>
-              {!error ? (
-                <Button label="أنشئ أول امتياز" onPress={() => router.push("/my-franchises/new")} />
-              ) : null}
-            </View>
+              {!error ? <Button label="أنشئ أول امتياز" onPress={() => router.push("/my-franchises/new")} /> : null}
+            </Card>
           )
         }
       />
@@ -142,6 +133,7 @@ function MyRow({
   onRequestVerification: () => void;
   onManageVerification: () => void;
 }) {
+  const { t } = useTheme();
   const canSubmit = franchise.status === "draft" || franchise.status === "rejected";
   const canArchive = franchise.status !== "archived";
   const canRequestVerification =
@@ -149,22 +141,13 @@ function MyRow({
   const hasVerificationRequest = !canRequestVerification;
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.white,
-        borderColor: colors.grid,
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 20,
-        gap: 14,
-      }}
-    >
+    <Card style={{ padding: 20, gap: 14 }}>
       <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink, textAlign: "right" }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
             {franchise.brand_name}
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, marginTop: 4, textAlign: "right" }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
             قطاع {SECTOR_LABELS[franchise.sector]} · {franchise.city}
           </Text>
         </View>
@@ -180,8 +163,7 @@ function MyRow({
           gap: 32,
           borderTopWidth: 1,
           borderBottomWidth: 1,
-          borderColor: colors.grid,
-          borderStyle: "dashed",
+          borderColor: t.border,
           paddingVertical: 12,
         }}
       >
@@ -194,31 +176,27 @@ function MyRow({
       </View>
 
       {franchise.status === "rejected" && franchise.rejection_reason ? (
-        <View style={{ backgroundColor: colors.dangerBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
-          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.danger, textAlign: "right" }}>
+        <View style={{ backgroundColor: t.dangerTint, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right" }}>
             سبب الرفض: {franchise.rejection_reason}
           </Text>
         </View>
       ) : null}
 
       <View style={{ gap: 8 }}>
-        {franchise.verification_status !== "verified" ? (
-          <VerificationStatusPill status={franchise.verification_status} />
-        ) : null}
-        {canRequestVerification ? (
-          <Button label="اطلب التوثيق المالي" variant="ghost" onPress={onRequestVerification} />
-        ) : null}
+        {franchise.verification_status !== "verified" ? <VerificationStatusPill status={franchise.verification_status} /> : null}
+        {canRequestVerification ? <Button label="اطلب التوثيق المالي" variant="secondary" onPress={onRequestVerification} /> : null}
         {hasVerificationRequest ? (
-          <Button label="إدارة التوثيق ورفع القوائم المالية" variant="ghost" onPress={onManageVerification} />
+          <Button label="إدارة التوثيق ورفع القوائم المالية" variant="secondary" onPress={onManageVerification} />
         ) : null}
       </View>
 
       <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, opacity: busy ? 0.5 : 1 }}>
-        <Button label="تعديل" variant="ghost" onPress={onEdit} />
-        {franchise.status === "published" ? <Button label="عرض عام" variant="ghost" onPress={onView} /> : null}
-        {canSubmit ? <Button label="إرسال للمراجعة" variant="verify" onPress={onSubmit} /> : null}
-        {canArchive ? <Button label="أرشفة" variant="ghost" onPress={onArchive} /> : null}
+        <Button label="تعديل" variant="secondary" onPress={onEdit} />
+        {franchise.status === "published" ? <Button label="عرض عام" variant="secondary" onPress={onView} /> : null}
+        {canSubmit ? <Button label="إرسال للمراجعة" onPress={onSubmit} /> : null}
+        {canArchive ? <Button label="أرشفة" variant="secondary" onPress={onArchive} /> : null}
       </View>
-    </View>
+    </Card>
   );
 }
