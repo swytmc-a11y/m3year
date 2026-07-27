@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, RefreshControl } from "react-native";
 import { useRouter, useFocusEffect, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { Logo } from "@/components/logo";
-import { Button, Card, Skeleton, Tappable, staggerEnter } from "@/components/kit";
+import { Button, Card, EmptyState, Skeleton, Tappable, staggerEnter, useRefreshTint, useTabBarSpacing } from "@/components/kit";
+import { ChatIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { listMyConversations, type ConversationSummary } from "@/lib/messaging";
@@ -29,17 +30,27 @@ function formatWhen(iso: string | null): string {
 export default function MessagesScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const tabSpacing = useTabBarSpacing();
   const { session, loading: authLoading } = useAuth();
+  const refreshTint = useRefreshTint();
   const [conversations, setConversations] = useState<ConversationSummary[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
+    setError(false);
     const { data, error: err } = await listMyConversations();
     if (err) setError(true);
     else setConversations(data ?? []);
     setLoading(false);
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,7 +89,8 @@ export default function MessagesScreen() {
       <FlatList
         data={conversations ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 12, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, paddingBottom: tabSpacing, gap: 12, flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
         renderItem={({ item, index }) => (
           <Animated.View entering={staggerEnter(Math.min(index, 8))}>
             <Tappable onPress={() => router.push(`/messages/${item.id}`)} haptic="light">
@@ -131,12 +143,18 @@ export default function MessagesScreen() {
                 <Skeleton key={i} width="100%" height={72} radius={radius.xl} />
               ))}
             </View>
+          ) : error ? (
+            <EmptyState
+              title="تعذّر التحميل"
+              description="تعذّر تحميل المحادثات الآن."
+              action={<Button label="إعادة المحاولة" variant="secondary" onPress={() => load()} />}
+            />
           ) : (
-            <View style={{ backgroundColor: t.surface, borderRadius: radius.xl, padding: 40, alignItems: "center", ...t.shadowSm }}>
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>
-                {error ? "تعذّر تحميل المحادثات الآن." : "لا توجد محادثات بعد."}
-              </Text>
-            </View>
+            <EmptyState
+              icon={<ChatIcon focused={false} color={t.textMuted} size={20} />}
+              title="لا توجد محادثات بعد"
+              description="تبدأ المحادثة عند تواصلك مع صاحب فرصة أو امتياز."
+            />
           )
         }
       />

@@ -13,6 +13,7 @@ import {
   StatCard,
   Tappable,
   useRefreshTint,
+  useTabBarSpacing,
 } from "@/components/kit";
 import {
   CalculatorIcon,
@@ -60,6 +61,7 @@ function initialsOf(name: string): string {
 export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
   const { session, user, isAdmin, loading } = useAuth();
   const [isActiveAccountant, setIsActiveAccountant] = useState(false);
@@ -215,7 +217,7 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 14 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, paddingBottom: tabSpacing, gap: 14 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
       >
         {/* Identity: portrait above the name, with editing right beside it. */}

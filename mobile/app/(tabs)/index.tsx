@@ -14,6 +14,7 @@ import {
   Skeleton,
   Tappable,
   useRefreshTint,
+  useTabBarSpacing,
 } from "@/components/kit";
 import { BellIcon, FilterIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { CreateTypeSheet } from "@/components/create-type-sheet";
@@ -43,6 +44,7 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
 
   const [mode, setMode] = useState<Mode>("listings");
@@ -206,7 +208,7 @@ export default function HomeScreen() {
             <FranchiseCard franchise={item as Franchise} index={index} />
           )
         }
-        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, paddingBottom: tabSpacing, gap: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
         ListHeaderComponent={
           <HomeHeader
@@ -535,6 +537,9 @@ function RangeInput({
       placeholderTextColor={t.textMuted}
       style={{
         flex: 1,
+        // Without this a TextInput refuses to shrink below its intrinsic width,
+        // so the pair overflows the sheet's padding on narrow screens.
+        minWidth: 0,
         height: 44,
         borderRadius: radius.lg,
         borderWidth: 1,

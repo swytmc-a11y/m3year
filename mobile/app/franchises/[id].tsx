@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Share, Modal } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
+import Animated, { ZoomIn } from "react-native-reanimated";
 import { Button, Card, Field, IconButton, Skeleton, Tappable, staggerEnter } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon } from "@/components/icons";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
@@ -201,18 +201,20 @@ export default function FranchiseDetailScreen() {
           ) : null}
 
           {franchise.photo_urls && franchise.photo_urls.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
-              {franchise.photo_urls.map((url) => (
-                <Image
-                  key={url}
-                  source={{ uri: url }}
-                  style={{ width: 260, height: 180, borderRadius: radius.xl, backgroundColor: t.surface2 }}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              ))}
-            </ScrollView>
+            <Animated.View entering={ZoomIn.springify().damping(20).mass(0.65)}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
+                {franchise.photo_urls.map((url) => (
+                  <Image
+                    key={url}
+                    source={{ uri: url }}
+                    style={{ width: 260, height: 180, borderRadius: radius.xl, backgroundColor: t.surface2 }}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
           ) : null}
 
           <Animated.View entering={staggerEnter(0)}>

@@ -255,13 +255,15 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
           minHeight: 36,
           borderRadius: radius.pill,
           borderWidth: 1,
-          borderColor: active ? t.text : t.border,
-          backgroundColor: active ? t.text : t.surface,
+          // Selection reads as the brand accent everywhere — the same signal the
+          // SegmentedControl uses — rather than a second near-black "on" colour.
+          borderColor: active ? t.primary : t.border,
+          backgroundColor: active ? t.primary : t.surface,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: active ? t.bg : t.textMuted }}>
+        <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: active ? t.onPrimary : t.textMuted }}>
           {label}
         </Text>
       </View>
@@ -826,6 +828,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       ) : null}
     </ToastContext.Provider>
   );
+}
+
+// ---- floating tab bar clearance ----
+//
+// The tab bar hovers over the content rather than sitting in its own strip, so
+// scrollable content inside a tab must reserve room for it or the last card
+// ends up underneath the pill.
+const TAB_PILL_HEIGHT = 56;
+const TAB_PILL_GAP = 14;
+
+export function useTabBarSpacing() {
+  const insets = useSafeAreaInsets();
+  return TAB_PILL_GAP + TAB_PILL_HEIGHT + insets.bottom + 12;
 }
 
 // ---- themed pull-to-refresh colors ----

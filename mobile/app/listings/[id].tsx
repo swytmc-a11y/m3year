@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Share } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
-import { Button, Card, IconButton, Skeleton, Tappable, staggerEnter } from "@/components/kit";
+import Animated, { ZoomIn } from "react-native-reanimated";
+import { Button, Card, IconButton, Skeleton, Tappable, staggerEnter, useToast } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon } from "@/components/icons";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
@@ -30,6 +30,7 @@ import { fonts, radius } from "@/theme";
 export default function ListingDetailScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, user } = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
@@ -106,7 +107,11 @@ export default function ListingDetailScreen() {
     setFavoriteError(null);
     const { favorited: next, error: favError } = await toggleFavorite(listing.id, favorited);
     setFavorited(next);
-    if (favError) setFavoriteError(favError);
+    if (favError) {
+      setFavoriteError(favError);
+      return;
+    }
+    toast(next ? "أُضيف إلى المفضلة." : "أُزيل من المفضلة.", "success");
   }
 
   async function onShare() {
@@ -176,18 +181,20 @@ export default function ListingDetailScreen() {
           ) : null}
 
           {listing.photo_urls && listing.photo_urls.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
-              {listing.photo_urls.map((url) => (
-                <Image
-                  key={url}
-                  source={{ uri: url }}
-                  style={{ width: 260, height: 180, borderRadius: radius.xl, backgroundColor: t.surface2 }}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              ))}
-            </ScrollView>
+            <Animated.View entering={ZoomIn.springify().damping(20).mass(0.65)}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
+                {listing.photo_urls.map((url) => (
+                  <Image
+                    key={url}
+                    source={{ uri: url }}
+                    style={{ width: 260, height: 180, borderRadius: radius.xl, backgroundColor: t.surface2 }}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
           ) : null}
 
           <Animated.View entering={staggerEnter(0)}>

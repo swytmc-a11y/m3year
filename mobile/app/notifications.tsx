@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, RefreshControl } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, IconButton, Skeleton, Tappable } from "@/components/kit";
+import { Button, EmptyState, IconButton, Skeleton, Tappable, useRefreshTint } from "@/components/kit";
 import { BellIcon, ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -27,26 +27,34 @@ function formatWhen(iso: string): string {
 const TYPE_ROUTE: Record<string, (relatedId: string) => string> = {
   new_message: (id) => `/messages/${id}`,
   listing_published: (id) => `/listings/${id}`,
-  listing_rejected: (id) => `/my-listings`,
+  listing_rejected: () => "/my-ads",
   verification_completed: (id) => `/listings/${id}`,
-  verification_rejected: (id) => `/my-listings`,
+  verification_rejected: () => "/my-ads",
 };
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { t } = useTheme();
   const { session, loading: authLoading } = useAuth();
+  const refreshTint = useRefreshTint();
   const [items, setItems] = useState<AppNotification[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    setError(false);
     const { data, error: err } = await listMyNotifications();
     if (err) setError(true);
     else setItems(data ?? []);
     setLoading(false);
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   useFocusEffect(
     useCallback(() => {
@@ -94,6 +102,7 @@ export default function NotificationsScreen() {
         data={items ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 10, flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
         renderItem={({ item }) => (
           <Tappable onPress={() => onPressItem(item)} haptic="light">
             <View
@@ -127,20 +136,18 @@ export default function NotificationsScreen() {
               <Skeleton width="100%" height={64} radius={radius.xl} />
               <Skeleton width="100%" height={64} radius={radius.xl} />
             </View>
+          ) : error ? (
+            <EmptyState
+              title="تعذّر التحميل"
+              description="تعذّر تحميل الإشعارات الآن."
+              action={<Button label="إعادة المحاولة" variant="secondary" onPress={() => load()} />}
+            />
           ) : (
-            <Card style={{ alignItems: "center", gap: 10, paddingVertical: 40 }}>
-              <View style={{ width: 52, height: 52, borderRadius: radius.xl, backgroundColor: t.surface2, alignItems: "center", justifyContent: "center" }}>
-                <BellIcon color={t.textMuted} size={22} />
-              </View>
-              <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.text }}>
-                {error ? "تعذّر تحميل الإشعارات الآن." : "لا إشعارات بعد"}
-              </Text>
-              {!error ? (
-                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "center" }}>
-                  ستصلك هنا تحديثات إعلاناتك ومحادثاتك
-                </Text>
-              ) : null}
-            </Card>
+            <EmptyState
+              icon={<BellIcon color={t.textMuted} size={20} />}
+              title="لا إشعارات بعد"
+              description="ستصلك هنا تحديثات إعلاناتك ومحادثاتك."
+            />
           )
         }
       />

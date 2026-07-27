@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Switch } from "react-native";
 import { useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, Field, IconButton } from "@/components/kit";
+import { Button, Card, Field, IconButton, useToast } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -13,13 +13,13 @@ import { fonts } from "@/theme";
 export default function SettingsScreen() {
   const router = useRouter();
   const { t, isDark, toggleDark } = useTheme();
+  const toast = useToast();
   const { session, user, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -50,7 +50,6 @@ export default function SettingsScreen() {
 
   async function onSave() {
     setError(undefined);
-    setSaved(false);
     if (fullName.trim().length < 2) {
       setError("أدخل اسمًا صحيحًا.");
       return;
@@ -65,7 +64,7 @@ export default function SettingsScreen() {
       setError(saveError);
       return;
     }
-    setSaved(true);
+    toast("تم حفظ التعديلات.", "success");
   }
 
   return (
@@ -95,9 +94,6 @@ export default function SettingsScreen() {
             ) : null}
             {error ? (
               <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.danger, textAlign: "right" }}>{error}</Text>
-            ) : null}
-            {saved ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.success, textAlign: "right" }}>تم حفظ التعديلات.</Text>
             ) : null}
             <Button label="حفظ التعديلات" fullWidth loading={saving} onPress={onSave} />
           </Card>
