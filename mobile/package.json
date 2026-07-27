@@ -49,7 +49,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package || true"
   },
   "private": true
 }
