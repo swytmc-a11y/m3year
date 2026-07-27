@@ -2,12 +2,15 @@ import { useState } from "react";
 import { View, Text, ScrollView, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Button, Card } from "@/components/ui";
+import { Button, Card, IconButton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
+import { useTheme } from "@/contexts/theme";
 import { submitReport } from "@/lib/reports";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 export default function ReportScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { targetType, targetId } = useLocalSearchParams<{
     targetType: "listing" | "franchise" | "user";
     targetId: string;
@@ -39,35 +42,32 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="الإبلاغ" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الإبلاغ</Text>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 18 }}>
         {sent ? (
           <Card style={{ gap: 12, alignItems: "center", padding: 32 }}>
-            <Text style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink }}>
-              تم استلام بلاغك
-            </Text>
-            <Text
-              style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center" }}
-            >
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 17, color: t.text }}>تم استلام بلاغك</Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
               سيراجع فريق معيار البلاغ ويتخذ الإجراء المناسب.
             </Text>
             <Button label="عودة" onPress={() => router.back()} />
           </Card>
         ) : (
-          <Card style={{ gap: 16 }}>
-            <Text
-              style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}
-            >
+          <Card style={{ padding: 20, gap: 16 }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
               أخبرنا لماذا تُبلغ عن هذا{" "}
               {targetType === "user" ? "المستخدم" : targetType === "franchise" ? "الامتياز" : "الإعلان"}.
               سيتم مراجعة البلاغ من فريق معيار.
             </Text>
             <ReasonInput value={reason} onChangeText={setReason} />
             {error ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.amber, textAlign: "right" }}>
-                {error}
-              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.danger, textAlign: "right" }}>{error}</Text>
             ) : null}
             <Button label="إرسال البلاغ" fullWidth loading={loading} onPress={onSubmit} />
           </Card>
@@ -77,31 +77,25 @@ export default function ReportScreen() {
   );
 }
 
-function ReasonInput({
-  value,
-  onChangeText,
-}: {
-  value: string;
-  onChangeText: (v: string) => void;
-}) {
+function ReasonInput({ value, onChangeText }: { value: string; onChangeText: (v: string) => void }) {
+  const { t } = useTheme();
   return (
     <TextInput
       value={value}
       onChangeText={onChangeText}
       placeholder="اشرح سبب البلاغ..."
-      placeholderTextColor={colors.mutedText}
+      placeholderTextColor={t.textMuted}
       multiline
       numberOfLines={5}
       maxLength={1000}
       style={{
         minHeight: 120,
-        borderWidth: 1,
-        borderColor: colors.grid,
-        borderRadius: 8,
+        borderRadius: radius.lg,
+        backgroundColor: t.surface2,
         padding: 12,
         fontFamily: fonts.body,
-        fontSize: 14,
-        color: colors.ink,
+        fontSize: 13,
+        color: t.text,
         textAlign: "right",
         textAlignVertical: "top",
       }}

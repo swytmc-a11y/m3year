@@ -1,16 +1,18 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Button } from "@/components/ui";
+import { Button, Card, IconButton, Skeleton, Tappable } from "@/components/kit";
+import { BellIcon, ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import {
   listMyNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   type AppNotification,
 } from "@/lib/notifications";
-import { colors, fonts, radius } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 const AR_MONTHS_SHORT = [
   "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
@@ -32,6 +34,7 @@ const TYPE_ROUTE: Record<string, (relatedId: string) => string> = {
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { session, loading: authLoading } = useAuth();
   const [items, setItems] = useState<AppNotification[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +55,7 @@ export default function NotificationsScreen() {
   );
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -70,72 +73,74 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar
-        title="الإشعارات"
-        onBack={() => router.back()}
-        right={
-          <Button
-            label="تعليم الكل كمقروء"
-            variant="ghost"
-            onPress={async () => {
-              await markAllNotificationsRead();
-              load();
-            }}
-          />
-        }
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 10 }}>
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الإشعارات</Text>
+        </View>
+        <Button
+          label="تعليم الكل كمقروء"
+          variant="secondary"
+          onPress={async () => {
+            await markAllNotificationsRead();
+            load();
+          }}
+        />
+      </View>
       <FlatList
         data={items ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, gap: 10, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 10, flexGrow: 1 }}
         renderItem={({ item }) => (
-          <Pressable
-            onPress={() => onPressItem(item)}
-            style={{
-              backgroundColor: item.read_at ? colors.white : "rgba(217,118,43,0.06)",
-              borderColor: colors.grid,
-              borderWidth: 1,
-              borderRadius: radius.lg,
-              padding: 16,
-              gap: 4,
-            }}
-          >
-            <View style={{ flexDirection: "row-reverse", justifyContent: "space-between" }}>
-              <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.ink, textAlign: "right" }}>
-                {item.title}
-              </Text>
-              <Text style={{ fontFamily: fonts.mono, fontSize: 11, color: colors.mutedText }}>
-                {formatWhen(item.created_at)}
-              </Text>
+          <Tappable onPress={() => onPressItem(item)} haptic="light">
+            <View
+              style={{
+                backgroundColor: item.read_at ? t.surface : `${t.primary}12`,
+                borderRadius: radius.xl,
+                padding: 16,
+                gap: 4,
+                ...t.shadowSm,
+              }}
+            >
+              <View style={{ flexDirection: "row-reverse", justifyContent: "space-between" }}>
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.text, textAlign: "right" }}>
+                  {item.title}
+                </Text>
+                <Text style={{ fontFamily: fonts.numeric, fontSize: 10.5, color: t.textMuted }}>
+                  {formatWhen(item.created_at)}
+                </Text>
+              </View>
+              {item.body ? (
+                <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                  {item.body}
+                </Text>
+              ) : null}
             </View>
-            {item.body ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.subtleText, textAlign: "right" }}>
-                {item.body}
-              </Text>
-            ) : null}
-          </Pressable>
+          </Tappable>
         )}
         ListEmptyComponent={
           loading ? (
-            <View style={{ paddingVertical: 48, alignItems: "center" }}>
-              <ActivityIndicator color={colors.ink} />
+            <View style={{ gap: 10 }}>
+              <Skeleton width="100%" height={64} radius={radius.xl} />
+              <Skeleton width="100%" height={64} radius={radius.xl} />
             </View>
           ) : (
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderColor: colors.grid,
-                borderWidth: 1,
-                borderRadius: 12,
-                padding: 40,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                {error ? "تعذّر تحميل الإشعارات الآن." : "لا توجد إشعارات بعد."}
+            <Card style={{ alignItems: "center", gap: 10, paddingVertical: 40 }}>
+              <View style={{ width: 52, height: 52, borderRadius: radius.xl, backgroundColor: t.surface2, alignItems: "center", justifyContent: "center" }}>
+                <BellIcon color={t.textMuted} size={22} />
+              </View>
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.text }}>
+                {error ? "تعذّر تحميل الإشعارات الآن." : "لا إشعارات بعد"}
               </Text>
-            </View>
+              {!error ? (
+                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "center" }}>
+                  ستصلك هنا تحديثات إعلاناتك ومحادثاتك
+                </Text>
+              ) : null}
+            </Card>
           )
         }
       />

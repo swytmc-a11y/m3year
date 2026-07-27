@@ -1,16 +1,19 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar } from "@/components/ui";
+import { IconButton, Skeleton } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listings";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { listMyFavorites } from "@/lib/favorites";
 import type { Listing } from "@/lib/constants";
-import { colors, fonts } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { session, loading: authLoading } = useAuth();
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,37 +34,34 @@ export default function FavoritesScreen() {
   );
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="المفضلة" onBack={() => router.back()} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>المفضلة</Text>
+      </View>
       <FlatList
         data={listings ?? []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ListingCard listing={item} />}
-        contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}
+        renderItem={({ item, index }) => <ListingCard listing={item} index={index} />}
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16, flexGrow: 1 }}
         ListEmptyComponent={
           loading ? (
-            <View style={{ paddingVertical: 48, alignItems: "center" }}>
-              <ActivityIndicator color={colors.ink} />
+            <View style={{ gap: 16 }}>
+              <Skeleton width="100%" height={140} radius={radius.lg} />
+              <Skeleton width="100%" height={140} radius={radius.lg} />
             </View>
           ) : (
-            <View
-              style={{
-                backgroundColor: colors.white,
-                borderColor: colors.grid,
-                borderWidth: 1,
-                borderRadius: 12,
-                padding: 40,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
+            <View style={{ backgroundColor: t.surface, borderRadius: radius.xl, padding: 40, alignItems: "center", ...t.shadowSm }}>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>
                 {error ? "تعذّر تحميل المفضلة الآن." : "لم تحفظ أي إعلان بعد."}
               </Text>
             </View>
