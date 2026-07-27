@@ -14,7 +14,20 @@ const AUTHENTICA_BASE = "https://api.authentica.sa";
 const COOLDOWN_SECONDS = 60;
 const MAX_PER_HOUR = 5;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 Deno.serve(async (req: Request) => {
+  // The browser (and some fetch clients) send a CORS preflight OPTIONS
+  // request before the real POST — without answering it, the actual request
+  // never gets sent at all (surfaces client-side as a generic "failed to
+  // send a request" error, not any error from this function's own logic).
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
   if (req.method !== "POST") {
     return json({ error: "method not allowed" }, 405);
   }
@@ -107,6 +120,6 @@ Deno.serve(async (req: Request) => {
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
 }
