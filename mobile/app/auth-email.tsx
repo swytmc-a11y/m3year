@@ -144,32 +144,11 @@ export default function AuthEmailScreen() {
             ) : null}
 
             <Button label="تسجيل الدخول" fullWidth loading={loading} onPress={onSubmit} />
-
-            <View
-              style={{
-                flexDirection: "row-reverse",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 4,
-              }}
-            >
-              <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                ليس لديك حساب؟
-              </Text>
-              <Link href="/signup" asChild>
-                <Pressable hitSlop={8}>
-                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
-                    أنشئ حسابًا
-                  </Text>
-                </Pressable>
-              </Link>
-            </View>
           </FadeInView>
 
           <FadeInView
             delay={220}
-            style={{ alignItems: "center", marginTop: 28, gap: 14 }}
+            style={{ alignItems: "center", marginTop: 28, gap: 12 }}
           >
             <Link href="/auth" asChild>
               <Pressable hitSlop={8}>
@@ -185,6 +164,26 @@ export default function AuthEmailScreen() {
                 </Text>
               </Pressable>
             </Link>
+            <View
+              style={{
+                flexDirection: "row-reverse",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 6,
+              }}
+            >
+              <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
+                ليس لديك حساب؟
+              </Text>
+              <Link href="/signup" asChild>
+                <Pressable hitSlop={8}>
+                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: colors.verify }}>
+                    أنشئ حسابًا
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
           </FadeInView>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -261,7 +261,7 @@ export default function AuthScreen() {
           </FadeInView>
 
           {step === "phone" ? (
-            <FadeInView delay={220} style={{ alignItems: "center", marginTop: 28 }}>
+            <FadeInView delay={220} style={{ alignItems: "center", marginTop: 28, gap: 12 }}>
               <Link href="/" asChild>
                 <Pressable hitSlop={8}>
                   <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
@@ -269,6 +269,26 @@ export default function AuthScreen() {
                   </Text>
                 </Pressable>
               </Link>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 6,
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
+                  ليس لديك حساب؟
+                </Text>
+                <Link href="/signup" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: colors.verify }}>
+                      أنشئ حسابًا
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
             </FadeInView>
           ) : null}
         </ScrollView>
