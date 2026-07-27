@@ -13,53 +13,31 @@ import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
-import { signUpSchema } from "@/lib/validations";
+import { signInSchema } from "@/lib/validations";
 import { colors, fonts } from "@/theme";
 
-export default function SignUpScreen() {
+export default function AuthEmailScreen() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit() {
     setError(undefined);
-    setFieldErrors({});
-    const parsed = signUpSchema.safeParse({ fullName, email, phone, password });
+    const parsed = signInSchema.safeParse({ email, password });
     if (!parsed.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = String(issue.path[0]);
-        if (!errors[key]) errors[key] = issue.message;
-      }
-      setFieldErrors(errors);
+      setError(parsed.error.issues[0].message);
       return;
     }
 
     setLoading(true);
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
-      options: {
-        data: {
-          full_name: parsed.data.fullName,
-          phone: parsed.data.phone,
-        },
-      },
-    });
+    const { error: signInError } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
 
-    if (signUpError) {
-      console.error("[auth] signUp failed", signUpError);
-      setError(
-        signUpError.message.includes("already registered")
-          ? "هذا البريد الإلكتروني مسجّل مسبقًا."
-          : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.",
-      );
+    if (signInError) {
+      console.error("[auth] signInWithPassword failed", signInError);
+      setError("البريد الإلكتروني أو كلمة السر غير صحيحة.");
       return;
     }
 
@@ -77,12 +55,12 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <FadeInView style={{ alignItems: "center", marginBottom: 28, gap: 12 }}>
+          <FadeInView style={{ alignItems: "center", marginBottom: 36, gap: 14 }}>
             <View
               style={{
-                width: 72,
-                height: 72,
-                borderRadius: 20,
+                width: 84,
+                height: 84,
+                borderRadius: 22,
                 backgroundColor: colors.white,
                 borderWidth: 1,
                 borderColor: colors.grid,
@@ -90,19 +68,29 @@ export default function SignUpScreen() {
                 justifyContent: "center",
               }}
             >
-              <LogoMark size={44} />
+              <LogoMark size={52} />
             </View>
-            <Text style={{ fontFamily: fonts.heading, fontSize: 24, color: colors.ink }}>
-              انضم إلى معيار
+            <Text style={{ fontFamily: fonts.heading, fontSize: 30, color: colors.ink }}>
+              معيار
+            </Text>
+            <Text
+              style={{
+                fontFamily: fonts.body,
+                fontSize: 14,
+                color: colors.mutedText,
+                textAlign: "center",
+              }}
+            >
+              منصة إعلانات وتوثيق فرص الشراكة
             </Text>
           </FadeInView>
 
-          <FadeInView delay={120} style={{ gap: 18, width: "100%", maxWidth: 400, alignSelf: "center" }}>
+          <FadeInView delay={120} style={{ gap: 20, width: "100%", maxWidth: 400, alignSelf: "center" }}>
             <View style={{ gap: 4 }}>
               <Text
                 style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.ink, textAlign: "right" }}
               >
-                إنشاء حساب جديد
+                أهلًا بعودتك
               </Text>
               <Text
                 style={{
@@ -113,19 +101,9 @@ export default function SignUpScreen() {
                   lineHeight: 22,
                 }}
               >
-                اعرض مشروعك أو ابحث عن فرصة شراكة موثّقة.
+                سجّل دخولك لمتابعة إعلاناتك ومحادثاتك.
               </Text>
             </View>
-
-            <Field
-              label="الاسم"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="اسمك الكامل"
-              autoComplete="name"
-              error={fieldErrors.fullName}
-              style={{ textAlign: "right" }}
-            />
 
             <Field
               label="البريد الإلكتروني"
@@ -135,19 +113,8 @@ export default function SignUpScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
-              error={fieldErrors.email}
+              returnKeyType="next"
               style={{ textAlign: "left" }}
-            />
-
-            <Field
-              label="رقم الجوال"
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="05xxxxxxxx"
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              error={fieldErrors.phone}
-              style={{ fontFamily: fonts.mono, textAlign: "left" }}
             />
 
             <Field
@@ -157,8 +124,9 @@ export default function SignUpScreen() {
               placeholder="••••••••"
               secureTextEntry
               autoCapitalize="none"
-              autoComplete="password-new"
-              error={fieldErrors.password}
+              autoComplete="password"
+              returnKeyType="go"
+              onSubmitEditing={onSubmit}
               style={{ textAlign: "left" }}
             />
 
@@ -175,7 +143,7 @@ export default function SignUpScreen() {
               </Text>
             ) : null}
 
-            <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onSubmit} />
+            <Button label="تسجيل الدخول" fullWidth loading={loading} onPress={onSubmit} />
 
             <View
               style={{
@@ -187,16 +155,36 @@ export default function SignUpScreen() {
               }}
             >
               <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                لديك حساب بالفعل؟
+                ليس لديك حساب؟
               </Text>
-              <Link href="/auth-email" asChild>
+              <Link href="/signup" asChild>
                 <Pressable hitSlop={8}>
                   <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
-                    سجّل الدخول
+                    أنشئ حسابًا
                   </Text>
                 </Pressable>
               </Link>
             </View>
+          </FadeInView>
+
+          <FadeInView
+            delay={220}
+            style={{ alignItems: "center", marginTop: 28, gap: 14 }}
+          >
+            <Link href="/auth" asChild>
+              <Pressable hitSlop={8}>
+                <Text style={{ fontFamily: fonts.bodyBold, fontSize: 14, color: colors.verify }}>
+                  الدخول برقم الجوال
+                </Text>
+              </Pressable>
+            </Link>
+            <Link href="/" asChild>
+              <Pressable hitSlop={8}>
+                <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
+                  تصفّح دون تسجيل الدخول
+                </Text>
+              </Pressable>
+            </Link>
           </FadeInView>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -77,10 +77,7 @@ export default function ProfileScreen() {
           </Text>
           <View style={{ gap: 12, width: "100%", maxWidth: 320 }}>
             <Link href="/auth" asChild>
-              <Button label="تسجيل الدخول" fullWidth />
-            </Link>
-            <Link href="/signup" asChild>
-              <Button label="إنشاء حساب" variant="ghost" fullWidth />
+              <Button label="تسجيل الدخول أو إنشاء حساب" fullWidth />
             </Link>
           </View>
           <View style={{ flexDirection: "row-reverse", gap: 16 }}>
