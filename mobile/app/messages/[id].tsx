@@ -10,22 +10,25 @@ import {
   Keyboard,
   Platform,
   Modal,
-  Image,
   Linking,
 } from "react-native";
+import { Image } from "expo-image";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { TopBar, Button } from "@/components/ui";
+import { Button, IconButton, Tappable } from "@/components/kit";
+import { ChevronBackIcon, SendIcon, AttachIcon } from "@/components/icons";
 import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import { sendMessage, markMessagesRead, type OutgoingAttachment } from "@/lib/messaging";
 import { uploadMessageAttachment, getMessageAttachmentSignedUrl } from "@/lib/storage";
 import { getUserRatingSummary, getMyRating, submitRating, type RatingSummary } from "@/lib/ratings";
 import { ratingFormSchema } from "@/lib/validations";
-import { colors, fonts, radius } from "@/theme";
+import { fonts, radius } from "@/theme";
 
 type Message = {
   id: string;
@@ -41,6 +44,7 @@ type Message = {
 
 export default function ChatScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, user, loading: authLoading } = useAuth();
@@ -53,12 +57,9 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
-  // Dynamically measured header height so the keyboard offset is exact on
-  // every device instead of a hardcoded guess.
   const [headerHeight, setHeaderHeight] = useState(0);
   const [keyboardShown, setKeyboardShown] = useState(false);
 
-  // Signed URLs for private attachments, keyed by storage path.
   const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [attaching, setAttaching] = useState(false);
@@ -190,7 +191,6 @@ export default function ChatScreen() {
     }
   }, [messages, user]);
 
-  // Resolve signed URLs for any attachment paths we haven't fetched yet.
   useEffect(() => {
     const pending = messages
       .map((m) => m.attachment_path)
@@ -214,7 +214,7 @@ export default function ChatScreen() {
   }, [messages, attachmentUrls]);
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
@@ -303,64 +303,40 @@ export default function ChatScreen() {
     setRatingSummary(await getUserRatingSummary(counterpartId));
   }
 
-  function renderBubble(item: Message) {
+  function renderBubble(item: Message, index: number) {
     const mine = item.sender_id === user?.id;
-    const bubbleColor = mine ? colors.ink : colors.white;
-    const textColor = mine ? colors.white : colors.ink;
+    const bubbleColor = mine ? t.primary : t.surface;
+    const textColor = mine ? t.onPrimary : t.text;
     const url = item.attachment_path ? attachmentUrls[item.attachment_path] : undefined;
 
     return (
-      <View
+      <Animated.View
+        entering={FadeInDown.delay(Math.min(index, 6) * 30).springify().damping(20)}
         style={{
           alignSelf: mine ? "flex-start" : "flex-end",
           maxWidth: "78%",
           backgroundColor: bubbleColor,
-          borderColor: mine ? colors.ink : colors.grid,
-          borderWidth: 1,
-          borderRadius: radius.lg,
+          borderRadius: radius.xl,
           overflow: "hidden",
           paddingHorizontal: item.attachment_type === "image" ? 0 : 14,
           paddingVertical: item.attachment_type === "image" ? 0 : 10,
+          ...t.shadowSm,
         }}
       >
         {item.attachment_type === "image" ? (
           url ? (
             <Pressable onPress={() => Linking.openURL(url)}>
-              <Image
-                source={{ uri: url }}
-                style={{ width: 220, height: 220, backgroundColor: colors.paper }}
-                resizeMode="cover"
-              />
+              <Image source={{ uri: url }} style={{ width: 220, height: 220, backgroundColor: t.surface2 }} contentFit="cover" />
             </Pressable>
           ) : (
-            <View
-              style={{
-                width: 220,
-                height: 220,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: colors.paper,
-              }}
-            >
-              <ActivityIndicator color={colors.mutedText} />
+            <View style={{ width: 220, height: 220, alignItems: "center", justifyContent: "center", backgroundColor: t.surface2 }}>
+              <ActivityIndicator color={t.textMuted} />
             </View>
           )
         ) : item.attachment_type === "file" ? (
-          <Pressable
-            onPress={() => url && Linking.openURL(url)}
-            style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}
-          >
+          <Pressable onPress={() => url && Linking.openURL(url)} style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}>
             <Text style={{ fontSize: 20 }}>📎</Text>
-            <Text
-              style={{
-                fontFamily: fonts.bodyMedium,
-                fontSize: 14,
-                color: textColor,
-                textAlign: "right",
-                flexShrink: 1,
-              }}
-              numberOfLines={1}
-            >
+            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: textColor, textAlign: "right", flexShrink: 1 }} numberOfLines={1}>
               {item.attachment_name ?? "ملف"}
             </Text>
           </Pressable>
@@ -370,8 +346,8 @@ export default function ChatScreen() {
           <Text
             style={{
               fontFamily: fonts.body,
-              fontSize: 14,
-              lineHeight: 21,
+              fontSize: 13.5,
+              lineHeight: 20,
               color: textColor,
               textAlign: "right",
               paddingHorizontal: item.attachment_type === "image" ? 14 : 0,
@@ -382,52 +358,38 @@ export default function ChatScreen() {
             {item.body}
           </Text>
         ) : null}
-      </View>
+      </Animated.View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
-        <TopBar
-          title={title || "المحادثة"}
-          onBack={() => router.back()}
-          right={
-            counterpartId ? (
-              <Pressable
-                onPress={() => setRateModalOpen(true)}
-                style={{ alignItems: "flex-end", gap: 2 }}
-              >
-                <RatingSummaryLabel average={ratingSummary.average} count={ratingSummary.count} />
-                <Text style={{ fontFamily: fonts.body, fontSize: 11, color: colors.verify }}>
-                  {myScore > 0 ? "عدّل تقييمك" : "قيّم"}
-                </Text>
-              </Pressable>
-            ) : undefined
-          }
-        />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 10, backgroundColor: t.surface, ...t.shadowSm }}
+      >
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10, flex: 1 }}>
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 13.5, color: t.text, flex: 1 }} numberOfLines={1}>
+            {title || "المحادثة"}
+          </Text>
+        </View>
+        {counterpartId ? (
+          <Tappable onPress={() => setRateModalOpen(true)} haptic="light" style={{ alignItems: "flex-end", gap: 2 }}>
+            <RatingSummaryLabel average={ratingSummary.average} count={ratingSummary.count} />
+            <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.primary }}>
+              {myScore > 0 ? "عدّل تقييمك" : "قيّم"}
+            </Text>
+          </Tappable>
+        ) : null}
       </View>
 
       <Modal visible={rateModalOpen} transparent animationType="fade" onRequestClose={() => setRateModalOpen(false)}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(23,26,28,0.5)",
-            justifyContent: "center",
-            padding: 24,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.white,
-              borderRadius: radius.lg,
-              padding: 24,
-              gap: 16,
-            }}
-          >
-            <Text
-              style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink, textAlign: "right" }}
-            >
+        <View style={{ flex: 1, backgroundColor: "rgba(16,16,20,0.55)", justifyContent: "center", padding: 24 }}>
+          <View style={{ backgroundColor: t.surface, borderRadius: radius.xl, padding: 24, gap: 16 }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 17, color: t.text, textAlign: "right" }}>
               {counterpartName ? `قيّم ${counterpartName}` : "قيّم الطرف الآخر"}
             </Text>
 
@@ -439,62 +401,52 @@ export default function ChatScreen() {
               value={myComment}
               onChangeText={setMyComment}
               placeholder="تعليق (اختياري)"
-              placeholderTextColor={colors.mutedText}
+              placeholderTextColor={t.textMuted}
               multiline
               style={{
                 minHeight: 80,
-                borderWidth: 1,
-                borderColor: colors.grid,
-                borderRadius: radius.md,
+                borderRadius: radius.lg,
+                backgroundColor: t.surface2,
                 padding: 12,
                 fontFamily: fonts.body,
-                fontSize: 14,
-                color: colors.ink,
+                fontSize: 13,
+                color: t.text,
                 textAlign: "right",
                 textAlignVertical: "top",
               }}
             />
 
             {rateError ? (
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.danger, textAlign: "right" }}>
-                {rateError}
-              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.danger, textAlign: "right" }}>{rateError}</Text>
             ) : null}
 
             <Button label="إرسال التقييم" fullWidth loading={rateSubmitting} onPress={onSubmitRating} />
-            <Button label="إلغاء" variant="ghost" fullWidth onPress={() => setRateModalOpen(false)} />
+            <Button label="إلغاء" variant="secondary" fullWidth onPress={() => setRateModalOpen(false)} />
           </View>
         </View>
       </Modal>
 
-      {/* Attachment picker sheet */}
       <Modal visible={attachMenuOpen} transparent animationType="fade" onRequestClose={() => setAttachMenuOpen(false)}>
         <Pressable style={{ flex: 1, justifyContent: "flex-end" }} onPress={() => setAttachMenuOpen(false)}>
           <View
             style={{
-              backgroundColor: colors.white,
-              borderTopLeftRadius: radius.lg,
-              borderTopRightRadius: radius.lg,
+              backgroundColor: t.surface,
+              borderTopLeftRadius: radius.xl,
+              borderTopRightRadius: radius.xl,
               padding: 16,
               paddingBottom: insets.bottom + 16,
               gap: 8,
             }}
           >
-            <Pressable
-              onPress={onPickImage}
-              style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}
-            >
+            <Tappable onPress={onPickImage} haptic="light" style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}>
               <Text style={{ fontSize: 22 }}>🖼️</Text>
-              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink }}>صورة</Text>
-            </Pressable>
-            <View style={{ height: 1, backgroundColor: colors.grid }} />
-            <Pressable
-              onPress={onPickFile}
-              style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}
-            >
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: t.text }}>صورة</Text>
+            </Tappable>
+            <View style={{ height: 1, backgroundColor: t.border }} />
+            <Tappable onPress={onPickFile} haptic="light" style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}>
               <Text style={{ fontSize: 22 }}>📎</Text>
-              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.ink }}>ملف</Text>
-            </Pressable>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: t.text }}>ملف</Text>
+            </Tappable>
           </View>
         </Pressable>
       </Modal>
@@ -506,14 +458,14 @@ export default function ChatScreen() {
       >
         {loading ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <ActivityIndicator color={colors.ink} />
+            <ActivityIndicator color={t.text} />
           </View>
         ) : loadError ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24, gap: 12 }}>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center" }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
               تعذّر تحميل المحادثة الآن.
             </Text>
-            <Button label="إعادة المحاولة" variant="ghost" onPress={() => load()} />
+            <Button label="إعادة المحاولة" variant="secondary" onPress={() => load()} />
           </View>
         ) : (
           <FlatList
@@ -523,12 +475,10 @@ export default function ChatScreen() {
             contentContainerStyle={{ padding: 16, gap: 8, flexGrow: 1 }}
             keyboardDismissMode="interactive"
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-            renderItem={({ item }) => renderBubble(item)}
+            renderItem={({ item, index }) => renderBubble(item, index)}
             ListEmptyComponent={
               <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 60 }}>
-                <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText }}>
-                  ابدأ المحادثة برسالة.
-                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>ابدأ المحادثة برسالة.</Text>
               </View>
             }
           />
@@ -542,74 +492,48 @@ export default function ChatScreen() {
             paddingHorizontal: 12,
             paddingTop: 12,
             paddingBottom: keyboardShown ? 12 : insets.bottom + 12,
-            borderTopWidth: 1,
-            borderTopColor: colors.grid,
-            backgroundColor: colors.white,
+            backgroundColor: t.surface,
+            ...t.shadowSm,
           }}
         >
-          <Pressable
+          <IconButton
+            accessibilityLabel="إرفاق"
             onPress={() => {
               Keyboard.dismiss();
               setAttachMenuOpen(true);
             }}
-            disabled={attaching}
-            hitSlop={8}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: attaching ? 0.5 : 1,
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="إرفاق"
           >
-            {attaching ? (
-              <ActivityIndicator color={colors.mutedText} size="small" />
-            ) : (
-              <Text style={{ fontSize: 22, color: colors.subtleText }}>＋</Text>
-            )}
-          </Pressable>
+            {attaching ? <ActivityIndicator color={t.textMuted} size="small" /> : <AttachIcon color={t.textMuted} size={18} />}
+          </IconButton>
 
           <TextInput
             value={draft}
             onChangeText={setDraft}
             placeholder="اكتب رسالة..."
-            placeholderTextColor={colors.mutedText}
+            placeholderTextColor={t.textMuted}
             multiline
             style={{
               flex: 1,
               maxHeight: 100,
-              minHeight: 44,
-              borderWidth: 1,
-              borderColor: colors.grid,
+              minHeight: 42,
+              backgroundColor: t.surface2,
               borderRadius: radius.pill,
               paddingHorizontal: 16,
               paddingVertical: 10,
               fontFamily: fonts.body,
-              fontSize: 14,
-              color: colors.ink,
+              fontSize: 13.5,
+              color: t.text,
               textAlign: "right",
             }}
           />
-          <Pressable
-            onPress={onSend}
-            disabled={sending || draft.trim().length === 0}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: colors.ink,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: sending || draft.trim().length === 0 ? 0.5 : 1,
-            }}
-            accessibilityRole="button"
+          <IconButton
             accessibilityLabel="إرسال"
+            onPress={onSend}
+            tone="primary"
+            size={44}
           >
-            <Text style={{ color: colors.white, fontSize: 18 }}>↑</Text>
-          </Pressable>
+            <SendIcon color={t.onPrimary} size={16} />
+          </IconButton>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

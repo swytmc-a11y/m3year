@@ -155,3 +155,25 @@ export function StarIcon({ color, size = 10 }: { color: ColorValue; size?: numbe
     </Svg>
   );
 }
+
+export function SendIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20 4 3 11l6 2.5M20 4l-7 16-3-6.5M20 4 9 13.5"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function AttachIcon({ color, size = 20 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
