@@ -160,3 +160,107 @@ export const ratingFormSchema = z.object({
 });
 
 export type RatingFormValues = z.infer<typeof ratingFormSchema>;
+
+export const franchiseFormSchema = z.object({
+  brand_name: z
+    .string()
+    .trim()
+    .min(3, { error: "اسم العلامة يجب أن يكون 3 أحرف على الأقل" })
+    .max(140, { error: "اسم العلامة يجب ألا يتجاوز 140 حرفًا" }),
+  sector: sectorEnum,
+  city: z
+    .string()
+    .trim()
+    .min(2, { error: "أدخل اسم المدينة" })
+    .max(60, { error: "اسم المدينة طويل جدًا" }),
+  cities_available: z.array(z.string().trim().min(1)).default([]),
+  countries_available: z.array(z.string().trim().min(1)).default([]),
+  description: z
+    .string()
+    .trim()
+    .max(5000, { error: "الوصف طويل جدًا" })
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+  founding_year: optionalNumber(
+    z
+      .number({ error: "أدخل سنة التأسيس كرقم" })
+      .int()
+      .min(1950, { error: "أدخل سنة تأسيس صحيحة" })
+      .max(2100, { error: "أدخل سنة تأسيس صحيحة" }),
+  ),
+  current_branches_count: optionalNumber(
+    z
+      .number({ error: "أدخل عدد الفروع كرقم" })
+      .int()
+      .min(0, { error: "عدد الفروع لا يمكن أن يكون سالبًا" })
+      .max(100_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  franchise_fee: z.coerce
+    .number({ error: "أدخل رسوم الامتياز كرقم" })
+    .min(0, { error: "رسوم الامتياز لا يمكن أن تكون سالبة" })
+    .max(1_000_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  initial_investment_min: optionalNumber(
+    z
+      .number({ error: "أدخل الحد الأدنى للاستثمار كرقم" })
+      .min(0, { error: "لا يمكن أن يكون سالبًا" })
+      .max(1_000_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  initial_investment_max: optionalNumber(
+    z
+      .number({ error: "أدخل الحد الأقصى للاستثمار كرقم" })
+      .min(0, { error: "لا يمكن أن يكون سالبًا" })
+      .max(1_000_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  royalty_percentage: optionalNumber(
+    z
+      .number({ error: "أدخل نسبة الإتاوة كرقم" })
+      .min(0, { error: "لا يمكن أن تكون سالبة" })
+      .max(100, { error: "لا يمكن أن تتجاوز 100٪" }),
+  ),
+  required_space_sqm: optionalNumber(
+    z
+      .number({ error: "أدخل المساحة المطلوبة كرقم" })
+      .min(0, { error: "لا يمكن أن تكون سالبة" })
+      .max(1_000_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  required_employees_count: optionalNumber(
+    z
+      .number({ error: "أدخل عدد الموظفين المطلوب كرقم" })
+      .int()
+      .min(0, { error: "لا يمكن أن يكون سالبًا" })
+      .max(100_000, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  expected_payback_months: optionalNumber(
+    z
+      .number({ error: "أدخل مدة استرداد رأس المال كرقم" })
+      .int()
+      .min(0, { error: "لا يمكن أن تكون سالبة" })
+      .max(1200, { error: "القيمة المدخلة كبيرة جدًا" }),
+  ),
+  training_provided: z.boolean(),
+  operational_support: z
+    .string()
+    .trim()
+    .max(2000, { error: "النص طويل جدًا" })
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+  marketing_support: z
+    .string()
+    .trim()
+    .max(2000, { error: "النص طويل جدًا" })
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+  entity_type: entityTypeEnum,
+  commercial_registration_number: z
+    .string()
+    .trim()
+    .min(5, { error: "أدخل رقم السجل التجاري كاملًا" })
+    .max(20, { error: "رقم السجل التجاري طويل جدًا" }),
+  confirm_no_branding: z
+    .boolean()
+    .refine((value) => value === true, {
+      error: "يجب تأكيد خلو الصور من أي شعار أو علامة تجارية قبل المتابعة.",
+    }),
+});
+
+export type FranchiseFormValues = z.infer<typeof franchiseFormSchema>;

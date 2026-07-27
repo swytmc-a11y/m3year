@@ -14,6 +14,7 @@ import {
 } from "@/lib/accountant-actions";
 import { getVerificationDocSignedUrl } from "@/lib/storage";
 import { formatSar, type Listing } from "@/lib/constants";
+import type { Franchise } from "@/lib/franchise-constants";
 import { colors, fonts } from "@/theme";
 
 export default function AccountantRequestScreen() {
@@ -23,6 +24,7 @@ export default function AccountantRequestScreen() {
 
   const [request, setRequest] = useState<VerificationRequestRow | null>(null);
   const [listing, setListing] = useState<Listing | null>(null);
+  const [franchise, setFranchise] = useState<Franchise | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -39,13 +41,20 @@ export default function AccountantRequestScreen() {
       .eq("id", String(id))
       .maybeSingle();
     setRequest(req as VerificationRequestRow | null);
-    if (req) {
+    if (req?.listing_id) {
       const { data: l } = await supabase
         .from("listings")
         .select("*")
         .eq("id", req.listing_id)
         .maybeSingle();
       setListing(l);
+    } else if (req?.franchise_id) {
+      const { data: f } = await supabase
+        .from("franchises")
+        .select("*")
+        .eq("id", req.franchise_id)
+        .maybeSingle();
+      setFranchise(f);
     }
     setLoading(false);
   }, [id]);
@@ -133,7 +142,7 @@ export default function AccountantRequestScreen() {
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator color={colors.ink} />
         </View>
-      ) : !request || !listing ? (
+      ) : !request || (!listing && !franchise) ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={{ fontFamily: fonts.body, fontSize: 15, color: colors.mutedText }}>
             الطلب غير موجود أو لا تملك صلاحية عرضه.
@@ -142,17 +151,35 @@ export default function AccountantRequestScreen() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
           <Card style={{ gap: 8 }}>
-            <Link href={`/listings/${listing.id}`}>
-              <Text style={{ fontFamily: fonts.bodyBold, fontSize: 17, color: colors.ink, textAlign: "right" }}>
-                {listing.title}
-              </Text>
-            </Link>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right" }}>
-              الإيراد الشهري المُصرَّح به: {formatSar(listing.monthly_revenue)}
-            </Text>
-            <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right" }}>
-              المدينة: {listing.city}
-            </Text>
+            {listing ? (
+              <>
+                <Link href={`/listings/${listing.id}`}>
+                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 17, color: colors.ink, textAlign: "right" }}>
+                    {listing.title}
+                  </Text>
+                </Link>
+                <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right" }}>
+                  الإيراد الشهري المُصرَّح به: {formatSar(listing.monthly_revenue)}
+                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right" }}>
+                  المدينة: {listing.city}
+                </Text>
+              </>
+            ) : franchise ? (
+              <>
+                <Link href={`/franchises/${franchise.id}`}>
+                  <Text style={{ fontFamily: fonts.bodyBold, fontSize: 17, color: colors.ink, textAlign: "right" }}>
+                    {franchise.brand_name}
+                  </Text>
+                </Link>
+                <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right" }}>
+                  رسوم الامتياز المُصرَّح بها: {formatSar(franchise.franchise_fee)}
+                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.mutedText, textAlign: "right" }}>
+                  المدينة: {franchise.city}
+                </Text>
+              </>
+            ) : null}
           </Card>
 
           {isOpen ? (

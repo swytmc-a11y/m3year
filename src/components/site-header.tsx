@@ -23,6 +23,9 @@ export async function SiteHeader() {
           <Link href="/listings" className="hover:text-ink">
             تصفح المشاريع
           </Link>
+          <Link href="/franchises" className="hover:text-ink">
+            الامتيازات التجارية
+          </Link>
           {isAdmin ? (
             <Link href="/admin/listings" className="hover:text-ink">
               لوحة الإدارة

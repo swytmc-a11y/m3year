@@ -37,6 +37,43 @@ export async function deleteListingPhoto(publicUrl: string): Promise<void> {
   if (error) console.error("[storage] listing photo delete failed", error);
 }
 
+/** Uploads a local image URI to the public franchise-photos bucket. */
+export async function uploadFranchisePhoto(
+  franchiseId: string,
+  localUri: string,
+): Promise<{ url?: string; error?: string }> {
+  try {
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+    const ext = blob.type.split("/")[1] ?? "jpg";
+    const path = `${franchiseId}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("franchise-photos")
+      .upload(path, blob, { contentType: blob.type, upsert: false });
+
+    if (error) {
+      console.error("[storage] franchise photo upload failed", error);
+      return { error: "تعذّر رفع الصورة الآن." };
+    }
+
+    const { data } = supabase.storage.from("franchise-photos").getPublicUrl(path);
+    return { url: data.publicUrl };
+  } catch (err) {
+    console.error("[storage] franchise photo upload threw", err);
+    return { error: "تعذّر رفع الصورة الآن." };
+  }
+}
+
+export async function deleteFranchisePhoto(publicUrl: string): Promise<void> {
+  const marker = "/franchise-photos/";
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return;
+  const path = publicUrl.slice(idx + marker.length);
+  const { error } = await supabase.storage.from("franchise-photos").remove([path]);
+  if (error) console.error("[storage] franchise photo delete failed", error);
+}
+
 /**
  * Uploads the owner's financial statement to the private verification-docs
  * bucket. Storage RLS scopes the path's first segment to the verification

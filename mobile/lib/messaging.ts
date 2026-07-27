@@ -2,7 +2,8 @@ import { supabase } from "@/lib/supabase";
 
 export type ConversationSummary = {
   id: string;
-  listing_id: string;
+  listing_id: string | null;
+  franchise_id: string | null;
   owner_id: string;
   investor_id: string;
   created_at: string;
@@ -54,6 +55,45 @@ export async function getOrCreateConversation(
   return { conversationId: created.id };
 }
 
+/**
+ * Same as getOrCreateConversation but for a franchise target — mirrors the
+ * listing flow exactly (unique constraint on (franchise_id, investor_id)).
+ */
+export async function getOrCreateFranchiseConversation(
+  franchiseId: string,
+  ownerId: string,
+): Promise<{ conversationId?: string; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "انتهت الجلسة. سجّل الدخول مرة أخرى." };
+
+  if (user.id === ownerId) {
+    return { error: "لا يمكنك التواصل مع نفسك." };
+  }
+
+  const { data: existing } = await supabase
+    .from("conversations")
+    .select("id")
+    .eq("franchise_id", franchiseId)
+    .eq("investor_id", user.id)
+    .maybeSingle();
+
+  if (existing) return { conversationId: existing.id };
+
+  const { data: created, error } = await supabase
+    .from("conversations")
+    .insert({ franchise_id: franchiseId, owner_id: ownerId, investor_id: user.id })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[messaging] create franchise conversation failed", error);
+    return { error: "تعذّر بدء المحادثة الآن. حاول مرة أخرى." };
+  }
+  return { conversationId: created.id };
+}
+
 export async function listMyConversations(): Promise<{
   data?: ConversationSummary[];
   error?: string;
@@ -66,7 +106,7 @@ export async function listMyConversations(): Promise<{
   const { data: conversations, error } = await supabase
     .from("conversations")
     .select(
-      "id, listing_id, owner_id, investor_id, created_at, listing:listings(title)",
+      "id, listing_id, franchise_id, owner_id, investor_id, created_at, listing:listings(title), franchise:franchises(brand_name)",
     )
     .or(`owner_id.eq.${user.id},investor_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
@@ -101,11 +141,15 @@ export async function listMyConversations(): Promise<{
       return {
         id: c.id,
         listing_id: c.listing_id,
+        franchise_id: c.franchise_id,
         owner_id: c.owner_id,
         investor_id: c.investor_id,
         created_at: c.created_at,
         listing_title:
-          (c as unknown as { listing?: { title?: string } }).listing?.title ?? "إعلان",
+          (c as unknown as { listing?: { title?: string } }).listing?.title ??
+          (c as unknown as { franchise?: { brand_name?: string } }).franchise
+            ?.brand_name ??
+          "إعلان",
         counterpart_name: counterpart?.full_name ?? null,
         last_message:
           lastMessage?.body ??

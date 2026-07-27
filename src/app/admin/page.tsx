@@ -8,6 +8,8 @@ export default async function AdminOverviewPage() {
   const [
     { count: totalListings },
     { count: pendingListings },
+    { count: totalFranchises },
+    { count: pendingFranchises },
     { count: openVerifications },
     { count: pendingAccountants },
     { count: totalUsers },
@@ -15,6 +17,11 @@ export default async function AdminOverviewPage() {
     supabase.from("listings").select("id", { count: "exact", head: true }),
     supabase
       .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending_review"),
+    supabase.from("franchises").select("id", { count: "exact", head: true }),
+    supabase
+      .from("franchises")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending_review"),
     supabase
@@ -39,6 +46,18 @@ export default async function AdminOverviewPage() {
       href: "/admin/all-listings",
       label: "كل الإعلانات (تحكّم كامل)",
       count: totalListings ?? 0,
+      urgent: false,
+    },
+    {
+      href: "/admin/franchises",
+      label: "امتيازات بانتظار المراجعة",
+      count: pendingFranchises ?? 0,
+      urgent: (pendingFranchises ?? 0) > 0,
+    },
+    {
+      href: "/admin/all-franchises",
+      label: "كل الامتيازات (تحكّم كامل)",
+      count: totalFranchises ?? 0,
       urgent: false,
     },
     {

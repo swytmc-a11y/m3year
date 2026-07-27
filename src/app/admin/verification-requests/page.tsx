@@ -18,6 +18,11 @@ type RequestRow = {
     title: string;
     monthly_revenue: number;
   } | null;
+  franchise: {
+    id: string;
+    brand_name: string;
+    franchise_fee: number;
+  } | null;
   accountant: {
     id: string;
     profile: { full_name: string | null } | null;
@@ -31,7 +36,7 @@ export default async function AdminVerificationRequestsPage() {
     supabase
       .from("verification_requests")
       .select(
-        "id, status, verified_revenue, notes, financial_statement_path, created_at, completed_at, listing:listings(id, title, monthly_revenue), accountant:accountants(id, profile:profiles(full_name))",
+        "id, status, verified_revenue, notes, financial_statement_path, created_at, completed_at, listing:listings(id, title, monthly_revenue), franchise:franchises(id, brand_name, franchise_fee), accountant:accountants(id, profile:profiles(full_name))",
       )
       .order("created_at", { ascending: false }),
     supabase
@@ -89,14 +94,29 @@ export default async function AdminVerificationRequestsPage() {
             <Card key={r.id} className="p-4 sm:p-6">
               <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <Link
-                    href={`/listings/${r.listing?.id}`}
-                    className="font-bold text-ink hover:underline"
-                  >
-                    {r.listing?.title ?? "إعلان محذوف"}
-                  </Link>
+                  {r.listing ? (
+                    <Link
+                      href={`/listings/${r.listing.id}`}
+                      className="font-bold text-ink hover:underline"
+                    >
+                      {r.listing.title}
+                    </Link>
+                  ) : r.franchise ? (
+                    <Link
+                      href={`/franchises/${r.franchise.id}`}
+                      className="font-bold text-ink hover:underline"
+                    >
+                      {r.franchise.brand_name}
+                    </Link>
+                  ) : (
+                    <span className="font-bold text-ink">إعلان محذوف</span>
+                  )}
                   <p className="mt-1 text-[13px] text-ink/50">
-                    الإيراد المُعلن: {r.listing ? formatSar(r.listing.monthly_revenue) : "—"}{" "}
+                    {r.listing
+                      ? `الإيراد المُعلن: ${formatSar(r.listing.monthly_revenue)}`
+                      : r.franchise
+                        ? `رسوم الامتياز: ${formatSar(r.franchise.franchise_fee)}`
+                        : "—"}{" "}
                     · طُلب في {formatDate(r.created_at)}
                   </p>
                 </div>

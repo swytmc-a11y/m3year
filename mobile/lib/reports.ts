@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export async function submitReport(params: {
-  targetType: "listing" | "user";
+  targetType: "listing" | "franchise" | "user";
   targetId: string;
   reason: string;
 }): Promise<{ error?: string }> {

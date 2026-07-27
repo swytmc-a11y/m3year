@@ -2,7 +2,8 @@ import { supabase } from "@/lib/supabase";
 
 export type VerificationRequestRow = {
   id: string;
-  listing_id: string;
+  listing_id: string | null;
+  franchise_id: string | null;
   owner_id: string;
   accountant_id: string | null;
   status: "requested" | "assigned" | "in_review" | "completed" | "rejected";
@@ -19,10 +20,28 @@ async function attachListingTitles(
   rows: VerificationRequestRow[],
 ): Promise<VerificationRequestRow[]> {
   if (rows.length === 0) return rows;
-  const ids = [...new Set(rows.map((r) => r.listing_id))];
-  const { data: listings } = await supabase.from("listings").select("id, title").in("id", ids);
+  const listingIds = [...new Set(rows.filter((r) => r.listing_id).map((r) => r.listing_id!))];
+  const franchiseIds = [
+    ...new Set(rows.filter((r) => r.franchise_id).map((r) => r.franchise_id!)),
+  ];
+  const [{ data: listings }, { data: franchises }] = await Promise.all([
+    listingIds.length
+      ? supabase.from("listings").select("id, title").in("id", listingIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+    franchiseIds.length
+      ? supabase.from("franchises").select("id, brand_name").in("id", franchiseIds)
+      : Promise.resolve({ data: [] as { id: string; brand_name: string }[] }),
+  ]);
   const titleById = new Map((listings ?? []).map((l) => [l.id, l.title]));
-  return rows.map((r) => ({ ...r, listing_title: titleById.get(r.listing_id) }));
+  const brandById = new Map((franchises ?? []).map((f) => [f.id, f.brand_name]));
+  return rows.map((r) => ({
+    ...r,
+    listing_title: r.listing_id
+      ? titleById.get(r.listing_id)
+      : r.franchise_id
+        ? brandById.get(r.franchise_id)
+        : undefined,
+  }));
 }
 
 export async function listOpenVerificationRequests(): Promise<{

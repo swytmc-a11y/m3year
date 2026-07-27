@@ -16,15 +16,18 @@ import { Chip } from "@/components/ui";
 import { FadeInView } from "@/components/motion";
 import { PlusIcon } from "@/components/icons";
 import { ListingCard } from "@/components/listings";
+import { FranchiseCard } from "@/components/franchises";
 import { supabase } from "@/lib/supabase";
 import {
   SECTOR_OPTIONS,
   type Listing,
   type BusinessSector,
 } from "@/lib/constants";
+import type { Franchise } from "@/lib/franchise-constants";
 import { colors, fonts, radius } from "@/theme";
 
 type SortOption = "newest" | "revenue_desc" | "percentage_desc";
+type Mode = "listings" | "franchises";
 
 const SORT_LABELS: Record<SortOption, string> = {
   newest: "الأحدث",
@@ -34,6 +37,7 @@ const SORT_LABELS: Record<SortOption, string> = {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("listings");
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState<BusinessSector | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -43,12 +47,36 @@ export default function HomeScreen() {
   const [maxRevenue, setMaxRevenue] = useState("");
 
   const [listings, setListings] = useState<Listing[] | null>(null);
+  const [franchises, setFranchises] = useState<Franchise[] | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+
+    if (mode === "franchises") {
+      let fquery = supabase.from("franchises").select("*").eq("status", "published");
+      if (sector) fquery = fquery.eq("sector", sector);
+      if (verifiedOnly) fquery = fquery.eq("verification_status", "verified");
+      const q = search.trim();
+      if (q) fquery = fquery.ilike("brand_name", `%${q}%`);
+      fquery = fquery
+        .order("is_featured", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      const { data, error: qError } = await fquery;
+      if (qError) {
+        console.error("[home] franchises load failed", qError);
+        setError(true);
+        setFranchises(null);
+      } else {
+        setFranchises(data);
+      }
+      setLoading(false);
+      return;
+    }
+
     let query = supabase
       .from("listings")
       .select("*")
@@ -82,7 +110,7 @@ export default function HomeScreen() {
       setListings(data);
     }
     setLoading(false);
-  }, [sector, verifiedOnly, search, sort, minRevenue, maxRevenue]);
+  }, [mode, sector, verifiedOnly, search, sort, minRevenue, maxRevenue]);
 
   // Debounce so typing in search/range fields doesn't fire a query per keystroke.
   useEffect(() => {
@@ -106,9 +134,11 @@ export default function HomeScreen() {
       >
         {/* In RTL the create action sits at the leading (top-right) corner. */}
         <Pressable
-          onPress={() => router.push("/my-listings/new")}
+          onPress={() =>
+            router.push(mode === "listings" ? "/my-listings/new" : "/my-franchises/new")
+          }
           accessibilityRole="button"
-          accessibilityLabel="إنشاء إعلان"
+          accessibilityLabel={mode === "listings" ? "إنشاء إعلان" : "إنشاء امتياز"}
           style={({ pressed }) => ({
             flexDirection: "row-reverse",
             alignItems: "center",
@@ -122,13 +152,36 @@ export default function HomeScreen() {
         >
           <PlusIcon color={colors.white} size={16} />
           <Text style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.white }}>
-            إعلان جديد
+            {mode === "listings" ? "إعلان جديد" : "امتياز جديد"}
           </Text>
         </Pressable>
 
         <Logo size={22} />
       </View>
 
+      <View
+        style={{
+          flexDirection: "row-reverse",
+          gap: 8,
+          paddingHorizontal: 20,
+          paddingTop: 14,
+          paddingBottom: 4,
+          backgroundColor: colors.paper,
+        }}
+      >
+        <Chip
+          label="فرص استثمارية"
+          active={mode === "listings"}
+          onPress={() => setMode("listings")}
+        />
+        <Chip
+          label="امتيازات تجارية"
+          active={mode === "franchises"}
+          onPress={() => setMode("franchises")}
+        />
+      </View>
+
+      {mode === "listings" ? (
       <FlatList
         data={listings ?? []}
         keyExtractor={(item) => item.id}
@@ -300,6 +353,76 @@ export default function HomeScreen() {
           )
         }
       />
+      ) : (
+      <FlatList
+        data={franchises ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <FadeInView delay={Math.min(index, 8) * 45}>
+            <FranchiseCard franchise={item} />
+          </FadeInView>
+        )}
+        contentContainerStyle={{ padding: 20, gap: 16 }}
+        ListHeaderComponent={
+          <View style={{ gap: 12, marginBottom: 4 }}>
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="ابحث باسم العلامة التجارية"
+              placeholderTextColor={colors.mutedText}
+              style={{
+                height: 46,
+                borderWidth: 1,
+                borderColor: colors.grid,
+                borderRadius: 10,
+                backgroundColor: colors.white,
+                paddingHorizontal: 16,
+                fontFamily: fonts.body,
+                fontSize: 15,
+                color: colors.ink,
+                textAlign: "right",
+              }}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}
+            >
+              <Chip label="الكل" active={sector === null} onPress={() => setSector(null)} />
+              {SECTOR_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.value}
+                  label={opt.label}
+                  active={sector === opt.value}
+                  onPress={() => setSector(opt.value)}
+                />
+              ))}
+            </ScrollView>
+            <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
+              <Switch
+                value={verifiedOnly}
+                onValueChange={setVerifiedOnly}
+                trackColor={{ true: colors.verify, false: colors.grid }}
+              />
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.subtleText }}>
+                الموثّقة فقط
+              </Text>
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={{ paddingVertical: 48, alignItems: "center" }}>
+              <ActivityIndicator color={colors.ink} />
+            </View>
+          ) : error ? (
+            <EmptyBox text="تعذّر تحميل الامتيازات الآن. حاول مرة أخرى." />
+          ) : (
+            <EmptyBox text="لا توجد امتيازات منشورة تطابق بحثك بعد." />
+          )
+        }
+      />
+      )}
     </SafeAreaView>
   );
 }

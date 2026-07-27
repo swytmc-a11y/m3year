@@ -8,6 +8,8 @@ const LINKS = [
   { href: "/admin", label: "نظرة عامة" },
   { href: "/admin/listings", label: "مراجعة الإعلانات" },
   { href: "/admin/all-listings", label: "كل الإعلانات" },
+  { href: "/admin/franchises", label: "مراجعة الامتيازات" },
+  { href: "/admin/all-franchises", label: "كل الامتيازات" },
   { href: "/admin/verification-requests", label: "طلبات التوثيق" },
   { href: "/admin/accountants", label: "المحاسبون" },
   { href: "/admin/users", label: "كل الحسابات" },

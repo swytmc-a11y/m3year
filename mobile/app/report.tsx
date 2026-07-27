@@ -9,7 +9,7 @@ import { colors, fonts } from "@/theme";
 export default function ReportScreen() {
   const router = useRouter();
   const { targetType, targetId } = useLocalSearchParams<{
-    targetType: "listing" | "user";
+    targetType: "listing" | "franchise" | "user";
     targetId: string;
   }>();
   const [reason, setReason] = useState("");
@@ -25,7 +25,8 @@ export default function ReportScreen() {
     }
     setLoading(true);
     const { error: submitError } = await submitReport({
-      targetType: targetType === "user" ? "user" : "listing",
+      targetType:
+        targetType === "user" ? "user" : targetType === "franchise" ? "franchise" : "listing",
       targetId: String(targetId),
       reason: reason.trim(),
     });
@@ -58,8 +59,9 @@ export default function ReportScreen() {
             <Text
               style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right", lineHeight: 22 }}
             >
-              أخبرنا لماذا تُبلغ عن هذا {targetType === "user" ? "المستخدم" : "الإعلان"}. سيتم
-              مراجعة البلاغ من فريق معيار.
+              أخبرنا لماذا تُبلغ عن هذا{" "}
+              {targetType === "user" ? "المستخدم" : targetType === "franchise" ? "الامتياز" : "الإعلان"}.
+              سيتم مراجعة البلاغ من فريق معيار.
             </Text>
             <ReasonInput value={reason} onChangeText={setReason} />
             {error ? (

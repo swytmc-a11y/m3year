@@ -11,20 +11,21 @@ export async function getUserRatingSummary(userId: string): Promise<RatingSummar
 
 export async function getMyRating(
   ratedId: string,
-  listingId: string,
+  listingId: string | null,
 ): Promise<{ id: string; score: number; comment: string | null } | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
+  let query = supabase
     .from("ratings")
     .select("id, score, comment")
     .eq("rater_id", user.id)
-    .eq("rated_id", ratedId)
-    .eq("listing_id", listingId)
-    .maybeSingle();
+    .eq("rated_id", ratedId);
+  query = listingId ? query.eq("listing_id", listingId) : query.is("listing_id", null);
+
+  const { data } = await query.maybeSingle();
 
   return data ?? null;
 }
@@ -36,7 +37,7 @@ export async function getMyRating(
  */
 export async function submitRating(params: {
   ratedId: string;
-  listingId: string;
+  listingId: string | null;
   score: number;
   comment: string | null;
 }): Promise<{ error?: string }> {

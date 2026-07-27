@@ -52,6 +52,56 @@ export type Database = {
           },
         ]
       }
+      ai_reports: {
+        Row: {
+          content: Json | null
+          created_at: string
+          id: string
+          model_version: string | null
+          published: boolean
+          published_at: string | null
+          requested_by: string
+          status: string
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          published?: boolean
+          published_at?: string | null
+          requested_by: string
+          status?: string
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          model_version?: string | null
+          published?: boolean
+          published_at?: string | null
+          requested_by?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reports_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -93,26 +143,36 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          franchise_id: string | null
           id: string
           investor_id: string
-          listing_id: string
+          listing_id: string | null
           owner_id: string
         }
         Insert: {
           created_at?: string
+          franchise_id?: string | null
           id?: string
           investor_id: string
-          listing_id: string
+          listing_id?: string | null
           owner_id: string
         }
         Update: {
           created_at?: string
+          franchise_id?: string | null
           id?: string
           investor_id?: string
-          listing_id?: string
+          listing_id?: string | null
           owner_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_investor_id_fkey"
             columns: ["investor_id"]
@@ -139,23 +199,33 @@ export type Database = {
       favorites: {
         Row: {
           created_at: string
+          franchise_id: string | null
           id: string
-          listing_id: string
+          listing_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          franchise_id?: string | null
           id?: string
-          listing_id: string
+          listing_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          franchise_id?: string | null
           id?: string
-          listing_id?: string
+          listing_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "favorites_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "favorites_listing_id_fkey"
             columns: ["listing_id"]
@@ -166,6 +236,155 @@ export type Database = {
           {
             foreignKeyName: "favorites_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchise_confidential: {
+        Row: {
+          commercial_registration_number: string | null
+          created_at: string
+          entity_type: string
+          franchise_id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type: string
+          franchise_id: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          commercial_registration_number?: string | null
+          created_at?: string
+          entity_type?: string
+          franchise_id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_confidential_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: true
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franchise_confidential_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchises: {
+        Row: {
+          brand_name: string
+          cities_available: string[]
+          city: string
+          countries_available: string[]
+          created_at: string
+          current_branches_count: number | null
+          description: string | null
+          expected_payback_months: number | null
+          founding_year: number | null
+          franchise_fee: number
+          id: string
+          initial_investment_max: number | null
+          initial_investment_min: number | null
+          is_featured: boolean
+          logo_url: string | null
+          marketing_support: string | null
+          operational_support: string | null
+          owner_id: string
+          photo_urls: string[]
+          rejection_reason: string | null
+          required_employees_count: number | null
+          required_space_sqm: number | null
+          reviewed_at: string | null
+          royalty_percentage: number | null
+          sector: Database["public"]["Enums"]["business_sector"]
+          status: Database["public"]["Enums"]["listing_status"]
+          training_provided: boolean
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          verified_at: string | null
+        }
+        Insert: {
+          brand_name: string
+          cities_available?: string[]
+          city: string
+          countries_available?: string[]
+          created_at?: string
+          current_branches_count?: number | null
+          description?: string | null
+          expected_payback_months?: number | null
+          founding_year?: number | null
+          franchise_fee: number
+          id?: string
+          initial_investment_max?: number | null
+          initial_investment_min?: number | null
+          is_featured?: boolean
+          logo_url?: string | null
+          marketing_support?: string | null
+          operational_support?: string | null
+          owner_id: string
+          photo_urls?: string[]
+          rejection_reason?: string | null
+          required_employees_count?: number | null
+          required_space_sqm?: number | null
+          reviewed_at?: string | null
+          royalty_percentage?: number | null
+          sector: Database["public"]["Enums"]["business_sector"]
+          status?: Database["public"]["Enums"]["listing_status"]
+          training_provided?: boolean
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          verified_at?: string | null
+        }
+        Update: {
+          brand_name?: string
+          cities_available?: string[]
+          city?: string
+          countries_available?: string[]
+          created_at?: string
+          current_branches_count?: number | null
+          description?: string | null
+          expected_payback_months?: number | null
+          founding_year?: number | null
+          franchise_fee?: number
+          id?: string
+          initial_investment_max?: number | null
+          initial_investment_min?: number | null
+          is_featured?: boolean
+          logo_url?: string | null
+          marketing_support?: string | null
+          operational_support?: string | null
+          owner_id?: string
+          photo_urls?: string[]
+          rejection_reason?: string | null
+          required_employees_count?: number | null
+          required_space_sqm?: number | null
+          reviewed_at?: string | null
+          royalty_percentage?: number | null
+          sector?: Database["public"]["Enums"]["business_sector"]
+          status?: Database["public"]["Enums"]["listing_status"]
+          training_provided?: boolean
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchises_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -595,8 +814,9 @@ export type Database = {
           created_at: string
           fee_amount: number | null
           financial_statement_path: string | null
+          franchise_id: string | null
           id: string
-          listing_id: string
+          listing_id: string | null
           notes: string | null
           owner_id: string
           report_path: string | null
@@ -610,8 +830,9 @@ export type Database = {
           created_at?: string
           fee_amount?: number | null
           financial_statement_path?: string | null
+          franchise_id?: string | null
           id?: string
-          listing_id: string
+          listing_id?: string | null
           notes?: string | null
           owner_id: string
           report_path?: string | null
@@ -625,8 +846,9 @@ export type Database = {
           created_at?: string
           fee_amount?: number | null
           financial_statement_path?: string | null
+          franchise_id?: string | null
           id?: string
-          listing_id?: string
+          listing_id?: string | null
           notes?: string | null
           owner_id?: string
           report_path?: string | null
@@ -640,6 +862,13 @@ export type Database = {
             columns: ["accountant_id"]
             isOneToOne: false
             referencedRelation: "accountants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_requests_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "franchises"
             referencedColumns: ["id"]
           },
           {
@@ -674,6 +903,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_blocked: { Args: { uid: string }; Returns: boolean }
       log_audit: {
         Args: {
           p_action: string
@@ -682,6 +912,10 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: undefined
+      }
+      owns_ai_report_target: {
+        Args: { p_target_id: string; p_target_type: string }
+        Returns: boolean
       }
     }
     Enums: {
