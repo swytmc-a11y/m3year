@@ -92,13 +92,18 @@ Deno.serve(async (req: Request) => {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ phone, otp }),
+        // `method` must match the channel used in send-otp — Authentica
+        // stores/validates the OTP per delivery channel, not just per phone.
+        body: JSON.stringify({ method: "whatsapp", phone, otp }),
       });
+      const rawBody = await res.text();
       if (!res.ok) {
+        console.error("[verify-whatsapp-otp] Authentica non-2xx", res.status, rawBody);
         return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
       }
-      const result = await res.json().catch(() => null);
+      const result = rawBody ? JSON.parse(rawBody) : null;
       if (result?.verified !== true) {
+        console.error("[verify-whatsapp-otp] Authentica rejected otp", rawBody);
         return json({ error: "الرمز غير صحيح أو منتهي الصلاحية." }, 401);
       }
     } catch (err) {
