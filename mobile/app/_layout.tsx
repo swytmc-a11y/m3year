@@ -22,8 +22,16 @@ import {
   IBMPlexMono_500Medium,
   IBMPlexMono_600SemiBold,
 } from "@expo-google-fonts/ibm-plex-mono";
+import {
+  Alexandria_600SemiBold,
+  Alexandria_700Bold,
+} from "@expo-google-fonts/alexandria";
+import {
+  JetBrainsMono_500Medium,
+  JetBrainsMono_700Bold,
+} from "@expo-google-fonts/jetbrains-mono";
 import { AuthProvider } from "@/contexts/auth";
-import { colors } from "@/theme";
+import { ThemeProvider, useTheme } from "@/contexts/theme";
 
 // Arabic is a right-to-left language; force RTL layout app-wide.
 if (!I18nManager.isRTL) {
@@ -44,6 +52,10 @@ export default function RootLayout() {
     IBMPlexSansArabic_700Bold,
     IBMPlexMono_500Medium,
     IBMPlexMono_600SemiBold,
+    Alexandria_600SemiBold,
+    Alexandria_700Bold,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_700Bold,
   });
 
   useEffect(() => {
@@ -83,20 +95,39 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <AuthProvider>
-          <StatusBar style="dark" />
-          <View style={{ flex: 1, backgroundColor: colors.paper }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.paper },
-                animation: "slide_from_left",
-              }}
-            />
-            {!splashDone ? <AppSplash onDone={() => setSplashDone(true)} /> : null}
-          </View>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <RootChrome splashDone={splashDone} onSplashDone={() => setSplashDone(true)} />
+          </AuthProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
+  );
+}
+
+// Split out so it can read the theme via context (a provider's own body
+// can't consume the context it renders).
+function RootChrome({
+  splashDone,
+  onSplashDone,
+}: {
+  splashDone: boolean;
+  onSplashDone: () => void;
+}) {
+  const { isDark, t } = useTheme();
+  return (
+    <>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: t.bg },
+            animation: "slide_from_left",
+          }}
+        />
+        {!splashDone ? <AppSplash onDone={onSplashDone} /> : null}
+      </View>
+    </>
   );
 }
