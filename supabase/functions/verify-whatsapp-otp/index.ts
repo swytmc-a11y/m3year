@@ -13,8 +13,9 @@
 // Two-step for brand-new numbers: first call without `fullName` returns
 // { needsName: true } once Authentica confirms the OTP but no account exists
 // yet. The client then re-submits the SAME otp with `fullName` included to
-// actually create the account (still re-verified against Authentica each
-// time — a stale/reused OTP cannot create an account).
+// actually create the account. Authentica OTPs are single-use, so the second
+// call reuses a short-lived local cache (phone_verifications) of the first
+// successful verification instead of re-sending the same otp to Authentica.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -60,33 +61,60 @@ Deno.serve(async (req: Request) => {
     return json({ error: "خدمة التحقق عبر واتساب غير مُهيَّأة بعد" }, 503);
   }
 
-  try {
-    const res = await fetch(`${AUTHENTICA_BASE}/api/v2/verify-otp`, {
-      method: "POST",
-      headers: {
-        "X-Authorization": authenticaKey,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ phone, otp }),
-    });
-    if (!res.ok) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const asAdmin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+
+  // Authentica OTPs are single-use. The signup flow calls this function twice
+  // for a brand-new number (once to check the account exists, once again
+  // after the name step) with the SAME otp — re-sending it to Authentica the
+  // second time gets rejected as already-consumed. Reuse a cached recent
+  // verification instead of calling Authentica again when we already know
+  // this exact phone+otp pair was verified moments ago.
+  const CACHE_WINDOW_MS = 10 * 60 * 1000;
+  const { data: cached } = await asAdmin
+    .from("phone_verifications")
+    .select("otp, verified_at")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  const isCachedHit =
+    cached &&
+    cached.otp === otp &&
+    Date.now() - new Date(cached.verified_at).getTime() < CACHE_WINDOW_MS;
+
+  if (!isCachedHit) {
+    try {
+      const res = await fetch(`${AUTHENTICA_BASE}/api/v2/verify-otp`, {
+        method: "POST",
+        headers: {
+          "X-Authorization": authenticaKey,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone, otp }),
+      });
+      if (!res.ok) {
+        return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
+      }
+      const result = await res.json().catch(() => null);
+      if (result?.verified !== true) {
+        return json({ error: "الرمز غير صحيح أو منتهي الصلاحية." }, 401);
+      }
+    } catch (err) {
+      console.error("[verify-whatsapp-otp] Authentica request failed", err);
       return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
     }
-    const result = await res.json().catch(() => null);
-    if (result?.verified !== true) {
-      return json({ error: "الرمز غير صحيح أو منتهي الصلاحية." }, 401);
-    }
-  } catch (err) {
-    console.error("[verify-whatsapp-otp] Authentica request failed", err);
-    return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
+
+    await asAdmin
+      .from("phone_verifications")
+      .upsert({ phone, otp, verified_at: new Date().toISOString() });
   }
 
   const digits = phone.replace(/\D/g, "");
   const bridgeEmail = `${digits}@${EMAIL_DOMAIN}`;
   const bridgePassword = await derivePassword(phone, pepper);
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const asAnon = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
 
