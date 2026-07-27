@@ -159,12 +159,14 @@ export function IconButton({
   accessibilityLabel,
   badge = false,
   size = 40,
+  tone = "surface",
 }: {
   onPress?: () => void;
   children: React.ReactNode;
   accessibilityLabel: string;
   badge?: boolean;
   size?: number;
+  tone?: "surface" | "primary";
 }) {
   const { t } = useTheme();
   return (
@@ -179,10 +181,10 @@ export function IconButton({
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: t.surface,
+          backgroundColor: tone === "primary" ? t.primary : t.surface,
           alignItems: "center",
           justifyContent: "center",
-          ...t.shadowSm,
+          ...(tone === "primary" ? t.shadowPrimary : t.shadowSm),
         }}
       >
         {children}

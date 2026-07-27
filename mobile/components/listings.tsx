@@ -1,7 +1,10 @@
-import { View, Text, Pressable, Image } from "react-native";
+import { View, Text } from "react-native";
+import Animated from "react-native-reanimated";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Caliper } from "@/components/caliper";
-import { colors, fonts, radius } from "@/theme";
+import { Tappable, Card, DrawnCheckmark, staggerEnter } from "@/components/kit";
+import { useTheme } from "@/contexts/theme";
+import { fonts, radius, type ThemeTokens } from "@/theme";
 import {
   SECTOR_LABELS,
   LISTING_STATUS_LABELS,
@@ -15,63 +18,79 @@ import {
 } from "@/lib/constants";
 
 export function VerifiedBadge() {
+  const { t } = useTheme();
   return (
     <View
       style={{
         flexDirection: "row-reverse",
         alignItems: "center",
         gap: 6,
-        backgroundColor: "rgba(15,107,102,0.1)",
+        backgroundColor: t.successTint,
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: radius.pill,
       }}
     >
-      <Caliper color={colors.verify} size={12} />
-      <Text
-        style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: colors.verify }}
+      <View
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 7,
+          backgroundColor: t.success,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        موثّق
-      </Text>
+        <DrawnCheckmark size={8} color={t.successTint} play={false} />
+      </View>
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: 12, color: t.success }}>موثّق</Text>
     </View>
   );
 }
 
-const STATUS_STYLE: Record<ListingStatus, { bg: string; fg: string }> = {
-  draft: { bg: colors.paper, fg: colors.subtleText },
-  pending_review: { bg: "rgba(217,118,43,0.12)", fg: colors.amber },
-  published: { bg: "rgba(15,107,102,0.1)", fg: colors.verify },
-  rejected: { bg: colors.dangerBg, fg: colors.danger },
-  archived: { bg: "rgba(199,203,198,0.4)", fg: colors.mutedText },
-};
+function statusStyle(t: ThemeTokens, status: ListingStatus) {
+  switch (status) {
+    case "draft":
+      return { bg: t.surface2, fg: t.textMuted };
+    case "pending_review":
+      return { bg: `${t.primary}1F`, fg: t.primary };
+    case "published":
+      return { bg: t.successTint, fg: t.success };
+    case "rejected":
+      return { bg: t.dangerTint, fg: t.danger };
+    case "archived":
+      return { bg: t.surface2, fg: t.textMuted };
+  }
+}
 
 export function StatusBadge({ status }: { status: ListingStatus }) {
-  const s = STATUS_STYLE[status];
+  const { t } = useTheme();
+  const s = statusStyle(t, status);
   return (
-    <View
-      style={{
-        backgroundColor: s.bg,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: radius.pill,
-      }}
-    >
-      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: s.fg }}>
+    <View style={{ backgroundColor: s.bg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill }}>
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: 12, color: s.fg }}>
         {LISTING_STATUS_LABELS[status]}
       </Text>
     </View>
   );
 }
 
-const VERIFICATION_STYLE: Record<VerificationStatus, { bg: string; fg: string }> = {
-  none: { bg: colors.paper, fg: colors.subtleText },
-  pending: { bg: "rgba(217,118,43,0.12)", fg: colors.amber },
-  verified: { bg: "rgba(15,107,102,0.1)", fg: colors.verify },
-  rejected: { bg: colors.dangerBg, fg: colors.danger },
-};
+function verificationStyle(t: ThemeTokens, status: VerificationStatus) {
+  switch (status) {
+    case "none":
+      return { bg: t.surface2, fg: t.textMuted };
+    case "pending":
+      return { bg: `${t.primary}1F`, fg: t.primary };
+    case "verified":
+      return { bg: t.successTint, fg: t.success };
+    case "rejected":
+      return { bg: t.dangerTint, fg: t.danger };
+  }
+}
 
 export function VerificationStatusPill({ status }: { status: VerificationStatus }) {
-  const s = VERIFICATION_STYLE[status];
+  const { t } = useTheme();
+  const s = verificationStyle(t, status);
   return (
     <View
       style={{
@@ -82,7 +101,7 @@ export function VerificationStatusPill({ status }: { status: VerificationStatus 
         borderRadius: radius.pill,
       }}
     >
-      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 12, color: s.fg }}>
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: 12, color: s.fg }}>
         {VERIFICATION_STATUS_LABELS[status]}
       </Text>
     </View>
@@ -96,26 +115,21 @@ export function Metric({
 }: {
   label: string;
   value: string;
+  /** Highlights the value in the brand accent — kept as `amber` so every
+   * existing call site (9 screens) works unchanged after the color swap. */
   amber?: boolean;
 }) {
+  const { t } = useTheme();
   return (
     <View>
-      <Text
-        style={{
-          fontFamily: fonts.body,
-          fontSize: 12,
-          color: colors.mutedText,
-          marginBottom: 4,
-          textAlign: "right",
-        }}
-      >
+      <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, marginBottom: 4, textAlign: "right" }}>
         {label}
       </Text>
       <Text
         style={{
-          fontFamily: fonts.monoSemiBold,
+          fontFamily: fonts.numericBold,
           fontSize: 18,
-          color: amber ? colors.amber : colors.ink,
+          color: amber ? t.primary : t.text,
           textAlign: "right",
         }}
       >
@@ -125,117 +139,73 @@ export function Metric({
   );
 }
 
-export function ListingCard({ listing }: { listing: Listing }) {
+export function ListingCard({ listing, index = 0 }: { listing: Listing; index?: number }) {
   const router = useRouter();
+  const { t } = useTheme();
   const isVerified = listing.verification_status === "verified";
 
   return (
-    <Pressable
-      onPress={() => router.push(`/listings/${listing.id}`)}
-      style={({ pressed }) => ({
-        backgroundColor: colors.white,
-        borderColor: colors.grid,
-        borderWidth: 1,
-        borderRadius: radius.lg,
-        padding: 20,
-        opacity: pressed ? 0.9 : 1,
-      })}
-    >
-      {listing.photo_urls?.[0] ? (
-        <Image
-          source={{ uri: listing.photo_urls[0] }}
-          style={{
-            width: "100%",
-            height: 140,
-            borderRadius: radius.md,
-            marginBottom: 14,
-            backgroundColor: colors.paper,
-          }}
-        />
-      ) : null}
+    <Animated_Entering index={index}>
+      <Tappable onPress={() => router.push(`/listings/${listing.id}`)} haptic="light">
+        <Card style={{ padding: 20 }}>
+          {listing.photo_urls?.[0] ? (
+            <Image
+              source={{ uri: listing.photo_urls[0] }}
+              style={{ width: "100%", height: 140, borderRadius: radius.lg, marginBottom: 14, backgroundColor: t.surface2 }}
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+            />
+          ) : null}
 
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text
+          <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 16, color: t.text, textAlign: "right" }}>
+                {listing.title}
+              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
+                قطاع {SECTOR_LABELS[listing.sector]} · {listing.city}
+              </Text>
+            </View>
+            {isVerified ? <VerifiedBadge /> : null}
+          </View>
+
+          <View
             style={{
-              fontFamily: fonts.bodyBold,
-              fontSize: 16,
-              color: colors.ink,
-              textAlign: "right",
+              flexDirection: "row-reverse",
+              flexWrap: "wrap",
+              gap: 32,
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: t.border,
+              paddingVertical: 14,
+              marginBottom: 14,
             }}
           >
-            {listing.title}
-          </Text>
-          <Text
-            style={{
-              fontFamily: fonts.body,
-              fontSize: 13,
-              color: colors.mutedText,
-              marginTop: 4,
-              textAlign: "right",
-            }}
-          >
-            قطاع {SECTOR_LABELS[listing.sector]} · {listing.city}
-          </Text>
-        </View>
-        {isVerified ? <VerifiedBadge /> : null}
-      </View>
+            <Metric label="الإيراد الشهري" value={formatSar(listing.monthly_revenue)} />
+            <Metric label="النسبة المطروحة" value={formatPercentage(listing.offered_percentage)} amber />
+            {listing.asking_price != null ? (
+              <Metric
+                label={listing.price_negotiable ? "السعر المطلوب (قابل للتفاوض)" : "السعر المطلوب"}
+                value={formatSar(listing.asking_price)}
+              />
+            ) : null}
+          </View>
 
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          flexWrap: "wrap",
-          gap: 32,
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          borderColor: colors.grid,
-          borderStyle: "dashed",
-          paddingVertical: 14,
-          marginBottom: 14,
-        }}
-      >
-        <Metric label="الإيراد الشهري" value={formatSar(listing.monthly_revenue)} />
-        <Metric
-          label="النسبة المطروحة"
-          value={formatPercentage(listing.offered_percentage)}
-          amber
-        />
-        {listing.asking_price != null ? (
-          <Metric
-            label={listing.price_negotiable ? "السعر المطلوب (قابل للتفاوض)" : "السعر المطلوب"}
-            value={formatSar(listing.asking_price)}
-          />
-        ) : null}
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}
-        >
-          {isVerified && listing.verified_at
-            ? `تحقق محاسبي: ${formatDate(listing.verified_at)}`
-            : "بانتظار التوثيق المالي"}
-        </Text>
-        <Text
-          style={{ fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink }}
-        >
-          التفاصيل ←
-        </Text>
-      </View>
-    </Pressable>
+          <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted }}>
+              {isVerified && listing.verified_at ? `تحقق محاسبي: ${formatDate(listing.verified_at)}` : "بانتظار التوثيق المالي"}
+            </Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.text }}>التفاصيل ←</Text>
+          </View>
+        </Card>
+      </Tappable>
+    </Animated_Entering>
   );
+}
+
+// Small wrapper so ListingCard/FranchiseCard get the shared staggered
+// entrance without every call site having to import Reanimated itself.
+function Animated_Entering({ index, children }: { index: number; children: React.ReactNode }) {
+  return <Animated.View entering={staggerEnter(Math.min(index, 8))}>{children}</Animated.View>;
 }

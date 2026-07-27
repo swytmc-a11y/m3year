@@ -98,3 +98,60 @@ export function ActiveDot({ size = 4 }: { size?: number }) {
     </Svg>
   );
 }
+
+// ---- New-identity general purpose icons (color/size supplied by caller) ----
+
+export function BellIcon({ color, size = 18 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18.5 16.5v-5a6.5 6.5 0 1 0-13 0v5l-1.7 2h16.4Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M10 21h4" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function SearchIcon({ color, size = 15 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={2} />
+      <Path d="M21 21l-4.3-4.3" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function ChevronBackIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M14.5 6l-6.5 6 6.5 6" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function HeartIcon({ color, size = 16, filled = false }: { color: ColorValue; size?: number; filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 20.3s-6.6-4.2-8.7-8.3C1.4 8.2 3.3 5.2 6.2 5.2c1.9 0 3.3 1.1 4.3 2.5 1-1.4 2.4-2.5 4.3-2.5 2.9 0 4.8 3 3 6.8-2.2 4.1-8.8 8.3-8.8 8.3Z"
+        fill={filled ? color : "none"}
+        stroke={color}
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function StarIcon({ color, size = 10 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.7 6.2 20.8l1.1-6.4-4.7-4.6 6.5-.9Z" fill={color} />
+    </Svg>
+  );
+}
