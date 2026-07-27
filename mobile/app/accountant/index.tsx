@@ -1,16 +1,18 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, Pressable } from "react-native";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TopBar, Button, Card } from "@/components/ui";
+import { Button, Card, IconButton, Tappable } from "@/components/kit";
+import { ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
+import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
 import {
   listOpenVerificationRequests,
   listMyAssignedRequests,
   type VerificationRequestRow,
 } from "@/lib/accountant-actions";
-import { colors, fonts, radius } from "@/theme";
+import { fonts } from "@/theme";
 
 const STATUS_LABEL: Record<string, string> = {
   requested: "بانتظار محاسب",
@@ -22,6 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function AccountantHomeScreen() {
   const router = useRouter();
+  const { t } = useTheme();
   const { session, user, loading: authLoading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAccountantRole, setIsAccountantRole] = useState(false);
@@ -83,56 +86,58 @@ export default function AccountantHomeScreen() {
   }
 
   if (authLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   }
   if (!session) {
     return <Redirect href="/auth" />;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.paper }} edges={["top"]}>
-      <TopBar title="لوحة المحاسب" onBack={() => router.back()} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>لوحة المحاسب</Text>
+      </View>
 
       {checkingRole ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator color={colors.ink} />
+          <ActivityIndicator color={t.text} />
         </View>
       ) : roleCheckError ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center" }}>
+          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
             تعذّر التحقق من صلاحياتك الآن.
           </Text>
-          <Button label="إعادة المحاولة" variant="ghost" onPress={() => load()} />
+          <Button label="إعادة المحاولة" variant="secondary" onPress={() => load()} />
         </View>
       ) : !isAccountantRole ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 }}>
-          <Text style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.ink, textAlign: "center" }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 16, color: t.text, textAlign: "center" }}>
             هذا القسم مخصص للمحاسبين المعتمدين
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center", lineHeight: 22 }}>
-            إذا كنت محاسبًا مرخّصًا وتريد الانضمام لتقديم خدمة التوثيق المالي، تواصل مع فريق معيار
-            لتفعيل صلاحية حسابك.
+          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center", lineHeight: 21 }}>
+            إذا كنت محاسبًا مرخّصًا وتريد الانضمام لتقديم خدمة التوثيق المالي، تواصل مع فريق معيار لتفعيل صلاحية حسابك.
           </Text>
         </View>
       ) : !hasProfile ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 }}>
-          <Text style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.ink, textAlign: "center" }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 16, color: t.text, textAlign: "center" }}>
             أكمل ملفك كمحاسب
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center", lineHeight: 22 }}>
-            لبدء استلام طلبات التوثيق المالي، أنشئ ملف المحاسب الخاص بك أولًا. سيراجع فريق معيار
-            ملفك ويفعّله قبل ظهور الطلبات لك.
+          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center", lineHeight: 21 }}>
+            لبدء استلام طلبات التوثيق المالي، أنشئ ملف المحاسب الخاص بك أولًا. سيراجع فريق معيار ملفك ويفعّله قبل ظهور الطلبات لك.
           </Text>
           <Button label="إنشاء ملف المحاسب" loading={registering} onPress={registerAsAccountant} />
         </View>
       ) : !isActive ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 }}>
-          <Text style={{ fontFamily: fonts.heading, fontSize: 17, color: colors.ink, textAlign: "center" }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 16, color: t.text, textAlign: "center" }}>
             ملفك قيد المراجعة
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "center", lineHeight: 22 }}>
-            تم إنشاء ملف المحاسب الخاص بك. سيقوم فريق معيار بمراجعته وتفعيله، وبعدها ستظهر لك طلبات
-            التوثيق المتاحة.
+          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center", lineHeight: 21 }}>
+            تم إنشاء ملف المحاسب الخاص بك. سيقوم فريق معيار بمراجعته وتفعيله، وبعدها ستظهر لك طلبات التوثيق المتاحة.
           </Text>
         </View>
       ) : (
@@ -141,7 +146,7 @@ export default function AccountantHomeScreen() {
           keyExtractor={() => "x"}
           renderItem={null}
           ListHeaderComponent={
-            <View style={{ padding: 20, gap: 24 }}>
+            <View style={{ padding: 18, gap: 24 }}>
               <Section
                 title="طلبات مفتوحة"
                 rows={open}
@@ -177,42 +182,26 @@ function Section({
   loading: boolean;
   onPressRow: (id: string) => void;
 }) {
+  const { t } = useTheme();
   return (
     <View style={{ gap: 12 }}>
-      <Text style={{ fontFamily: fonts.bodyBold, fontSize: 16, color: colors.ink, textAlign: "right" }}>
-        {title}
-      </Text>
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>{title}</Text>
       {loading ? (
-        <ActivityIndicator color={colors.ink} />
+        <ActivityIndicator color={t.text} />
       ) : rows.length === 0 ? (
         <Card>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.mutedText, textAlign: "right" }}>
-            {emptyText}
-          </Text>
+          <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right" }}>{emptyText}</Text>
         </Card>
       ) : (
         rows.map((row) => (
-          <Pressable
-            key={row.id}
-            onPress={() => onPressRow(row.id)}
-            style={{
-              backgroundColor: colors.white,
-              borderColor: colors.grid,
-              borderWidth: 1,
-              borderRadius: radius.md,
-              padding: 16,
-              flexDirection: "row-reverse",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink, textAlign: "right" }}>
-              {row.listing_title ?? "إعلان"}
-            </Text>
-            <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.mutedText }}>
-              {STATUS_LABEL[row.status]}
-            </Text>
-          </Pressable>
+          <Tappable key={row.id} onPress={() => onPressRow(row.id)} haptic="light">
+            <Card style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.text, textAlign: "right" }}>
+                {row.listing_title ?? "إعلان"}
+              </Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted }}>{STATUS_LABEL[row.status]}</Text>
+            </Card>
+          </Tappable>
         ))
       )}
     </View>
