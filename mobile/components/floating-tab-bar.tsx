@@ -93,7 +93,12 @@ export function FloatingTabBar({ state, navigation }: MinimalTabBarProps) {
                   backgroundColor: focused ? `${t.primary}1A` : "transparent",
                 }}
               >
-                <Icon focused={focused} color={focused ? t.primary : t.textMuted} size={17} />
+                <Icon
+                  focused={focused}
+                  color={focused ? t.primary : t.textMuted}
+                  activeFill={`${t.primary}24`}
+                  size={17}
+                />
                 {focused ? (
                   <Text style={{ fontFamily: fonts.displayBold, fontSize: 11.5, color: t.primary }}>
                     {label}

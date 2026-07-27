@@ -86,7 +86,7 @@ export default function EditFranchiseScreen() {
             onSubmit={async (values, intent, extra) => {
               const { error } = await updateFranchise(franchise.id, values, intent, extra.logoUrl, extra.photoUrls);
               if (error) throw new Error(error);
-              router.replace("/my-franchises");
+              router.replace("/my-ads?kind=franchises");
             }}
           />
         </ScrollView>

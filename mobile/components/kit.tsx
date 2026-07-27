@@ -1,9 +1,22 @@
-import { useEffect, useState } from "react";
-import { Platform, Pressable, Text, View, type PressableProps, type ViewProps } from "react-native";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type PressableProps,
+  type TextInputProps,
+  type ViewProps,
+} from "react-native";
 import Animated, {
   Easing,
   FadeInDown,
   FadeInUp,
+  SlideInDown,
   runOnJS,
   useAnimatedProps,
   useAnimatedReaction,
@@ -14,8 +27,10 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import * as Haptics from "expo-haptics";
+import { ChevronBackIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { fonts, motion, radius, type ThemeTokens } from "@/theme";
 
@@ -450,6 +465,378 @@ export function AnimatedNumber({
 export function staggerEnter(index: number, from: "up" | "down" = "up") {
   const base = from === "up" ? FadeInUp : FadeInDown;
   return base.delay(index * motion.listStaggerMs).springify().damping(18).mass(0.6);
+}
+
+// ---- form primitives ----
+//
+// These replace the legacy `components/ui.tsx` Field/Chip, which were hard-wired
+// to the old static palette. Everything here reads live theme tokens, so forms
+// follow light/dark like the rest of the app.
+
+export function FieldLabel({ children }: { children: string }) {
+  const { t } = useTheme();
+  return (
+    <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12.5, color: t.text, textAlign: "right" }}>
+      {children}
+    </Text>
+  );
+}
+
+export function FieldError({ message }: { message?: string }) {
+  const { t } = useTheme();
+  if (!message) return null;
+  return (
+    <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.danger, textAlign: "right" }}>
+      {message}
+    </Text>
+  );
+}
+
+/**
+ * Themed text input. `numeric` switches to the tabular mono face and
+ * left-aligns, so figures line up in a column the way they do everywhere else.
+ */
+export function Field({
+  label,
+  error,
+  hint,
+  numeric = false,
+  multiline,
+  style,
+  onFocus,
+  onBlur,
+  ...inputProps
+}: { label?: string; error?: string; hint?: string; numeric?: boolean } & TextInputProps) {
+  const { t } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const borderColor = error ? t.danger : focused ? t.primary : t.border;
+
+  return (
+    <View style={{ gap: 7 }}>
+      {label ? <FieldLabel>{label}</FieldLabel> : null}
+      <TextInput
+        placeholderTextColor={t.textMuted}
+        multiline={multiline}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        {...inputProps}
+        style={[
+          {
+            borderWidth: 1,
+            borderColor,
+            borderRadius: radius.lg,
+            backgroundColor: t.surface,
+            paddingHorizontal: 14,
+            fontSize: 13.5,
+            fontFamily: numeric ? fonts.numeric : fonts.body,
+            color: t.text,
+            textAlign: numeric ? "left" : "right",
+          },
+          multiline
+            ? { minHeight: 96, paddingTop: 12, paddingBottom: 12, textAlignVertical: "top" as const }
+            : { height: 46 },
+          style,
+        ]}
+      />
+      {hint && !error ? (
+        <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted, textAlign: "right" }}>{hint}</Text>
+      ) : null}
+      <FieldError message={error} />
+    </View>
+  );
+}
+
+/** Checkbox row used for form confirmations and boolean options. */
+export function CheckRow({ checked, label, onPress }: { checked: boolean; label: string; onPress: () => void }) {
+  const { t } = useTheme();
+  return (
+    <Tappable
+      onPress={onPress}
+      haptic="light"
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      style={{ alignSelf: "stretch" }}
+    >
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10, paddingVertical: 5 }}>
+        <View
+          style={{
+            width: 21,
+            height: 21,
+            borderRadius: radius.sm,
+            borderWidth: 1.5,
+            borderColor: checked ? t.primary : t.border,
+            backgroundColor: checked ? t.primary : t.surface,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {checked ? <DrawnCheckmark size={13} color={t.onPrimary} /> : null}
+        </View>
+        <Text
+          style={{ flex: 1, fontFamily: fonts.body, fontSize: 12.5, color: t.text, textAlign: "right", lineHeight: 19 }}
+        >
+          {label}
+        </Text>
+      </View>
+    </Tappable>
+  );
+}
+
+// ---- Sheet (bottom sheet) ----
+//
+// Modal unmounts its children the instant `visible` flips false, so a Reanimated
+// `exiting` animation would never get to play. We let Modal own the fade-out and
+// use Reanimated only for the spring-up entrance.
+export function Sheet({
+  visible,
+  onClose,
+  title,
+  children,
+  footer,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const { t } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+        <Pressable
+          accessibilityLabel="إغلاق"
+          onPress={onClose}
+          style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+        />
+        <Animated.View
+          entering={SlideInDown.springify().damping(20).mass(0.7)}
+          style={{
+            backgroundColor: t.bg,
+            borderTopLeftRadius: radius.xxl,
+            borderTopRightRadius: radius.xxl,
+            paddingBottom: insets.bottom + 12,
+            maxHeight: "88%",
+            ...t.shadowLg,
+          }}
+        >
+          <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}>
+            <View style={{ width: 38, height: 4, borderRadius: 2, backgroundColor: t.border }} />
+          </View>
+          {title ? (
+            <Text
+              style={{
+                fontFamily: fonts.displayBold,
+                fontSize: 15,
+                color: t.text,
+                textAlign: "center",
+                paddingHorizontal: 20,
+                paddingTop: 6,
+                paddingBottom: 10,
+              }}
+            >
+              {title}
+            </Text>
+          ) : null}
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 12 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+          {footer ? <View style={{ paddingHorizontal: 18, paddingTop: 6 }}>{footer}</View> : null}
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+}
+
+// ---- MenuCard (grouped settings/navigation rows) ----
+export type MenuItem = {
+  label: string;
+  onPress: () => void;
+  icon?: React.ReactNode;
+  value?: string;
+  danger?: boolean;
+};
+
+export function MenuCard({ items }: { items: MenuItem[] }) {
+  const { t } = useTheme();
+  return (
+    <Card style={{ padding: 0, overflow: "hidden" }}>
+      {items.map((item, idx) => (
+        <Tappable key={item.label} onPress={item.onPress} haptic="light">
+          <View
+            style={{
+              flexDirection: "row-reverse",
+              alignItems: "center",
+              gap: 11,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              minHeight: 46,
+              borderTopWidth: idx === 0 ? 0 : StyleSheet.hairlineWidth,
+              borderTopColor: t.border,
+            }}
+          >
+            {item.icon ? (
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: radius.md,
+                  backgroundColor: item.danger ? t.dangerTint : t.surface2,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {item.icon}
+              </View>
+            ) : null}
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: fonts.bodyMedium,
+                fontSize: 12.5,
+                color: item.danger ? t.danger : t.text,
+                textAlign: "right",
+              }}
+            >
+              {item.label}
+            </Text>
+            {item.value ? (
+              <Text style={{ fontFamily: fonts.numeric, fontSize: 11, color: t.textMuted }}>{item.value}</Text>
+            ) : null}
+            <ChevronBackIcon color={t.textMuted} size={13} />
+          </View>
+        </Tappable>
+      ))}
+    </Card>
+  );
+}
+
+// ---- EmptyState (one consistent shape for every "nothing here yet") ----
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  const { t } = useTheme();
+  return (
+    <Card style={{ padding: 28, alignItems: "center", gap: 9 }}>
+      {icon ? (
+        <View
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: radius.xl,
+            backgroundColor: t.surface2,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 2,
+          }}
+        >
+          {icon}
+        </View>
+      ) : null}
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "center" }}>{title}</Text>
+      {description ? (
+        <Text
+          style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "center", lineHeight: 20 }}
+        >
+          {description}
+        </Text>
+      ) : null}
+      {action ? <View style={{ marginTop: 8 }}>{action}</View> : null}
+    </Card>
+  );
+}
+
+// ---- Toast ----
+type ToastKind = "success" | "error" | "info";
+type ToastState = { message: string; kind: ToastKind } | null;
+
+const ToastContext = createContext<(message: string, kind?: ToastKind) => void>(() => {});
+
+/** Fire a transient confirmation/error banner: `toast("تم الحفظ", "success")`. */
+export function useToast() {
+  return useContext(ToastContext);
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [toast, setToast] = useState<ToastState>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const show = useCallback((message: string, kind: ToastKind = "info") => {
+    if (timer.current) clearTimeout(timer.current);
+    setToast({ message, kind });
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(
+        kind === "error"
+          ? Haptics.NotificationFeedbackType.Error
+          : Haptics.NotificationFeedbackType.Success,
+      ).catch(() => {});
+    }
+    timer.current = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+
+  const bg = toast?.kind === "error" ? t.danger : toast?.kind === "success" ? t.success : t.text;
+
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      {toast ? (
+        <Animated.View
+          entering={FadeInDown.springify().damping(18).mass(0.6)}
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: 16,
+            right: 16,
+            bottom: insets.bottom + 96,
+            backgroundColor: bg,
+            borderRadius: radius.lg,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            ...t.shadowLg,
+          }}
+        >
+          <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12.5, color: t.white, textAlign: "center" }}>
+            {toast.message}
+          </Text>
+        </Animated.View>
+      ) : null}
+    </ToastContext.Provider>
+  );
+}
+
+// ---- themed pull-to-refresh colors ----
+// RefreshControl needs per-platform props to be tinted; centralise so every
+// list refreshes with the same brand spinner instead of the OS default gray.
+export function useRefreshTint() {
+  const { t } = useTheme();
+  return useMemo(
+    () => ({ tintColor: t.primary, colors: [t.primary], progressBackgroundColor: t.surface }),
+    [t],
+  );
 }
 
 export type { ThemeTokens };

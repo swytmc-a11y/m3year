@@ -18,8 +18,8 @@ import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { Button, IconButton, Tappable } from "@/components/kit";
-import { ChevronBackIcon, SendIcon, AttachIcon } from "@/components/icons";
+import { Button, IconButton, Tappable, useToast } from "@/components/kit";
+import { ChevronBackIcon, SendIcon, ImagePickIcon, FileClipIcon } from "@/components/icons";
 import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -45,6 +45,7 @@ type Message = {
 export default function ChatScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, user, loading: authLoading } = useAuth();
@@ -61,7 +62,6 @@ export default function ChatScreen() {
   const [keyboardShown, setKeyboardShown] = useState(false);
 
   const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
-  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [attaching, setAttaching] = useState(false);
 
   const [listingId, setListingId] = useState<string | null>(null);
@@ -238,13 +238,17 @@ export default function ChatScreen() {
     setAttaching(false);
     if (error) {
       console.error("[messages] send attachment failed", error);
+      toast("تعذّر إرسال المرفق الآن.", "error");
     }
   }
 
   async function onPickImage() {
-    setAttachMenuOpen(false);
+    Keyboard.dismiss();
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    if (!permission.granted) {
+      toast("امنح إذن الوصول للصور لإرسالها.", "error");
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 0.7,
@@ -257,13 +261,14 @@ export default function ChatScreen() {
     const { path, error } = await uploadMessageAttachment(String(id), asset.uri, name);
     if (error || !path) {
       setAttaching(false);
+      toast(error ?? "تعذّر رفع الصورة الآن.", "error");
       return;
     }
     await sendAttachment({ path, type: "image", name });
   }
 
   async function onPickFile() {
-    setAttachMenuOpen(false);
+    Keyboard.dismiss();
     const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
     if (result.canceled || !result.assets?.[0]) return;
 
@@ -272,6 +277,7 @@ export default function ChatScreen() {
     const { path, error } = await uploadMessageAttachment(String(id), asset.uri, asset.name);
     if (error || !path) {
       setAttaching(false);
+      toast(error ?? "تعذّر رفع الملف الآن.", "error");
       return;
     }
     await sendAttachment({ path, type: "file", name: asset.name });
@@ -426,31 +432,6 @@ export default function ChatScreen() {
         </View>
       </Modal>
 
-      <Modal visible={attachMenuOpen} transparent animationType="fade" onRequestClose={() => setAttachMenuOpen(false)}>
-        <Pressable style={{ flex: 1, justifyContent: "flex-end" }} onPress={() => setAttachMenuOpen(false)}>
-          <View
-            style={{
-              backgroundColor: t.surface,
-              borderTopLeftRadius: radius.xl,
-              borderTopRightRadius: radius.xl,
-              padding: 16,
-              paddingBottom: insets.bottom + 16,
-              gap: 8,
-            }}
-          >
-            <Tappable onPress={onPickImage} haptic="light" style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}>
-              <Text style={{ fontSize: 22 }}>🖼️</Text>
-              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: t.text }}>صورة</Text>
-            </Tappable>
-            <View style={{ height: 1, backgroundColor: t.border }} />
-            <Tappable onPress={onPickFile} haptic="light" style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 }}>
-              <Text style={{ fontSize: 22 }}>📎</Text>
-              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: t.text }}>ملف</Text>
-            </Tappable>
-          </View>
-        </Pressable>
-      </Modal>
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -496,15 +477,22 @@ export default function ChatScreen() {
             ...t.shadowSm,
           }}
         >
-          <IconButton
-            accessibilityLabel="إرفاق"
-            onPress={() => {
-              Keyboard.dismiss();
-              setAttachMenuOpen(true);
-            }}
-          >
-            {attaching ? <ActivityIndicator color={t.textMuted} size="small" /> : <AttachIcon color={t.textMuted} size={18} />}
-          </IconButton>
+          {/* Two direct buttons rather than a "+" that opens a menu of the same
+              two choices — one tap straight into the real device picker. */}
+          {attaching ? (
+            <View style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
+              <ActivityIndicator color={t.textMuted} size="small" />
+            </View>
+          ) : (
+            <>
+              <IconButton accessibilityLabel="إرسال صورة" onPress={onPickImage}>
+                <ImagePickIcon color={t.textMuted} size={18} />
+              </IconButton>
+              <IconButton accessibilityLabel="إرسال ملف" onPress={onPickFile}>
+                <FileClipIcon color={t.textMuted} size={18} />
+              </IconButton>
+            </>
+          )}
 
           <TextInput
             value={draft}

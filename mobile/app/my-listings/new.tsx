@@ -37,7 +37,7 @@ export default function NewListingScreen() {
           onSubmit={async (values, intent, extra) => {
             const { error } = await createListing(extra.listingId, values, intent, extra.photoUrls);
             if (error) throw new Error(error);
-            router.replace("/my-listings");
+            router.replace("/my-ads");
           }}
         />
       </ScrollView>

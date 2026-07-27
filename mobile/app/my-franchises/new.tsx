@@ -37,7 +37,7 @@ export default function NewFranchiseScreen() {
           onSubmit={async (values, intent, extra) => {
             const { error } = await createFranchise(extra.franchiseId, values, intent, extra.logoUrl, extra.photoUrls);
             if (error) throw new Error(error);
-            router.replace("/my-franchises");
+            router.replace("/my-ads?kind=franchises");
           }}
         />
       </ScrollView>

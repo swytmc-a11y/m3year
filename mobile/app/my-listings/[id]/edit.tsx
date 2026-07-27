@@ -86,7 +86,7 @@ export default function EditListingScreen() {
             onSubmit={async (values, intent, extra) => {
               const { error } = await updateListing(listing.id, values, intent, extra.photoUrls);
               if (error) throw new Error(error);
-              router.replace("/my-listings");
+              router.replace("/my-ads");
             }}
           />
         </ScrollView>

@@ -1,27 +1,28 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Switch,
-  ScrollView,
-} from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, TextInput, FlatList, Switch, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
-import { Chip, IconButton, SegmentedControl, Skeleton, Tappable } from "@/components/kit";
-import { BellIcon, PlusIcon, SearchIcon } from "@/components/icons";
+import {
+  Button,
+  Chip,
+  EmptyState,
+  FieldLabel,
+  IconButton,
+  SegmentedControl,
+  Sheet,
+  Skeleton,
+  Tappable,
+  useRefreshTint,
+} from "@/components/kit";
+import { BellIcon, FilterIcon, PlusIcon, SearchIcon } from "@/components/icons";
+import { CreateTypeSheet } from "@/components/create-type-sheet";
 import { ListingCard } from "@/components/listings";
 import { FranchiseCard } from "@/components/franchises";
 import { supabase } from "@/lib/supabase";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import { useTheme } from "@/contexts/theme";
-import {
-  SECTOR_OPTIONS,
-  type Listing,
-  type BusinessSector,
-} from "@/lib/constants";
+import { SECTOR_OPTIONS, type Listing, type BusinessSector } from "@/lib/constants";
 import type { Franchise } from "@/lib/franchise-constants";
 import { fonts, radius } from "@/theme";
 
@@ -42,23 +43,27 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const refreshTint = useRefreshTint();
+
   const [mode, setMode] = useState<Mode>("listings");
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState<BusinessSector | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [sort, setSort] = useState<SortOption>("newest");
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [minRevenue, setMinRevenue] = useState("");
   const [maxRevenue, setMaxRevenue] = useState("");
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [franchises, setFranchises] = useState<Franchise[] | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     setError(false);
 
     if (mode === "franchises") {
@@ -67,9 +72,7 @@ export default function HomeScreen() {
       if (verifiedOnly) fquery = fquery.eq("verification_status", "verified");
       const q = search.trim();
       if (q) fquery = fquery.ilike("brand_name", `%${q}%`);
-      fquery = fquery
-        .order("is_featured", { ascending: false })
-        .order("created_at", { ascending: false });
+      fquery = fquery.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
 
       const { data, error: qError } = await fquery;
       if (qError) {
@@ -83,10 +86,7 @@ export default function HomeScreen() {
       return;
     }
 
-    let query = supabase
-      .from("listings")
-      .select("*")
-      .eq("status", "published");
+    let query = supabase.from("listings").select("*").eq("status", "published");
 
     if (sector) query = query.eq("sector", sector);
     if (verifiedOnly) query = query.eq("verification_status", "verified");
@@ -120,6 +120,7 @@ export default function HomeScreen() {
 
   // Debounce so typing in search/range fields doesn't fire a query per keystroke.
   useEffect(() => {
+    setLoading(true);
     const timer = setTimeout(load, 300);
     return () => clearTimeout(timer);
   }, [load]);
@@ -132,233 +133,420 @@ export default function HomeScreen() {
     }, []),
   );
 
+  async function onRefresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
+
+  function resetFilters() {
+    setSector(null);
+    setVerifiedOnly(false);
+    setSort("newest");
+    setMinRevenue("");
+    setMaxRevenue("");
+  }
+
+  // Everything the user changed away from its default, so the filter button can
+  // show at a glance that a narrowed view is in effect.
+  const activeFilters = useMemo(() => {
+    const chips: { key: string; label: string; clear: () => void }[] = [];
+    if (sector) {
+      chips.push({
+        key: "sector",
+        label: SECTOR_OPTIONS.find((o) => o.value === sector)?.label ?? "",
+        clear: () => setSector(null),
+      });
+    }
+    if (verifiedOnly) chips.push({ key: "verified", label: "موثّقة فقط", clear: () => setVerifiedOnly(false) });
+    if (mode === "listings" && sort !== "newest") {
+      chips.push({ key: "sort", label: SORT_LABELS[sort], clear: () => setSort("newest") });
+    }
+    if (mode === "listings" && minRevenue) {
+      chips.push({ key: "min", label: `إيراد من ${minRevenue}`, clear: () => setMinRevenue("") });
+    }
+    if (mode === "listings" && maxRevenue) {
+      chips.push({ key: "max", label: `إيراد حتى ${maxRevenue}`, clear: () => setMaxRevenue("") });
+    }
+    return chips;
+  }, [sector, verifiedOnly, sort, minRevenue, maxRevenue, mode]);
+
+  const rows: (Listing | Franchise)[] = mode === "listings" ? (listings ?? []) : (franchises ?? []);
   const activeCount = mode === "listings" ? listings?.length : franchises?.length;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 10 }}>
+      <View
+        style={{
+          flexDirection: "row-reverse",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+        }}
+      >
         <Logo size={20} />
         <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
-          <IconButton
-            accessibilityLabel="الإشعارات"
-            badge={unreadCount > 0}
-            onPress={() => router.push("/notifications")}
-          >
+          <IconButton accessibilityLabel="الإشعارات" badge={unreadCount > 0} onPress={() => router.push("/notifications")}>
             <BellIcon color={t.text} size={16} />
           </IconButton>
-          <IconButton
-            accessibilityLabel={mode === "listings" ? "إعلان جديد" : "امتياز جديد"}
-            onPress={() => router.push(mode === "listings" ? "/my-listings/new" : "/my-franchises/new")}
-            size={40}
-            tone="primary"
-          >
+          <IconButton accessibilityLabel="إضافة إعلان" onPress={() => setCreateOpen(true)} size={40} tone="primary">
             <PlusIcon color={t.onPrimary} size={17} />
           </IconButton>
         </View>
       </View>
 
-      {mode === "listings" ? (
-        <FlatList
-          data={listings ?? []}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => <ListingCard listing={item} index={index} />}
-          contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16 }}
-          ListHeaderComponent={
-            <HomeHeader
-              mode={mode}
-              setMode={setMode}
-              search={search}
-              setSearch={setSearch}
-              placeholder="ابحث بعنوان المشروع"
-              sector={sector}
-              setSector={setSector}
-              sort={sort}
-              setSort={setSort}
-              verifiedOnly={verifiedOnly}
-              setVerifiedOnly={setVerifiedOnly}
-              showAdvanced={showAdvanced}
-              setShowAdvanced={setShowAdvanced}
-              minRevenue={minRevenue}
-              setMinRevenue={setMinRevenue}
-              maxRevenue={maxRevenue}
-              setMaxRevenue={setMaxRevenue}
-              activeCount={activeCount}
+      <FlatList
+        data={rows}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) =>
+          mode === "listings" ? (
+            <ListingCard listing={item as Listing} index={index} />
+          ) : (
+            <FranchiseCard franchise={item as Franchise} index={index} />
+          )
+        }
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
+        ListHeaderComponent={
+          <HomeHeader
+            mode={mode}
+            setMode={setMode}
+            search={search}
+            setSearch={setSearch}
+            placeholder={mode === "listings" ? "ابحث بعنوان المشروع" : "ابحث باسم العلامة التجارية"}
+            activeCount={activeCount}
+            activeFilters={activeFilters}
+            onOpenFilters={() => setFiltersOpen(true)}
+          />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <HomeSkeletonList />
+          ) : error ? (
+            <EmptyState
+              title="تعذّر التحميل"
+              description={mode === "listings" ? "تعذّر تحميل المشاريع الآن." : "تعذّر تحميل الامتيازات الآن."}
+              action={<Button label="إعادة المحاولة" variant="secondary" onPress={() => load()} />}
             />
-          }
-          ListEmptyComponent={
-            loading ? (
-              <HomeSkeletonList />
-            ) : error ? (
-              <EmptyBox text="تعذّر تحميل المشاريع الآن. حاول مرة أخرى." />
-            ) : (
-              <EmptyBox text="لا توجد مشاريع منشورة تطابق بحثك بعد." />
-            )
-          }
-        />
-      ) : (
-        <FlatList
-          data={franchises ?? []}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => <FranchiseCard franchise={item} index={index} />}
-          contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 16 }}
-          ListHeaderComponent={
-            <HomeHeader
-              mode={mode}
-              setMode={setMode}
-              search={search}
-              setSearch={setSearch}
-              placeholder="ابحث باسم العلامة التجارية"
-              sector={sector}
-              setSector={setSector}
-              sort={null}
-              setSort={null}
-              verifiedOnly={verifiedOnly}
-              setVerifiedOnly={setVerifiedOnly}
-              showAdvanced={false}
-              setShowAdvanced={null}
-              minRevenue=""
-              setMinRevenue={null}
-              maxRevenue=""
-              setMaxRevenue={null}
-              activeCount={activeCount}
+          ) : activeFilters.length > 0 || search.trim() ? (
+            <EmptyState
+              icon={<SearchIcon color={t.textMuted} size={20} />}
+              title="لا نتائج مطابقة"
+              description="جرّب توسيع البحث أو إزالة بعض الفلاتر."
+              action={
+                <Button
+                  label="مسح الفلاتر"
+                  variant="secondary"
+                  onPress={() => {
+                    resetFilters();
+                    setSearch("");
+                  }}
+                />
+              }
             />
-          }
-          ListEmptyComponent={
-            loading ? (
-              <HomeSkeletonList />
-            ) : error ? (
-              <EmptyBox text="تعذّر تحميل الامتيازات الآن. حاول مرة أخرى." />
-            ) : (
-              <EmptyBox text="لا توجد امتيازات منشورة تطابق بحثك بعد." />
-            )
-          }
-        />
-      )}
+          ) : (
+            <EmptyState
+              title={mode === "listings" ? "لا توجد فرص منشورة بعد" : "لا توجد امتيازات منشورة بعد"}
+              description="تظهر هنا الإعلانات فور اعتمادها من فريق معيار."
+            />
+          )
+        }
+      />
+
+      <CreateTypeSheet visible={createOpen} onClose={() => setCreateOpen(false)} />
+
+      <FiltersSheet
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        mode={mode}
+        sector={sector}
+        setSector={setSector}
+        sort={sort}
+        setSort={setSort}
+        verifiedOnly={verifiedOnly}
+        setVerifiedOnly={setVerifiedOnly}
+        minRevenue={minRevenue}
+        setMinRevenue={setMinRevenue}
+        maxRevenue={maxRevenue}
+        setMaxRevenue={setMaxRevenue}
+        onReset={resetFilters}
+        resultCount={activeCount}
+      />
     </SafeAreaView>
   );
 }
 
+/**
+ * Two rows instead of five: the mode switch, then search with the filters
+ * folded behind one button. Anything narrowed shows as a removable chip so the
+ * current view is still legible without opening the sheet.
+ */
 function HomeHeader({
   mode,
   setMode,
   search,
   setSearch,
   placeholder,
-  sector,
-  setSector,
-  sort,
-  setSort,
-  verifiedOnly,
-  setVerifiedOnly,
-  showAdvanced,
-  setShowAdvanced,
-  minRevenue,
-  setMinRevenue,
-  maxRevenue,
-  setMaxRevenue,
   activeCount,
+  activeFilters,
+  onOpenFilters,
 }: {
   mode: Mode;
   setMode: (m: Mode) => void;
   search: string;
   setSearch: (s: string) => void;
   placeholder: string;
-  sector: BusinessSector | null;
-  setSector: (s: BusinessSector | null) => void;
-  sort: SortOption | null;
-  setSort: ((s: SortOption) => void) | null;
-  verifiedOnly: boolean;
-  setVerifiedOnly: (v: boolean) => void;
-  showAdvanced: boolean;
-  setShowAdvanced: ((cb: (v: boolean) => boolean) => void) | null;
-  minRevenue: string;
-  setMinRevenue: ((v: string) => void) | null;
-  maxRevenue: string;
-  setMaxRevenue: ((v: string) => void) | null;
   activeCount?: number;
+  activeFilters: { key: string; label: string; clear: () => void }[];
+  onOpenFilters: () => void;
 }) {
   const { t } = useTheme();
   return (
-    <View style={{ gap: 12, marginBottom: 4 }}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 9, backgroundColor: t.surface, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 12, ...t.shadowSm }}>
-        <SearchIcon color={t.textMuted} size={15} />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder={placeholder}
-          placeholderTextColor={t.textMuted}
-          style={{ flex: 1, fontFamily: fonts.body, fontSize: 13, color: t.text, textAlign: "right" }}
-        />
-      </View>
-
-      {activeCount != null ? (
-        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 7 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.primary }} />
-          <Text style={{ fontFamily: fonts.numeric, fontSize: 10.5, color: t.textMuted, direction: "ltr" }}>
-            {activeCount} {mode === "listings" ? "فرصة نشطة" : "امتياز متاح"}
-          </Text>
-        </View>
-      ) : null}
-
+    <View style={{ gap: 10, marginBottom: 4 }}>
       <SegmentedControl options={MODE_OPTIONS} value={mode} onChange={setMode} />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
-        <Chip label="الكل" active={sector === null} onPress={() => setSector(null)} />
-        {SECTOR_OPTIONS.map((opt) => (
-          <Chip key={opt.value} label={opt.label} active={sector === opt.value} onPress={() => setSector(opt.value)} />
-        ))}
-      </ScrollView>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row-reverse",
+            alignItems: "center",
+            gap: 9,
+            backgroundColor: t.surface,
+            borderRadius: radius.lg,
+            paddingHorizontal: 13,
+            height: 44,
+            ...t.shadowSm,
+          }}
+        >
+          <SearchIcon color={t.textMuted} size={15} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder={placeholder}
+            placeholderTextColor={t.textMuted}
+            returnKeyType="search"
+            style={{ flex: 1, fontFamily: fonts.body, fontSize: 12.5, color: t.text, textAlign: "right" }}
+          />
+        </View>
 
-      {sort && setSort ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row-reverse", gap: 8 }}>
-          {(Object.keys(SORT_LABELS) as SortOption[]).map((opt) => (
-            <Chip key={opt} label={SORT_LABELS[opt]} active={sort === opt} onPress={() => setSort(opt)} />
+        <Tappable onPress={onOpenFilters} haptic="light" accessibilityRole="button" accessibilityLabel="الفلاتر">
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: radius.lg,
+              backgroundColor: activeFilters.length > 0 ? t.primary : t.surface,
+              alignItems: "center",
+              justifyContent: "center",
+              ...(activeFilters.length > 0 ? t.shadowPrimary : t.shadowSm),
+            }}
+          >
+            <FilterIcon color={activeFilters.length > 0 ? t.onPrimary : t.text} size={17} />
+            {activeFilters.length > 0 ? (
+              <View
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  left: -4,
+                  minWidth: 17,
+                  height: 17,
+                  borderRadius: 9,
+                  paddingHorizontal: 4,
+                  backgroundColor: t.text,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1.5,
+                  borderColor: t.bg,
+                }}
+              >
+                <Text style={{ fontFamily: fonts.numericBold, fontSize: 9, color: t.bg }}>{activeFilters.length}</Text>
+              </View>
+            ) : null}
+          </View>
+        </Tappable>
+      </View>
+
+      {activeFilters.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexDirection: "row-reverse", gap: 7 }}
+        >
+          {activeFilters.map((f) => (
+            <Tappable key={f.key} onPress={f.clear} haptic="light" accessibilityLabel={`إزالة ${f.label}`}>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  alignItems: "center",
+                  gap: 6,
+                  paddingHorizontal: 11,
+                  height: 28,
+                  borderRadius: radius.pill,
+                  backgroundColor: t.surface,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                }}
+              >
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 11, color: t.text }}>{f.label}</Text>
+                <Text style={{ fontSize: 13, lineHeight: 15, color: t.textMuted }}>×</Text>
+              </View>
+            </Tappable>
           ))}
         </ScrollView>
       ) : null}
 
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
-        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
-          <Switch value={verifiedOnly} onValueChange={setVerifiedOnly} trackColor={{ true: t.success, false: t.border }} />
-          <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.textMuted }}>الموثّقة فقط</Text>
-        </View>
-
-        {setShowAdvanced ? (
-          <Tappable onPress={() => setShowAdvanced((v) => !v)} haptic="none">
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 12.5, color: t.primary }}>
-              {showAdvanced ? "إخفاء الفلاتر المتقدمة" : "فلاتر متقدمة"}
-            </Text>
-          </Tappable>
-        ) : null}
-      </View>
-
-      {showAdvanced && setMinRevenue && setMaxRevenue ? (
-        <View style={{ flexDirection: "row-reverse", gap: 10, backgroundColor: t.surface, borderRadius: radius.lg, padding: 12, ...t.shadowSm }}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>الحد الأدنى للإيراد</Text>
-            <TextInput
-              value={minRevenue}
-              onChangeText={setMinRevenue}
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor={t.textMuted}
-              style={{ height: 38, borderRadius: radius.md, backgroundColor: t.surface2, paddingHorizontal: 12, fontFamily: fonts.numeric, fontSize: 13, color: t.text, textAlign: "left" }}
-            />
-          </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>الحد الأقصى للإيراد</Text>
-            <TextInput
-              value={maxRevenue}
-              onChangeText={setMaxRevenue}
-              keyboardType="number-pad"
-              placeholder="بلا حد"
-              placeholderTextColor={t.textMuted}
-              style={{ height: 38, borderRadius: radius.md, backgroundColor: t.surface2, paddingHorizontal: 12, fontFamily: fonts.numeric, fontSize: 13, color: t.text, textAlign: "left" }}
-            />
-          </View>
+      {activeCount != null ? (
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 7 }}>
+          <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: t.primary }} />
+          <Text style={{ fontFamily: fonts.numeric, fontSize: 10, color: t.textMuted }}>
+            {activeCount} {mode === "listings" ? "فرصة نشطة" : "امتياز متاح"}
+          </Text>
         </View>
       ) : null}
     </View>
+  );
+}
+
+function FiltersSheet({
+  visible,
+  onClose,
+  mode,
+  sector,
+  setSector,
+  sort,
+  setSort,
+  verifiedOnly,
+  setVerifiedOnly,
+  minRevenue,
+  setMinRevenue,
+  maxRevenue,
+  setMaxRevenue,
+  onReset,
+  resultCount,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  mode: Mode;
+  sector: BusinessSector | null;
+  setSector: (s: BusinessSector | null) => void;
+  sort: SortOption;
+  setSort: (s: SortOption) => void;
+  verifiedOnly: boolean;
+  setVerifiedOnly: (v: boolean) => void;
+  minRevenue: string;
+  setMinRevenue: (v: string) => void;
+  maxRevenue: string;
+  setMaxRevenue: (v: string) => void;
+  onReset: () => void;
+  resultCount?: number;
+}) {
+  const { t } = useTheme();
+  return (
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title="الفلاتر"
+      footer={
+        <View style={{ flexDirection: "row-reverse", gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Button
+              label={resultCount != null ? `عرض ${resultCount} نتيجة` : "عرض النتائج"}
+              fullWidth
+              onPress={onClose}
+            />
+          </View>
+          <Button label="مسح" variant="secondary" onPress={onReset} />
+        </View>
+      }
+    >
+      <View style={{ gap: 18 }}>
+        <View style={{ gap: 9 }}>
+          <FieldLabel>القطاع</FieldLabel>
+          <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 }}>
+            <Chip label="الكل" active={sector === null} onPress={() => setSector(null)} />
+            {SECTOR_OPTIONS.map((opt) => (
+              <Chip
+                key={opt.value}
+                label={opt.label}
+                active={sector === opt.value}
+                onPress={() => setSector(opt.value)}
+              />
+            ))}
+          </View>
+        </View>
+
+        {mode === "listings" ? (
+          <View style={{ gap: 9 }}>
+            <FieldLabel>الترتيب</FieldLabel>
+            <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 }}>
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((opt) => (
+                <Chip key={opt} label={SORT_LABELS[opt]} active={sort === opt} onPress={() => setSort(opt)} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
+          <View style={{ gap: 2, flex: 1 }}>
+            <FieldLabel>الموثّقة فقط</FieldLabel>
+            <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted, textAlign: "right" }}>
+              أرقامها راجعها محاسب معتمد.
+            </Text>
+          </View>
+          <Switch
+            value={verifiedOnly}
+            onValueChange={setVerifiedOnly}
+            trackColor={{ true: t.success, false: t.border }}
+          />
+        </View>
+
+        {mode === "listings" ? (
+          <View style={{ gap: 9 }}>
+            <FieldLabel>نطاق الإيراد الشهري (ر.س)</FieldLabel>
+            <View style={{ flexDirection: "row-reverse", gap: 10 }}>
+              <RangeInput value={minRevenue} onChangeText={setMinRevenue} placeholder="من" />
+              <RangeInput value={maxRevenue} onChangeText={setMaxRevenue} placeholder="إلى" />
+            </View>
+          </View>
+        ) : null}
+      </View>
+    </Sheet>
+  );
+}
+
+function RangeInput({
+  value,
+  onChangeText,
+  placeholder,
+}: {
+  value: string;
+  onChangeText: (v: string) => void;
+  placeholder: string;
+}) {
+  const { t } = useTheme();
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType="number-pad"
+      placeholder={placeholder}
+      placeholderTextColor={t.textMuted}
+      style={{
+        flex: 1,
+        height: 44,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: t.border,
+        backgroundColor: t.surface,
+        paddingHorizontal: 13,
+        fontFamily: fonts.numeric,
+        fontSize: 13,
+        color: t.text,
+        textAlign: "left",
+      }}
+    />
   );
 }
 
@@ -366,21 +554,12 @@ function HomeSkeletonList() {
   return (
     <View style={{ gap: 16 }}>
       {[0, 1, 2].map((i) => (
-        <View key={i} style={{ gap: 14, backgroundColor: "transparent" }}>
+        <View key={i} style={{ gap: 14 }}>
           <Skeleton width="100%" height={140} radius={radius.lg} />
           <Skeleton width="60%" height={16} />
           <Skeleton width="40%" height={12} />
         </View>
       ))}
-    </View>
-  );
-}
-
-function EmptyBox({ text }: { text: string }) {
-  const { t } = useTheme();
-  return (
-    <View style={{ backgroundColor: t.surface, borderRadius: radius.xl, padding: 40, alignItems: "center", ...t.shadowSm }}>
-      <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>{text}</Text>
     </View>
   );
 }

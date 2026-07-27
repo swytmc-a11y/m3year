@@ -1,67 +1,58 @@
-import { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { LogoMark } from "@/components/logo";
-import { colors, fonts } from "@/theme";
+import { useTheme } from "@/contexts/theme";
+import { fonts } from "@/theme";
 
 /**
  * Branded loading overlay shown briefly on cold start, on top of the app once
- * fonts are ready. Fades itself out and calls onDone when finished so the
- * host can unmount it. Purely presentational — never blocks navigation.
+ * fonts are ready. Fades itself out and calls onDone when finished so the host
+ * can unmount it. Purely presentational — never blocks navigation.
+ *
+ * Runs on the UI thread (Reanimated worklets) so the intro stays smooth even
+ * while the JS thread is busy restoring the session and warming first queries.
  */
 export function AppSplash({ onDone }: { onDone: () => void }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const markScale = useRef(new Animated.Value(0.9)).current;
-  const contentShift = useRef(new Animated.Value(8)).current;
+  const { t } = useTheme();
+  const opacity = useSharedValue(0);
+  const markScale = useSharedValue(0.9);
+  const contentShift = useSharedValue(8);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(markScale, {
-        toValue: 1,
-        friction: 7,
-        tension: 60,
-        useNativeDriver: true,
-      }),
-      Animated.timing(contentShift, {
-        toValue: 0,
-        duration: 420,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
+    opacity.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.cubic) });
+    markScale.value = withSpring(1, { damping: 12, stiffness: 120, mass: 0.7 });
+    contentShift.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
 
-    const timer = setTimeout(() => {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 340,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished) onDone();
-      });
-    }, 1150);
-
-    return () => clearTimeout(timer);
+    opacity.value = withDelay(
+      1150,
+      withTiming(0, { duration: 340, easing: Easing.in(Easing.cubic) }, (finished) => {
+        "worklet";
+        if (finished) runOnJS(onDone)();
+      }),
+    );
   }, [opacity, markScale, contentShift, onDone]);
 
+  const fillStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const contentStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: markScale.value }, { translateY: contentShift.value }],
+  }));
+
   return (
-    <Animated.View style={[styles.fill, { opacity }]} pointerEvents="none">
+    <Animated.View style={[styles.fill, { backgroundColor: t.bg }, fillStyle]} pointerEvents="none">
       <View style={styles.center}>
-        <Animated.View
-          style={{
-            alignItems: "center",
-            gap: 18,
-            transform: [{ scale: markScale }, { translateY: contentShift }],
-          }}
-        >
+        <Animated.View style={[{ alignItems: "center", gap: 18 }, contentStyle]}>
           <LogoMark size={96} />
-          <Text style={styles.wordmark}>معيار</Text>
-          <Text style={styles.tagline}>منصة إعلانات وتوثيق فرص الشراكة</Text>
+          <Text style={[styles.wordmark, { color: t.text }]}>معيار</Text>
+          <Text style={[styles.tagline, { color: t.textMuted }]}>منصة إعلانات وتوثيق فرص الشراكة</Text>
         </Animated.View>
       </View>
     </Animated.View>
@@ -75,20 +66,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.paper,
     zIndex: 100,
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   wordmark: {
-    fontFamily: fonts.heading,
-    fontSize: 34,
-    color: colors.ink,
+    fontFamily: fonts.displayBold,
+    fontSize: 32,
     letterSpacing: 1,
   },
   tagline: {
     fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.mutedText,
+    fontSize: 13,
     textAlign: "center",
   },
 });

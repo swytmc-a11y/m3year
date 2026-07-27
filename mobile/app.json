@@ -8,7 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "backgroundColor": "#EDEEE9",
+    "backgroundColor": "#F5F5F1",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -28,7 +28,7 @@
     "android": {
       "package": "com.miyar.app",
       "adaptiveIcon": {
-        "backgroundColor": "#EDEEE9",
+        "backgroundColor": "#F5F5F1",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -48,7 +48,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#EDEEE9",
+          "backgroundColor": "#F5F5F1",
           "image": "./assets/splash-icon.png",
           "imageWidth": 160
         }
@@ -57,7 +57,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#0F6B66"
+          "color": "#4338CA"
         }
       ],
       [

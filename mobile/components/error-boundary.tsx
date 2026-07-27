@@ -1,6 +1,11 @@
 import React from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
-import { colors, fonts, radius } from "@/theme";
+import { fonts, lightTokens, radius } from "@/theme";
+
+// This boundary wraps ThemeProvider itself, so it cannot read the theme context
+// (the crash it renders for may well be the provider failing). It pins the
+// light tokens statically rather than reaching for a context that may be gone.
+const t = lightTokens;
 
 type Props = { children: React.ReactNode };
 type State = { error: Error | null };
@@ -28,26 +33,26 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (!error) return this.props.children;
 
     return (
-      <View style={{ flex: 1, backgroundColor: colors.paper, padding: 24, justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: t.bg, padding: 24, justifyContent: "center" }}>
         <View
           style={{
-            backgroundColor: colors.white,
-            borderColor: colors.grid,
+            backgroundColor: t.surface,
+            borderColor: t.border,
             borderWidth: 1,
-            borderRadius: radius.lg,
+            borderRadius: radius.xl,
             padding: 20,
             gap: 12,
             maxHeight: "80%",
           }}
         >
-          <Text style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.ink, textAlign: "right" }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 17, color: t.text, textAlign: "right" }}>
             حدث خطأ غير متوقع
           </Text>
           <Text
             style={{
               fontFamily: fonts.body,
               fontSize: 14,
-              color: colors.mutedText,
+              color: t.textMuted,
               textAlign: "right",
               lineHeight: 22,
             }}
@@ -58,9 +63,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <Text
               selectable
               style={{
-                fontFamily: fonts.mono,
+                fontFamily: fonts.numeric,
                 fontSize: 12,
-                color: colors.danger,
+                color: t.danger,
                 textAlign: "left",
                 lineHeight: 18,
               }}
@@ -73,13 +78,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
             onPress={() => this.setState({ error: null })}
             style={{
               height: 48,
-              borderRadius: radius.md,
-              backgroundColor: colors.ink,
+              borderRadius: radius.lg,
+              backgroundColor: t.primary,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontFamily: fonts.bodyBold, fontSize: 15, color: colors.white }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.onPrimary }}>
               إعادة المحاولة
             </Text>
           </Pressable>

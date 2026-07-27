@@ -9,6 +9,7 @@ import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
 import { AppSplash } from "@/components/app-splash";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ToastProvider } from "@/components/kit";
 import {
   Almarai_700Bold,
   Almarai_800ExtraBold,
@@ -99,7 +100,9 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <ThemeProvider>
             <AuthProvider>
-              <RootChrome splashDone={splashDone} onSplashDone={() => setSplashDone(true)} />
+              <ToastProvider>
+                <RootChrome splashDone={splashDone} onSplashDone={() => setSplashDone(true)} />
+              </ToastProvider>
             </AuthProvider>
           </ThemeProvider>
         </SafeAreaProvider>
