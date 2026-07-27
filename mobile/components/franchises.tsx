@@ -3,6 +3,7 @@ import Animated from "react-native-reanimated";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Tappable, Card, staggerEnter } from "@/components/kit";
+import { MiyarBadge } from "@/components/miyar-index";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
 import { Metric, VerifiedBadge } from "@/components/listings";
@@ -38,7 +39,10 @@ export function FranchiseCard({ franchise, index = 0 }: { franchise: Franchise; 
                 قطاع {SECTOR_LABELS[franchise.sector]} · {franchise.city}
               </Text>
             </View>
-            {isVerified ? <VerifiedBadge /> : null}
+            <View style={{ alignItems: "flex-end", gap: 6 }}>
+              <MiyarBadge grade={franchise.miyar_grade} />
+              {isVerified ? <VerifiedBadge /> : null}
+            </View>
           </View>
 
           <View

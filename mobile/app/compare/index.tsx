@@ -104,10 +104,24 @@ export default function CompareScreen() {
       return aWins ? 0 : 1;
     };
 
+    const gradeRank: Record<string, number> = { A: 4, B: 3, C: 2, D: 1 };
+    const gradeRow = (ga: string | null, gb: string | null): Row => ({
+      label: "مؤشر معيار",
+      a: ga ?? "غير مصنّف",
+      b: gb ?? "غير مصنّف",
+      better:
+        (gradeRank[ga ?? ""] ?? 0) === (gradeRank[gb ?? ""] ?? 0)
+          ? null
+          : (gradeRank[ga ?? ""] ?? 0) > (gradeRank[gb ?? ""] ?? 0)
+            ? 0
+            : 1,
+    });
+
     if (kind === "listings") {
       const la = a as Listing;
       const lb = b as Listing;
       return [
+        gradeRow(la.miyar_grade, lb.miyar_grade),
         { label: "القطاع", a: SECTOR_LABELS[la.sector], b: SECTOR_LABELS[lb.sector], better: null },
         { label: "المدينة", a: la.city, b: lb.city, better: null },
         {
@@ -157,6 +171,7 @@ export default function CompareScreen() {
     const fa = a as Franchise;
     const fb = b as Franchise;
     return [
+      gradeRow(fa.miyar_grade, fb.miyar_grade),
       { label: "القطاع", a: SECTOR_LABELS[fa.sector], b: SECTOR_LABELS[fb.sector], better: null },
       { label: "المدينة", a: fa.city, b: fb.city, better: null },
       {

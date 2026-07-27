@@ -304,6 +304,12 @@ export type Database = {
           is_featured: boolean
           logo_url: string | null
           marketing_support: string | null
+          miyar_completeness_pct: number | null
+          miyar_computed_at: string | null
+          miyar_confidence_score: number | null
+          miyar_formula_version: number | null
+          miyar_grade: string | null
+          miyar_quality_score: number | null
           operational_support: string | null
           owner_id: string
           photo_urls: string[]
@@ -338,6 +344,12 @@ export type Database = {
           is_featured?: boolean
           logo_url?: string | null
           marketing_support?: string | null
+          miyar_completeness_pct?: number | null
+          miyar_computed_at?: string | null
+          miyar_confidence_score?: number | null
+          miyar_formula_version?: number | null
+          miyar_grade?: string | null
+          miyar_quality_score?: number | null
           operational_support?: string | null
           owner_id: string
           photo_urls?: string[]
@@ -372,6 +384,12 @@ export type Database = {
           is_featured?: boolean
           logo_url?: string | null
           marketing_support?: string | null
+          miyar_completeness_pct?: number | null
+          miyar_computed_at?: string | null
+          miyar_confidence_score?: number | null
+          miyar_formula_version?: number | null
+          miyar_grade?: string | null
+          miyar_quality_score?: number | null
           operational_support?: string | null
           owner_id?: string
           photo_urls?: string[]
@@ -451,6 +469,12 @@ export type Database = {
           has_legal_obligations: boolean
           id: string
           is_featured: boolean
+          miyar_completeness_pct: number | null
+          miyar_computed_at: string | null
+          miyar_confidence_score: number | null
+          miyar_formula_version: number | null
+          miyar_grade: string | null
+          miyar_quality_score: number | null
           monthly_profit: number | null
           monthly_revenue: number
           offered_percentage: number
@@ -479,6 +503,12 @@ export type Database = {
           has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
+          miyar_completeness_pct?: number | null
+          miyar_computed_at?: string | null
+          miyar_confidence_score?: number | null
+          miyar_formula_version?: number | null
+          miyar_grade?: string | null
+          miyar_quality_score?: number | null
           monthly_profit?: number | null
           monthly_revenue: number
           offered_percentage: number
@@ -507,6 +537,12 @@ export type Database = {
           has_legal_obligations?: boolean
           id?: string
           is_featured?: boolean
+          miyar_completeness_pct?: number | null
+          miyar_computed_at?: string | null
+          miyar_confidence_score?: number | null
+          miyar_formula_version?: number | null
+          miyar_grade?: string | null
+          miyar_quality_score?: number | null
           monthly_profit?: number | null
           monthly_revenue?: number
           offered_percentage?: number
@@ -625,6 +661,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      phone_otp_throttle: {
+        Row: {
+          last_sent_at: string | null
+          phone: string
+          send_count: number
+          window_start: string
+        }
+        Insert: {
+          last_sent_at?: string | null
+          phone: string
+          send_count?: number
+          window_start?: string
+        }
+        Update: {
+          last_sent_at?: string | null
+          phone?: string
+          send_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
+      phone_verifications: {
+        Row: {
+          otp: string
+          phone: string
+          verified_at: string
+        }
+        Insert: {
+          otp: string
+          phone: string
+          verified_at?: string
+        }
+        Update: {
+          otp?: string
+          phone?: string
+          verified_at?: string
+        }
+        Relationships: []
       }
       profile_contact: {
         Row: {
@@ -922,6 +997,15 @@ export type Database = {
       owns_ai_report_target: {
         Args: { p_target_id: string; p_target_type: string }
         Returns: boolean
+      }
+      recompute_all_miyar_index: { Args: never; Returns: undefined }
+      recompute_miyar_index_franchise: {
+        Args: { p_franchise_id: string }
+        Returns: undefined
+      }
+      recompute_miyar_index_listing: {
+        Args: { p_listing_id: string }
+        Returns: undefined
       }
     }
     Enums: {

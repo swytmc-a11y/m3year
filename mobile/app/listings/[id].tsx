@@ -7,6 +7,7 @@ import Animated, { ZoomIn } from "react-native-reanimated";
 import { Button, Card, IconButton, Skeleton, Tappable, staggerEnter, useToast } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon } from "@/components/icons";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
+import { MiyarBreakdown } from "@/components/miyar-index";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
@@ -198,6 +199,18 @@ export default function ListingDetailScreen() {
           ) : null}
 
           <Animated.View entering={staggerEnter(0)}>
+            <MiyarBreakdown
+              fields={{
+                miyar_grade: listing.miyar_grade,
+                miyar_quality_score: listing.miyar_quality_score,
+                miyar_confidence_score: listing.miyar_confidence_score,
+                miyar_completeness_pct: listing.miyar_completeness_pct,
+                verification_status: listing.verification_status,
+              }}
+            />
+          </Animated.View>
+
+          <Animated.View entering={staggerEnter(1)}>
             <Card style={{ padding: 20, gap: 20 }}>
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <View style={{ flex: 1 }}>

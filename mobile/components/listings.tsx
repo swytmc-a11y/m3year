@@ -3,6 +3,7 @@ import Animated from "react-native-reanimated";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Tappable, Card, DrawnCheckmark, staggerEnter } from "@/components/kit";
+import { MiyarBadge } from "@/components/miyar-index";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius, type ThemeTokens } from "@/theme";
 import {
@@ -167,7 +168,10 @@ export function ListingCard({ listing, index = 0 }: { listing: Listing; index?: 
                 قطاع {SECTOR_LABELS[listing.sector]} · {listing.city}
               </Text>
             </View>
-            {isVerified ? <VerifiedBadge /> : null}
+            <View style={{ alignItems: "flex-end", gap: 6 }}>
+              <MiyarBadge grade={listing.miyar_grade} />
+              {isVerified ? <VerifiedBadge /> : null}
+            </View>
           </View>
 
           <View
