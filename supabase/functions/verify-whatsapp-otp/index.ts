@@ -172,8 +172,49 @@ Deno.serve(async (req: Request) => {
     return json({ session: signInData.session });
   }
 
-  // Any account-not-found path lands here as an "invalid credentials" style
-  // error from Supabase — treat it uniformly as "this phone has no account yet".
+  // signInWithPassword only succeeds for accounts that were themselves
+  // created through this WhatsApp bridge (bridgeEmail as their primary
+  // email). A phone that was already registered through a different path
+  // (e.g. email/password signup) has a real primary email, not bridgeEmail,
+  // so it correctly fails here too — but that does NOT mean the phone is
+  // new. Check profile_contact (source of truth for phone ownership) before
+  // assuming that and routing to signup, which would otherwise collide with
+  // the unique-phone constraint and fail outright.
+  const { data: existingContact } = await asAdmin
+    .from("profile_contact")
+    .select("email")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (existingContact?.email) {
+    // This phone already belongs to a real account under a different email.
+    // Log it straight in via a server-minted magic-link token instead of
+    // password auth (we don't know — and must not set — that account's real
+    // password).
+    const { data: linkData, error: linkError } = await asAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: existingContact.email,
+    });
+    const hashedToken = linkData?.properties?.hashed_token;
+    if (linkError || !hashedToken) {
+      console.error("[verify-whatsapp-otp] generateLink failed for existing account", linkError);
+      return json({ error: "تعذّر تسجيل الدخول الآن. حاول مرة أخرى." }, 500);
+    }
+
+    const { data: verifyData, error: verifyError } = await asAnon.auth.verifyOtp({
+      type: "magiclink",
+      email: existingContact.email,
+      token: hashedToken,
+    });
+    if (verifyError || !verifyData.session) {
+      console.error("[verify-whatsapp-otp] verifyOtp failed for existing account", verifyError);
+      return json({ error: "تعذّر تسجيل الدخول الآن. حاول مرة أخرى." }, 500);
+    }
+
+    return json({ session: verifyData.session });
+  }
+
+  // Genuinely no account owns this phone yet.
   if (!fullName) {
     return json({ needsName: true });
   }
