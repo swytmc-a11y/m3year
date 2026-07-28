@@ -26,6 +26,7 @@ export default function SignUpScreen() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState(false);
 
   async function onSubmit() {
     setError(undefined);
@@ -42,7 +43,7 @@ export default function SignUpScreen() {
     }
 
     setLoading(true);
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
@@ -61,6 +62,14 @@ export default function SignUpScreen() {
           ? "هذا البريد الإلكتروني مسجّل مسبقًا."
           : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.",
       );
+      return;
+    }
+
+    // Real email confirmation is required now that SMTP is configured, so a
+    // fresh signUp returns no session — the user must click the link
+    // Supabase already emailed before they can sign in.
+    if (!data.session) {
+      setPendingConfirmation(true);
       return;
     }
 
@@ -93,74 +102,94 @@ export default function SignUpScreen() {
           </FadeInView>
 
           <FadeInView delay={120} style={{ gap: 18, width: "100%", maxWidth: 400, alignSelf: "center" }}>
-            <View style={{ gap: 4 }}>
-              <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
-                إنشاء حساب جديد
-              </Text>
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-                اعرض مشروعك أو ابحث عن فرصة شراكة موثّقة.
-              </Text>
-            </View>
+            {pendingConfirmation ? (
+              <>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
+                    تحقق من بريدك الإلكتروني
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
+                    أرسلنا رابط تأكيد إلى {email}. افتح بريدك واضغط الرابط لتفعيل حسابك، ثم سجّل دخولك.
+                  </Text>
+                </View>
+                <Button
+                  label="الدخول بالبريد الإلكتروني"
+                  fullWidth
+                  onPress={() => router.replace("/auth-email")}
+                />
+              </>
+            ) : (
+              <>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
+                    إنشاء حساب جديد
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
+                    اعرض مشروعك أو ابحث عن فرصة شراكة موثّقة.
+                  </Text>
+                </View>
 
-            <Field
-              label="الاسم"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="اسمك الكامل"
-              autoComplete="name"
-              error={fieldErrors.fullName}
-              style={{ textAlign: "right" }}
-            />
+                <Field
+                  label="الاسم"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="اسمك الكامل"
+                  autoComplete="name"
+                  error={fieldErrors.fullName}
+                  style={{ textAlign: "right" }}
+                />
 
-            <Field
-              label="البريد الإلكتروني"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="example@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              error={fieldErrors.email}
-              style={{ textAlign: "left" }}
-            />
+                <Field
+                  label="البريد الإلكتروني"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="example@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  error={fieldErrors.email}
+                  style={{ textAlign: "left" }}
+                />
 
-            <Field
-              label="رقم الجوال"
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="05xxxxxxxx"
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              error={fieldErrors.phone}
-              style={{ fontFamily: fonts.numeric, textAlign: "left" }}
-            />
+                <Field
+                  label="رقم الجوال"
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="05xxxxxxxx"
+                  keyboardType="phone-pad"
+                  autoComplete="tel"
+                  error={fieldErrors.phone}
+                  style={{ fontFamily: fonts.numeric, textAlign: "left" }}
+                />
 
-            <Field
-              label="كلمة السر"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              autoCapitalize="none"
-              autoComplete="password-new"
-              error={fieldErrors.password}
-              style={{ textAlign: "left" }}
-            />
+                <Field
+                  label="كلمة السر"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="••••••••"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="password-new"
+                  error={fieldErrors.password}
+                  style={{ textAlign: "left" }}
+                />
 
-            {error ? (
-              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.danger, textAlign: "right" }}>{error}</Text>
-            ) : null}
+                {error ? (
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.danger, textAlign: "right" }}>{error}</Text>
+                ) : null}
 
-            <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onSubmit} />
+                <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onSubmit} />
 
-            <View style={{ flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>لديك حساب بالفعل؟</Text>
-              <Link href="/auth-email" asChild>
-                <Tappable haptic="none">
-                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.primary }}>سجّل الدخول</Text>
-                </Tappable>
-              </Link>
-            </View>
+                <View style={{ flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 4 }}>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted }}>لديك حساب بالفعل؟</Text>
+                  <Link href="/auth-email" asChild>
+                    <Tappable haptic="none">
+                      <Text style={{ fontFamily: fonts.displayBold, fontSize: 13, color: t.primary }}>سجّل الدخول</Text>
+                    </Tappable>
+                  </Link>
+                </View>
+              </>
+            )}
           </FadeInView>
         </ScrollView>
       </KeyboardAvoidingView>

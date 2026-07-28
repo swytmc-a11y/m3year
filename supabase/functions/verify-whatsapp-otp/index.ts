@@ -1,31 +1,36 @@
 // Miyar (معيار) — verifies a WhatsApp OTP (via Authentica) and bridges the
 // result into a real Supabase session.
 //
-// Accounts created BY this bridge are mapped to a synthetic, namespaced email
-// (`<digits>@phone.miyar.internal`) with a password derived as
-// HMAC-SHA256(phone, AUTH_BRIDGE_PEPPER). AUTH_BRIDGE_PEPPER only ever lives
-// in this function's environment — nobody, including us, can derive that
-// password from the phone number alone.
+// The WhatsApp OTP only proves possession of the phone number — it is not an
+// account by itself. Two outcomes follow:
 //
-// Accounts that already existed before this bridge (registered with a real
-// email + password) can't be reached that way: their primary email is their
-// own, not the synthetic one. For those, the phone is resolved to its owner
-// through profile_contact and the session is issued from a single-use
-// admin-generated magic-link token. profile_contact has no INSERT/UPDATE RLS
-// policy for any client role — only the handle_new_user trigger writes it —
-// so the phone→account mapping can't be tampered with from the outside.
+// 1) The phone already belongs to an account (profile_contact lookup): log
+//    that account straight in. Session issuance goes through a single-use
+//    admin-generated magic-link token (token_hash + verifyOtp), never a
+//    guessed/derived password — profile_contact has no INSERT/UPDATE RLS
+//    policy for any client role, only the handle_new_user trigger writes it,
+//    so the phone→account mapping can't be tampered with from the outside.
+//
+// 2) The phone is new: the client collects a real name + email + password (a
+//    normal signup, not a synthetic bridge account) and resubmits with those
+//    fields. The phone goes into that account's metadata as an
+//    already-verified contact method — no separate re-verification needed,
+//    since Authentica already proved possession earlier in this same request
+//    chain. The email itself still goes through Supabase's own confirmation
+//    flow (real SMTP is configured), so signUp here does NOT hand back a
+//    session — the client is told to check their inbox instead.
 //
 // Two-step for brand-new numbers: first call without `fullName` returns
 // { needsName: true } once Authentica confirms the OTP but no account exists
-// yet. The client then re-submits the SAME otp with `fullName` included to
-// actually create the account. Authentica OTPs are single-use, so the second
-// call reuses a short-lived local cache (phone_verifications) of the first
-// successful verification instead of re-sending the same otp to Authentica.
+// yet. The client then re-submits the SAME otp with fullName/email/password
+// to actually create the account. Authentica OTPs are single-use, so the
+// second call reuses a short-lived local cache (phone_verifications) of the
+// first successful verification instead of re-sending the same otp to
+// Authentica.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const AUTHENTICA_BASE = "https://api.authentica.sa";
-const EMAIL_DOMAIN = "phone.miyar.internal";
 
 // The WhatsApp OTP is 4 digits — only 10,000 combinations — and this endpoint
 // is public (verify_jwt=false). Without our own attempt counter the whole
@@ -66,25 +71,36 @@ async function handleRequest(req: Request): Promise<Response> {
   let phone: string | undefined;
   let otp: string | undefined;
   let fullName: string | undefined;
+  let email: string | undefined;
+  let password: string | undefined;
   try {
     const body = await req.json();
     phone = typeof body?.phone === "string" ? body.phone : undefined;
     otp = typeof body?.otp === "string" ? body.otp : undefined;
     fullName = typeof body?.fullName === "string" ? body.fullName.trim() : undefined;
+    email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : undefined;
+    password = typeof body?.password === "string" ? body.password : undefined;
   } catch {
     // fall through to validation below
   }
   if (!phone || !/^\+9665\d{8}$/.test(phone) || !otp || !/^\d{4}$/.test(otp)) {
     return json({ error: "بيانات غير صحيحة" }, 400);
   }
-  if (fullName !== undefined && (fullName.length < 2 || fullName.length > 80)) {
-    return json({ error: "أدخل اسمًا صحيحًا" }, 400);
+  if (fullName !== undefined) {
+    if (fullName.length < 2 || fullName.length > 80) {
+      return json({ error: "أدخل اسمًا صحيحًا" }, 400);
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: "أدخل بريدًا إلكترونيًا صحيحًا" }, 400);
+    }
+    if (!password || password.length < 6) {
+      return json({ error: "كلمة السر يجب أن تكون 6 أحرف على الأقل" }, 400);
+    }
   }
 
   const authenticaKey = Deno.env.get("AUTHENTICA_API_KEY");
-  const pepper = Deno.env.get("AUTH_BRIDGE_PEPPER");
-  if (!authenticaKey || !pepper) {
-    console.error("[verify-whatsapp-otp] missing AUTHENTICA_API_KEY or AUTH_BRIDGE_PEPPER");
+  if (!authenticaKey) {
+    console.error("[verify-whatsapp-otp] missing AUTHENTICA_API_KEY");
     return json({ error: "خدمة التحقق عبر واتساب غير مُهيَّأة بعد" }, 503);
   }
 
@@ -131,10 +147,10 @@ async function handleRequest(req: Request): Promise<Response> {
 
   // Authentica OTPs are single-use. The signup flow calls this function twice
   // for a brand-new number (once to check the account exists, once again
-  // after the name step) with the SAME otp — re-sending it to Authentica the
-  // second time gets rejected as already-consumed. Reuse a cached recent
-  // verification instead of calling Authentica again when we already know
-  // this exact phone+otp pair was verified moments ago.
+  // after the name/email/password step) with the SAME otp — re-sending it to
+  // Authentica the second time gets rejected as already-consumed. Reuse a
+  // cached recent verification instead of calling Authentica again when we
+  // already know this exact phone+otp pair was verified moments ago.
   const CACHE_WINDOW_MS = 10 * 60 * 1000;
   const { data: cached } = await asAdmin
     .from("phone_verifications")
@@ -191,28 +207,9 @@ async function handleRequest(req: Request): Promise<Response> {
   // Possession of the number is proven from here on.
   await clearAttempts();
 
-  const digits = phone.replace(/\D/g, "");
-  const bridgeEmail = `${digits}@${EMAIL_DOMAIN}`;
-  const bridgePassword = await derivePassword(phone, pepper);
-
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const asAnon = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
 
-  const { data: signInData, error: signInError } = await asAnon.auth.signInWithPassword({
-    email: bridgeEmail,
-    password: bridgePassword,
-  });
-
-  if (!signInError && signInData.session) {
-    return json({ session: signInData.session });
-  }
-
-  // signInWithPassword only succeeds for accounts this bridge created itself.
-  // A phone registered through the email/password flow has a real primary
-  // email, so it fails here too — but that does NOT mean the phone is new.
-  // Resolving it through profile_contact first is what keeps an existing user
-  // from being pushed into a signup that would then collide with the
-  // unique-phone constraint and fail outright.
   const { data: existingContact } = await asAdmin
     .from("profile_contact")
     .select("id")
@@ -259,36 +256,35 @@ async function handleRequest(req: Request): Promise<Response> {
   }
 
   // Genuinely no account owns this phone yet.
-  if (!fullName) {
+  if (!fullName || !email || !password) {
     return json({ needsName: true });
   }
 
   const { data: signUpData, error: signUpError } = await asAnon.auth.signUp({
-    email: bridgeEmail,
-    password: bridgePassword,
+    email,
+    password,
+    // The phone is trustworthy here — Authentica already proved possession
+    // earlier in this same request chain — so handle_new_user can store it
+    // directly, unlike the plain email-signup path where a submitted phone
+    // is just unverified contact info.
     options: { data: { full_name: fullName, phone } },
   });
 
-  if (signUpError || !signUpData.session) {
+  if (signUpError) {
     console.error("[verify-whatsapp-otp] signUp failed", signUpError);
-    return json({ error: "تعذّر إنشاء الحساب الآن. حاول مرة أخرى." }, 500);
+    const message = signUpError.message.includes("already registered")
+      ? "هذا البريد الإلكتروني مسجّل مسبقًا."
+      : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.";
+    return json({ error: message }, 500);
   }
 
-  return json({ session: signUpData.session });
-}
-
-async function derivePassword(phone: string, pepper: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(pepper),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(phone));
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  // Real email confirmation is required (SMTP is configured), so signUp does
+  // not hand back a session yet — Supabase already sent the confirmation
+  // email. The client shows a "check your inbox" screen instead of a session.
+  if (signUpData.session) {
+    return json({ session: signUpData.session });
+  }
+  return json({ pendingEmailConfirmation: true });
 }
 
 function json(body: unknown, status = 200): Response {

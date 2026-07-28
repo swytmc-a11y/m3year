@@ -38,7 +38,11 @@ export default function AuthEmailScreen() {
 
     if (signInError) {
       console.error("[auth] signInWithPassword failed", signInError);
-      setError("البريد الإلكتروني أو كلمة السر غير صحيحة.");
+      setError(
+        signInError.message.includes("Email not confirmed")
+          ? "لم تُفعّل بريدك الإلكتروني بعد. تحقق من صندوق الوارد واضغط رابط التأكيد."
+          : "البريد الإلكتروني أو كلمة السر غير صحيحة.",
+      );
       return;
     }
 

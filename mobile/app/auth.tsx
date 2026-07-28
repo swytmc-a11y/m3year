@@ -12,11 +12,11 @@ import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field, Tappable } from "@/components/kit";
 import { useTheme } from "@/contexts/theme";
-import { phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
+import { completeWhatsAppSignupSchema, phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
 import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsapp-auth";
 import { fonts, radius } from "@/theme";
 
-type Step = "phone" | "code" | "name";
+type Step = "phone" | "code" | "name" | "check-email";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -26,6 +26,9 @@ export default function AuthScreen() {
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [code, setCode] = useState("");
   const [fullName, setFullName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(false);
@@ -85,15 +88,30 @@ export default function AuthScreen() {
 
   async function onCompleteSignup() {
     setError(undefined);
-    if (fullName.trim().length < 2) {
-      setError("أدخل اسمًا صحيحًا.");
+    setFieldErrors({});
+    const parsed = completeWhatsAppSignupSchema.safeParse({
+      fullName,
+      email: signupEmail,
+      password: signupPassword,
+    });
+    if (!parsed.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errors[key]) errors[key] = issue.message;
+      }
+      setFieldErrors(errors);
       return;
     }
     setLoading(true);
-    const result = await verifyWhatsAppOtp(normalizedPhone, code, fullName.trim());
+    const result = await verifyWhatsAppOtp(normalizedPhone, code, parsed.data);
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      return;
+    }
+    if (result.pendingEmailConfirmation) {
+      setStep("check-email");
       return;
     }
     router.replace("/");
@@ -200,15 +218,66 @@ export default function AuthScreen() {
                     أكمل حسابك
                   </Text>
                   <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-                    رقمك موثّق. بس خبرنا اسمك ونكمل.
+                    رقمك موثّق. أكمل بياناتك لإنشاء الحساب.
                   </Text>
                 </View>
 
-                <Field label="الاسم الكامل" value={fullName} onChangeText={setFullName} placeholder="اسمك" autoComplete="name" style={{ textAlign: "right" }} />
+                <Field
+                  label="الاسم الكامل"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="اسمك"
+                  autoComplete="name"
+                  error={fieldErrors.fullName}
+                  style={{ textAlign: "right" }}
+                />
+
+                <Field
+                  label="البريد الإلكتروني"
+                  value={signupEmail}
+                  onChangeText={setSignupEmail}
+                  placeholder="example@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  error={fieldErrors.email}
+                  style={{ textAlign: "left" }}
+                />
+
+                <Field
+                  label="كلمة السر"
+                  value={signupPassword}
+                  onChangeText={setSignupPassword}
+                  placeholder="••••••••"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="password-new"
+                  error={fieldErrors.password}
+                  style={{ textAlign: "left" }}
+                />
 
                 {error ? <ErrorText text={error} /> : null}
 
                 <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onCompleteSignup} />
+              </>
+            ) : null}
+
+            {step === "check-email" ? (
+              <>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
+                    تحقق من بريدك الإلكتروني
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
+                    أرسلنا رابط تأكيد إلى {signupEmail}. افتح بريدك واضغط الرابط لتفعيل حسابك، ثم سجّل دخولك.
+                  </Text>
+                </View>
+
+                <Button
+                  label="الدخول بالبريد الإلكتروني"
+                  fullWidth
+                  onPress={() => router.replace("/auth-email")}
+                />
               </>
             ) : null}
 

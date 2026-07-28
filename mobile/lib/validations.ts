@@ -58,6 +58,21 @@ export const signUpSchema = z.object({
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
+// Used on the "أكمل حسابك" step of the WhatsApp login flow — the phone is
+// already verified by that point, so only name/email/password are collected
+// here (no separate phone field, unlike signUpSchema above).
+export const completeWhatsAppSignupSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(2, { error: "الاسم يجب أن يكون حرفين على الأقل" })
+    .max(80, { error: "الاسم طويل جدًا" }),
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export type CompleteWhatsAppSignupValues = z.infer<typeof completeWhatsAppSignupSchema>;
+
 const sectorEnum = z.enum(["cafe", "restaurant", "retail", "services", "other"]);
 
 export const entityTypeEnum = z.enum(["sole_proprietorship", "company"]);
