@@ -10,7 +10,28 @@ import { Metric, VerifiedBadge } from "@/components/listings";
 import { SECTOR_LABELS, formatSar } from "@/lib/constants";
 import { formatSarRange, type Franchise } from "@/lib/franchise-constants";
 
-export function FranchiseCard({ franchise, index = 0 }: { franchise: Franchise; index?: number }) {
+// Mirrors ListingCardData: only what the card draws, so the feed never pulls
+// full franchise descriptions just to render a list row.
+export type FranchiseCardData = Pick<
+  Franchise,
+  | "id"
+  | "brand_name"
+  | "sector"
+  | "city"
+  | "franchise_fee"
+  | "initial_investment_min"
+  | "initial_investment_max"
+  | "logo_url"
+  | "photo_urls"
+  | "verification_status"
+  | "miyar_grade"
+  | "is_featured"
+>;
+
+export const FRANCHISE_CARD_COLUMNS =
+  "id, brand_name, sector, city, franchise_fee, initial_investment_min, initial_investment_max, logo_url, photo_urls, verification_status, miyar_grade, is_featured";
+
+export function FranchiseCard({ franchise, index = 0 }: { franchise: FranchiseCardData; index?: number }) {
   const router = useRouter();
   const { t } = useTheme();
   const isVerified = franchise.verification_status === "verified";

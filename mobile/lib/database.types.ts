@@ -295,6 +295,7 @@ export type Database = {
           current_branches_count: number | null
           description: string | null
           expected_payback_months: number | null
+          featured_until: string | null
           founding_year: number | null
           franchise_fee: number
           franchise_type: string
@@ -335,6 +336,7 @@ export type Database = {
           current_branches_count?: number | null
           description?: string | null
           expected_payback_months?: number | null
+          featured_until?: string | null
           founding_year?: number | null
           franchise_fee: number
           franchise_type?: string
@@ -375,6 +377,7 @@ export type Database = {
           current_branches_count?: number | null
           description?: string | null
           expected_payback_months?: number | null
+          featured_until?: string | null
           founding_year?: number | null
           franchise_fee?: number
           franchise_type?: string
@@ -464,6 +467,7 @@ export type Database = {
           created_at: string
           description: string | null
           employee_count: number | null
+          featured_until: string | null
           financial_data_sharing: string
           founding_year: number | null
           has_legal_obligations: boolean
@@ -499,6 +503,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           employee_count?: number | null
+          featured_until?: string | null
           financial_data_sharing?: string
           founding_year?: number | null
           has_legal_obligations?: boolean
@@ -534,6 +539,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           employee_count?: number | null
+          featured_until?: string | null
           financial_data_sharing?: string
           founding_year?: number | null
           has_legal_obligations?: boolean
@@ -769,6 +775,117 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_orders: {
+        Row: {
+          amount_halalas: number
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          featured_from: string | null
+          featured_until: string | null
+          id: string
+          paid_at: string | null
+          plan_code: string
+          provider: string
+          provider_invoice_id: string | null
+          provider_payment_id: string | null
+          status: string
+          target_id: string
+          target_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_halalas: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          featured_from?: string | null
+          featured_until?: string | null
+          id?: string
+          paid_at?: string | null
+          plan_code: string
+          provider?: string
+          provider_invoice_id?: string | null
+          provider_payment_id?: string | null
+          status?: string
+          target_id: string
+          target_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_halalas?: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          featured_from?: string | null
+          featured_until?: string | null
+          id?: string
+          paid_at?: string | null
+          plan_code?: string
+          provider?: string
+          provider_invoice_id?: string | null
+          provider_payment_id?: string | null
+          status?: string
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_orders_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "promotion_plans"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "promotion_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_plans: {
+        Row: {
+          code: string
+          created_at: string
+          description_ar: string | null
+          duration_days: number
+          is_active: boolean
+          name_ar: string
+          price_halalas: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description_ar?: string | null
+          duration_days: number
+          is_active?: boolean
+          name_ar: string
+          price_halalas: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description_ar?: string | null
+          duration_days?: number
+          is_active?: boolean
+          name_ar?: string
+          price_halalas?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       push_tokens: {
         Row: {
           created_at: string
@@ -992,6 +1109,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      expire_featured_promotions: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: { uid: string }; Returns: boolean }
       log_audit: {

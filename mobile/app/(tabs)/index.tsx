@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, TextInput, FlatList, Switch, ScrollView, RefreshControl } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, View, Text, TextInput, FlatList, Switch, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
@@ -18,13 +18,12 @@ import {
 } from "@/components/kit";
 import { BellIcon, FilterIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { CreateTypeSheet } from "@/components/create-type-sheet";
-import { ListingCard } from "@/components/listings";
-import { FranchiseCard } from "@/components/franchises";
+import { ListingCard, LISTING_CARD_COLUMNS, type ListingCardData } from "@/components/listings";
+import { FranchiseCard, FRANCHISE_CARD_COLUMNS, type FranchiseCardData } from "@/components/franchises";
 import { supabase } from "@/lib/supabase";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import { useTheme } from "@/contexts/theme";
-import { SECTOR_OPTIONS, type Listing, type BusinessSector } from "@/lib/constants";
-import type { Franchise } from "@/lib/franchise-constants";
+import { SECTOR_OPTIONS, type BusinessSector } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
 type SortOption = "newest" | "revenue_desc" | "percentage_desc";
@@ -40,6 +39,12 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: "listings", label: "فرص استثمارية" },
   { value: "franchises", label: "امتيازات تجارية" },
 ];
+
+// The feed used to fetch every published row on every filter change. That is
+// fine at 50 listings and ruinous at 5,000 — it grows the response linearly
+// with the catalogue for every user on every keystroke. Pages of this size
+// fill more than a screen, so scrolling stays ahead of the fetch.
+const PAGE_SIZE = 12;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -59,70 +64,146 @@ export default function HomeScreen() {
   const [createOpen, setCreateOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const [listings, setListings] = useState<Listing[] | null>(null);
-  const [franchises, setFranchises] = useState<Franchise[] | null>(null);
+  const [listings, setListings] = useState<ListingCardData[] | null>(null);
+  const [franchises, setFranchises] = useState<FranchiseCardData[] | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Whether the server still has rows past what we've loaded, and whether a
+  // next-page fetch is already running (so scroll momentum can't fire several).
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Bumped every time the filter set changes. A response whose token no
+  // longer matches belongs to a superseded filter set and is dropped, so a
+  // slow early request can't overwrite the results of a newer one.
+  const requestToken = useRef(0);
+
+  const fetchPage = useCallback(
+    async (page: number) => {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const q = search.trim();
+      // PostgREST treats , and ) as syntax inside or(), so a raw query string
+      // would break the filter (or match unintended rows). Strip them.
+      const safeQ = q.replace(/[,()]/g, " ").trim();
+
+      if (mode === "franchises") {
+        let query = supabase
+          .from("franchises")
+          .select(FRANCHISE_CARD_COLUMNS)
+          .eq("status", "published");
+        if (sector) query = query.eq("sector", sector);
+        if (verifiedOnly) query = query.eq("verification_status", "verified");
+        if (safeQ) {
+          query = query.or(
+            `brand_name.ilike.%${safeQ}%,description.ilike.%${safeQ}%,city.ilike.%${safeQ}%`,
+          );
+        }
+        query = query
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false })
+          .range(from, to);
+        return query;
+      }
+
+      let query = supabase
+        .from("listings")
+        .select(LISTING_CARD_COLUMNS)
+        .eq("status", "published");
+      if (sector) query = query.eq("sector", sector);
+      if (verifiedOnly) query = query.eq("verification_status", "verified");
+      if (safeQ) {
+        query = query.or(
+          `title.ilike.%${safeQ}%,description.ilike.%${safeQ}%,city.ilike.%${safeQ}%`,
+        );
+      }
+
+      const min = Number(minRevenue);
+      if (minRevenue && !Number.isNaN(min)) query = query.gte("monthly_revenue", min);
+      const max = Number(maxRevenue);
+      if (maxRevenue && !Number.isNaN(max)) query = query.lte("monthly_revenue", max);
+
+      query = query.order("is_featured", { ascending: false });
+      if (sort === "revenue_desc") {
+        query = query.order("monthly_revenue", { ascending: false });
+      } else if (sort === "percentage_desc") {
+        query = query.order("offered_percentage", { ascending: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+      // id breaks ties so a row can't appear on two pages (or on none) when
+      // several share the same sort value — the classic pagination duplicate.
+      return query.order("id", { ascending: false }).range(from, to);
+    },
+    [mode, sector, verifiedOnly, search, sort, minRevenue, maxRevenue],
+  );
 
   const load = useCallback(async () => {
     setError(false);
+    const token = ++requestToken.current;
 
-    if (mode === "franchises") {
-      let fquery = supabase.from("franchises").select("*").eq("status", "published");
-      if (sector) fquery = fquery.eq("sector", sector);
-      if (verifiedOnly) fquery = fquery.eq("verification_status", "verified");
-      const q = search.trim();
-      if (q) fquery = fquery.ilike("brand_name", `%${q}%`);
-      fquery = fquery.order("is_featured", { ascending: false }).order("created_at", { ascending: false });
+    const { data, error: qError } = await fetchPage(0);
+    if (token !== requestToken.current) return;
 
-      const { data, error: qError } = await fquery;
-      if (qError) {
-        console.error("[home] franchises load failed", qError);
-        setError(true);
-        setFranchises(null);
-      } else {
-        setFranchises(data);
-      }
-      setLoading(false);
-      return;
-    }
-
-    let query = supabase.from("listings").select("*").eq("status", "published");
-
-    if (sector) query = query.eq("sector", sector);
-    if (verifiedOnly) query = query.eq("verification_status", "verified");
-    const q = search.trim();
-    if (q) query = query.ilike("title", `%${q}%`);
-
-    const min = Number(minRevenue);
-    if (minRevenue && !Number.isNaN(min)) query = query.gte("monthly_revenue", min);
-    const max = Number(maxRevenue);
-    if (maxRevenue && !Number.isNaN(max)) query = query.lte("monthly_revenue", max);
-
-    query = query.order("is_featured", { ascending: false });
-    if (sort === "revenue_desc") {
-      query = query.order("monthly_revenue", { ascending: false });
-    } else if (sort === "percentage_desc") {
-      query = query.order("offered_percentage", { ascending: false });
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
-
-    const { data, error: qError } = await query;
     if (qError) {
       console.error("[home] load failed", qError);
       setError(true);
       setListings(null);
+      setFranchises(null);
+      setHasMore(false);
     } else {
-      setListings(data);
+      const rows = data ?? [];
+      if (mode === "franchises") {
+        setFranchises(rows as unknown as FranchiseCardData[]);
+        setListings(null);
+      } else {
+        setListings(rows as unknown as ListingCardData[]);
+        setFranchises(null);
+      }
+      setHasMore(rows.length === PAGE_SIZE);
     }
     setLoading(false);
-  }, [mode, sector, verifiedOnly, search, sort, minRevenue, maxRevenue]);
+  }, [fetchPage, mode]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || loading || error) return;
+    const current = mode === "franchises" ? franchises : listings;
+    if (!current || current.length === 0) return;
+
+    setLoadingMore(true);
+    const token = requestToken.current;
+    const page = Math.floor(current.length / PAGE_SIZE);
+    const { data, error: qError } = await fetchPage(page);
+
+    // Filters changed while this page was in flight — its rows belong to a
+    // query the user has already moved on from.
+    if (token !== requestToken.current) {
+      setLoadingMore(false);
+      return;
+    }
+
+    if (qError) {
+      console.error("[home] load more failed", qError);
+      setHasMore(false);
+    } else {
+      const rows = data ?? [];
+      if (mode === "franchises") {
+        setFranchises((prev) => [...(prev ?? []), ...(rows as unknown as FranchiseCardData[])]);
+      } else {
+        setListings((prev) => [...(prev ?? []), ...(rows as unknown as ListingCardData[])]);
+      }
+      setHasMore(rows.length === PAGE_SIZE);
+    }
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, loading, error, mode, franchises, listings, fetchPage]);
 
   // Debounce so typing in search/range fields doesn't fire a query per keystroke.
+  // Any filter change restarts from page 0, so previously-loaded pages of the
+  // old filter set must not be treated as "already have more".
   useEffect(() => {
     setLoading(true);
+    setHasMore(true);
     const timer = setTimeout(load, 300);
     return () => clearTimeout(timer);
   }, [load]);
@@ -173,7 +254,8 @@ export default function HomeScreen() {
     return chips;
   }, [sector, verifiedOnly, sort, minRevenue, maxRevenue, mode]);
 
-  const rows: (Listing | Franchise)[] = mode === "listings" ? (listings ?? []) : (franchises ?? []);
+  const rows: (ListingCardData | FranchiseCardData)[] =
+    mode === "listings" ? (listings ?? []) : (franchises ?? []);
   const activeCount = mode === "listings" ? listings?.length : franchises?.length;
 
   return (
@@ -203,13 +285,22 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) =>
           mode === "listings" ? (
-            <ListingCard listing={item as Listing} index={index} />
+            <ListingCard listing={item as ListingCardData} index={index} />
           ) : (
-            <FranchiseCard franchise={item as Franchise} index={index} />
+            <FranchiseCard franchise={item as FranchiseCardData} index={index} />
           )
         }
         contentContainerStyle={{ padding: 18, paddingTop: 4, paddingBottom: tabSpacing, gap: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ paddingVertical: 20, alignItems: "center" }}>
+              <ActivityIndicator color={t.textMuted} />
+            </View>
+          ) : null
+        }
         ListHeaderComponent={
           <HomeHeader
             mode={mode}

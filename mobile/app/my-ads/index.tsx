@@ -148,6 +148,7 @@ export default function MyAdsScreen() {
                 runAction(() => requestVerification(item.id), item.id, "أُرسل طلب التوثيق.")
               }
               onManageVerification={() => router.push(`/my-listings/${item.id}/verification`)}
+              onPromote={() => router.push(`/promote?type=listing&id=${item.id}`)}
             />
           ) : (
             <FranchiseRow
@@ -161,6 +162,7 @@ export default function MyAdsScreen() {
                 runAction(() => requestFranchiseVerification(item.id), item.id, "أُرسل طلب التوثيق.")
               }
               onManageVerification={() => router.push(`/my-franchises/${item.id}/verification`)}
+              onPromote={() => router.push(`/promote?type=franchise&id=${item.id}`)}
             />
           )
         }
@@ -211,12 +213,14 @@ function RowShell({
   canSubmit,
   canArchive,
   published,
+  featuredUntil,
   onEdit,
   onView,
   onSubmit,
   onArchive,
   onRequestVerification,
   onManageVerification,
+  onPromote,
 }: {
   title: string;
   subtitle: string;
@@ -229,15 +233,18 @@ function RowShell({
   canSubmit: boolean;
   canArchive: boolean;
   published: boolean;
+  featuredUntil?: string | null;
   onEdit: () => void;
   onView: () => void;
   onSubmit: () => void;
   onArchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
+  onPromote: () => void;
 }) {
   const { t } = useTheme();
   const canRequestVerification = verificationStatus === "none" || verificationStatus === "rejected";
+  const isFeatured = Boolean(featuredUntil && new Date(featuredUntil) > new Date());
 
   return (
     <Card style={{ padding: 16, gap: 12 }}>
@@ -284,6 +291,27 @@ function RowShell({
         )}
       </View>
 
+      {/* Promotion is only meaningful for something already visible in the
+          feed, so it stays hidden until the ad is actually published. */}
+      {published ? (
+        isFeatured ? (
+          <View
+            style={{
+              backgroundColor: t.successTint,
+              borderRadius: radius.md,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+            }}
+          >
+            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 11.5, color: t.success, textAlign: "right" }}>
+              مميّز حتى {new Date(featuredUntil!).toLocaleDateString("ar-SA")}
+            </Text>
+          </View>
+        ) : (
+          <Button label="تمييز الإعلان" variant="secondary" fullWidth onPress={onPromote} />
+        )
+      ) : null}
+
       <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, opacity: busy ? 0.5 : 1 }}>
         <Button label="تعديل" variant="secondary" onPress={onEdit} />
         {published ? <Button label="عرض عام" variant="secondary" onPress={onView} /> : null}
@@ -306,6 +334,7 @@ function ListingRow({
   onArchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
+  onPromote: () => void;
 }) {
   return (
     <RowShell
@@ -318,6 +347,7 @@ function ListingRow({
       canSubmit={listing.status === "draft" || listing.status === "rejected"}
       canArchive={listing.status !== "archived"}
       published={listing.status === "published"}
+      featuredUntil={listing.featured_until}
       metrics={
         <>
           <Metric label="الإيراد الشهري" value={formatSar(listing.monthly_revenue)} />
@@ -341,6 +371,7 @@ function FranchiseRow({
   onArchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
+  onPromote: () => void;
 }) {
   return (
     <RowShell
@@ -353,6 +384,7 @@ function FranchiseRow({
       canSubmit={franchise.status === "draft" || franchise.status === "rejected"}
       canArchive={franchise.status !== "archived"}
       published={franchise.status === "published"}
+      featuredUntil={franchise.featured_until}
       metrics={
         <>
           <Metric label="رسوم الامتياز" value={formatSar(franchise.franchise_fee)} />

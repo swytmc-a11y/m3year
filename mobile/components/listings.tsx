@@ -18,6 +18,29 @@ import {
   type VerificationStatus,
 } from "@/lib/constants";
 
+// Exactly the columns the card renders. The feed selects these instead of
+// `*` so browsing doesn't pull every listing's full description text — the
+// single biggest contributor to feed payload size, and never shown here.
+export type ListingCardData = Pick<
+  Listing,
+  | "id"
+  | "title"
+  | "sector"
+  | "city"
+  | "monthly_revenue"
+  | "offered_percentage"
+  | "asking_price"
+  | "price_negotiable"
+  | "photo_urls"
+  | "verification_status"
+  | "verified_at"
+  | "miyar_grade"
+  | "is_featured"
+>;
+
+export const LISTING_CARD_COLUMNS =
+  "id, title, sector, city, monthly_revenue, offered_percentage, asking_price, price_negotiable, photo_urls, verification_status, verified_at, miyar_grade, is_featured";
+
 export function VerifiedBadge() {
   const { t } = useTheme();
   return (
@@ -140,7 +163,7 @@ export function Metric({
   );
 }
 
-export function ListingCard({ listing, index = 0 }: { listing: Listing; index?: number }) {
+export function ListingCard({ listing, index = 0 }: { listing: ListingCardData; index?: number }) {
   const router = useRouter();
   const { t } = useTheme();
   const isVerified = listing.verification_status === "verified";

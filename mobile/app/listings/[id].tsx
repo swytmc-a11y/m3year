@@ -22,6 +22,7 @@ import {
   formatSar,
   formatPercentage,
   formatDate,
+  listingShareUrl,
   type Listing,
   type ReasonForSelling,
   type FinancialDataSharing,
@@ -119,7 +120,7 @@ export default function ListingDetailScreen() {
     if (!listing) return;
     try {
       await Share.share({
-        message: `${listing.title} — عبر معيار\nhttps://miyar.app/listings/${listing.id}`,
+        message: `${listing.title} — عبر معيار\n${listingShareUrl(listing.id)}`,
       });
     } catch (err) {
       console.error("[listing] share failed", err);

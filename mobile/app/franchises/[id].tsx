@@ -15,7 +15,7 @@ import { getOrCreateFranchiseConversation, sendMessage } from "@/lib/messaging";
 import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
 import { RatingSummaryLabel } from "@/components/rating-stars";
 import { isFranchiseFavorited, toggleFranchiseFavorite } from "@/lib/favorites";
-import { SECTOR_LABELS, formatSar, formatDate } from "@/lib/constants";
+import { SECTOR_LABELS, formatSar, formatDate, franchiseShareUrl } from "@/lib/constants";
 import {
   formatSarRange,
   FRANCHISE_TYPE_LABELS,
@@ -139,7 +139,7 @@ export default function FranchiseDetailScreen() {
     if (!franchise) return;
     try {
       await Share.share({
-        message: `${franchise.brand_name} — عبر معيار\nhttps://miyar.app/franchises/${franchise.id}`,
+        message: `${franchise.brand_name} — عبر معيار\n${franchiseShareUrl(franchise.id)}`,
       });
     } catch (err) {
       console.error("[franchise] share failed", err);

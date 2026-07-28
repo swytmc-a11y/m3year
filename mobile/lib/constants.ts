@@ -122,3 +122,21 @@ export function formatDate(value: string | null): string {
   const d = new Date(value);
   return `${d.getDate()} ${AR_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
+
+// Public-facing URLs for this brand, in one place.
+//
+// These were previously hardcoded as "miyar.app" in three screens — a domain
+// that was never registered, so every shared link 404'd and the support
+// address bounced. The registered domain is miyear.site (verified with
+// Resend for outbound auth mail). Keep these here so changing the domain is
+// a one-line edit rather than a hunt through screens.
+export const SITE_URL = "https://miyear.site";
+export const SUPPORT_EMAIL = "support@miyear.site";
+
+export function listingShareUrl(id: string): string {
+  return `${SITE_URL}/listings/${id}`;
+}
+
+export function franchiseShareUrl(id: string): string {
+  return `${SITE_URL}/franchises/${id}`;
+}

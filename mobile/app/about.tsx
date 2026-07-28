@@ -6,6 +6,7 @@ import { Button, Card, IconButton } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { useTheme } from "@/contexts/theme";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 import { fonts } from "@/theme";
 
 export default function AboutScreen() {
@@ -52,10 +53,10 @@ export default function AboutScreen() {
             <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>سياسة الخصوصية</Text>
           </Link>
           <Text
-            onPress={() => Linking.openURL("mailto:support@miyar.app")}
+            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
             style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}
           >
-            تواصل معنا: support@miyar.app
+            تواصل معنا: {SUPPORT_EMAIL}
           </Text>
         </View>
       </ScrollView>
