@@ -16,7 +16,7 @@ import { completeWhatsAppSignupSchema, phoneSchema, whatsappOtpCodeSchema } from
 import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsapp-auth";
 import { fonts, radius } from "@/theme";
 
-type Step = "phone" | "code" | "name" | "check-email";
+type Step = "phone" | "code" | "name";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -108,10 +108,6 @@ export default function AuthScreen() {
     setLoading(false);
     if (result.error) {
       setError(result.error);
-      return;
-    }
-    if (result.pendingEmailConfirmation) {
-      setStep("check-email");
       return;
     }
     router.replace("/");
@@ -259,25 +255,6 @@ export default function AuthScreen() {
                 {error ? <ErrorText text={error} /> : null}
 
                 <Button label="إنشاء الحساب" fullWidth loading={loading} onPress={onCompleteSignup} />
-              </>
-            ) : null}
-
-            {step === "check-email" ? (
-              <>
-                <View style={{ gap: 4 }}>
-                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 20, color: t.text, textAlign: "right" }}>
-                    تحقق من بريدك الإلكتروني
-                  </Text>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-                    أرسلنا رابط تأكيد إلى {signupEmail}. افتح بريدك واضغط الرابط لتفعيل حسابك، ثم سجّل دخولك.
-                  </Text>
-                </View>
-
-                <Button
-                  label="الدخول بالبريد الإلكتروني"
-                  fullWidth
-                  onPress={() => router.replace("/auth-email")}
-                />
               </>
             ) : null}
 

@@ -14,6 +14,7 @@ import {
   Tappable,
   useRefreshTint,
   useTabBarSpacing,
+  useToast,
 } from "@/components/kit";
 import {
   CalculatorIcon,
@@ -64,10 +65,12 @@ export default function ProfileScreen() {
   const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
   const { session, user, isAdmin, loading } = useAuth();
+  const toast = useToast();
   const [isActiveAccountant, setIsActiveAccountant] = useState(false);
   const [stats, setStats] = useState({ ads: 0, verified: 0, favorites: 0, rating: 0 });
   const [pendingVerification, setPendingVerification] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
 
   // "لوحة المحاسب" must only appear for users who are actually an active,
   // approved accountant — not every signed-in user.
@@ -196,8 +199,20 @@ export default function ProfileScreen() {
     setRefreshing(false);
   }
 
+  async function onResendConfirmation() {
+    if (!user?.email || resendingConfirmation) return;
+    setResendingConfirmation(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email: user.email });
+    setResendingConfirmation(false);
+    toast(
+      error ? "تعذّر إرسال رابط التأكيد الآن." : "أُرسل رابط تأكيد جديد إلى بريدك.",
+      error ? "error" : "success",
+    );
+  }
+
   const fullName = user?.user_metadata?.full_name || "حسابي";
   const avatarUrl: string | undefined = user?.user_metadata?.avatar_url;
+  const emailUnconfirmed = Boolean(user?.email) && !user?.email_confirmed_at;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
@@ -291,6 +306,24 @@ export default function ProfileScreen() {
             </View>
           ) : null}
         </Card>
+
+        {emailUnconfirmed ? (
+          <Card style={{ padding: 14, gap: 8 }}>
+            <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 12.5, color: t.text }}>
+                بريدك الإلكتروني غير مفعّل
+              </Text>
+              <Tappable haptic="light" onPress={onResendConfirmation} disabled={resendingConfirmation}>
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 11.5, color: t.primary }}>
+                  {resendingConfirmation ? "جارٍ الإرسال..." : "إعادة إرسال الرابط"}
+                </Text>
+              </Tappable>
+            </View>
+            <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right", lineHeight: 18 }}>
+              أرسلنا رابط تأكيد إلى {user?.email}. فعّله أي وقت — تصفّحك واستخدامك للتطبيق لا يتأثر بذلك.
+            </Text>
+          </Card>
+        ) : null}
 
         <View style={{ flexDirection: "row", gap: 9 }}>
           <StatCard value={String(stats.ads)} label="إعلاناتي" />

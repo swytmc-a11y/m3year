@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 type SendResult = { error?: string };
 type VerifyResult = {
   needsName?: boolean;
-  pendingEmailConfirmation?: boolean;
   error?: string;
 };
 
@@ -24,10 +23,11 @@ export async function sendWhatsAppOtp(phone: string): Promise<SendResult> {
  * `password` weren't provided, returns { needsName: true } — call again with
  * those set to actually create the account (the OTP is re-checked against
  * Authentica every time, so a stale code can't be replayed to create an
- * account). A new account still requires real email confirmation, so that
- * call returns { pendingEmailConfirmation: true } instead of a session — the
- * caller must check their inbox before they can sign in.
- * On a direct session result, it's already set on the shared `supabase` client.
+ * account). Either way, a successful result signs the caller straight in —
+ * a brand-new account still gets a real confirmation email in the
+ * background, but proving phone possession is enough to use the app right
+ * away rather than waiting on that click.
+ * The session is already set on the shared `supabase` client on success.
  */
 export async function verifyWhatsAppOtp(
   phone: string,
@@ -43,7 +43,6 @@ export async function verifyWhatsAppOtp(
   }
   if (data?.error) return { error: data.error };
   if (data?.needsName) return { needsName: true };
-  if (data?.pendingEmailConfirmation) return { pendingEmailConfirmation: true };
   if (data?.session) {
     const { error: setError } = await supabase.auth.setSession({
       access_token: data.session.access_token,

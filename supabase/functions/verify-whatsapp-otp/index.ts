@@ -16,9 +16,13 @@
 //    fields. The phone goes into that account's metadata as an
 //    already-verified contact method — no separate re-verification needed,
 //    since Authentica already proved possession earlier in this same request
-//    chain. The email itself still goes through Supabase's own confirmation
-//    flow (real SMTP is configured), so signUp here does NOT hand back a
-//    session — the client is told to check their inbox instead.
+//    chain. Supabase's own confirmation email still goes out (real SMTP is
+//    configured) and is still the genuine path to a confirmed email, but the
+//    session is handed back immediately rather than making the user wait for
+//    that click — repeating the whole flow after a restart would burn
+//    another Authentica OTP send for a phone that's already proven. See the
+//    comment at the bottom of the new-signup branch for how that's done
+//    without falsely marking the email as confirmed.
 //
 // Two-step for brand-new numbers: first call without `fullName` returns
 // { needsName: true } once Authentica confirms the OTP but no account exists
@@ -270,21 +274,49 @@ async function handleRequest(req: Request): Promise<Response> {
     options: { data: { full_name: fullName, phone } },
   });
 
-  if (signUpError) {
+  if (signUpError || !signUpData.user) {
     console.error("[verify-whatsapp-otp] signUp failed", signUpError);
-    const message = signUpError.message.includes("already registered")
+    const message = signUpError?.message.includes("already registered")
       ? "هذا البريد الإلكتروني مسجّل مسبقًا."
       : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.";
     return json({ error: message }, 500);
   }
 
-  // Real email confirmation is required (SMTP is configured), so signUp does
-  // not hand back a session yet — Supabase already sent the confirmation
-  // email. The client shows a "check your inbox" screen instead of a session.
-  if (signUpData.session) {
-    return json({ session: signUpData.session });
+  // signUp() above already queued the real confirmation email through
+  // Supabase's own SMTP — that part is untouched and still the honest path
+  // to a genuinely confirmed email. But making the user wait for that click
+  // before they can even open the app means every retry burns another
+  // Authentica OTP send for no reason, when phone possession was already
+  // proven earlier in this exact request. So: mint a session immediately via
+  // the same single-use admin-link mechanism used for returning users, then
+  // immediately undo the side effect that verifying any email-based OTP has
+  // — it marks the address confirmed, which would be a lie here since the
+  // user never actually opened their inbox for THIS token. The session
+  // already handed back is unaffected by resetting the stored flag
+  // afterward; only the real click from the actual email will set it again,
+  // honestly, later.
+  const { data: linkData, error: linkError } = await asAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  const hashedToken = linkData?.properties?.hashed_token;
+  if (linkError || !hashedToken) {
+    console.error("[verify-whatsapp-otp] generateLink failed for new signup", linkError);
+    return json({ error: "تعذّر تسجيل الدخول الآن. حاول مرة أخرى." }, 500);
   }
-  return json({ pendingEmailConfirmation: true });
+
+  const { data: verifyData, error: verifyError } = await asAnon.auth.verifyOtp({
+    type: "magiclink",
+    token_hash: hashedToken,
+  });
+  if (verifyError || !verifyData.session) {
+    console.error("[verify-whatsapp-otp] verifyOtp failed for new signup", verifyError);
+    return json({ error: "تعذّر تسجيل الدخول الآن. حاول مرة أخرى." }, 500);
+  }
+
+  await asAdmin.auth.admin.updateUserById(signUpData.user.id, { email_confirm: false });
+
+  return json({ session: verifyData.session });
 }
 
 function json(body: unknown, status = 200): Response {
