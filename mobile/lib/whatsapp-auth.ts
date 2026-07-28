@@ -64,8 +64,17 @@ async function extractServerMessage(error: unknown): Promise<string | undefined>
       // response body wasn't JSON — fall through
     }
   }
+  // No readable body means the request never completed or came back without
+  // CORS headers (e.g. a platform-level crash). supabase-js's own message for
+  // that is the English "Failed to send a request to the Edge Function",
+  // which reads to a user as if they did something wrong — replace it with
+  // something honest and actionable in Arabic.
   if (error && typeof error === "object" && "message" in error) {
-    return String((error as { message: unknown }).message);
+    const message = String((error as { message: unknown }).message);
+    if (message.includes("Failed to send a request")) {
+      return "تعذّر الوصول إلى الخادم. تحقّق من اتصالك ثم حاول مرة أخرى.";
+    }
+    return message;
   }
   return undefined;
 }

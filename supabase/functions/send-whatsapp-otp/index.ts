@@ -21,6 +21,18 @@ const CORS_HEADERS = {
 };
 
 Deno.serve(async (req: Request) => {
+  // An escaping throw becomes a platform 500 with no CORS headers, which the
+  // browser surfaces as "Failed to send a request to the Edge Function" —
+  // hiding the real error behind what looks like a network failure.
+  try {
+    return await handleRequest(req);
+  } catch (err) {
+    console.error("[send-whatsapp-otp] unhandled error", err);
+    return json({ error: "تعذّر إرسال رمز التحقق الآن. حاول مرة أخرى." }, 500);
+  }
+});
+
+async function handleRequest(req: Request): Promise<Response> {
   // The browser (and some fetch clients) send a CORS preflight OPTIONS
   // request before the real POST — without answering it, the actual request
   // never gets sent at all (surfaces client-side as a generic "failed to
@@ -115,7 +127,7 @@ Deno.serve(async (req: Request) => {
     console.error("[send-whatsapp-otp] Authentica request failed", err);
     return json({ error: "تعذّر إرسال رمز التحقق الآن. حاول مرة أخرى." }, 502);
   }
-});
+}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

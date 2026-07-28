@@ -42,6 +42,20 @@ const CORS_HEADERS = {
 };
 
 Deno.serve(async (req: Request) => {
+  // Any throw that escapes the handler becomes a platform-level 500 with no
+  // CORS headers, which the browser reports as "Failed to send a request to
+  // the Edge Function" — an opaque message that hides the real error and
+  // looks to the user like the network died. Everything below is wrapped so a
+  // failure always comes back as readable JSON with CORS attached.
+  try {
+    return await handleRequest(req);
+  } catch (err) {
+    console.error("[verify-whatsapp-otp] unhandled error", err);
+    return json({ error: "تعذّر إتمام العملية الآن. حاول مرة أخرى." }, 500);
+  }
+});
+
+async function handleRequest(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
@@ -261,7 +275,7 @@ Deno.serve(async (req: Request) => {
   }
 
   return json({ session: signUpData.session });
-});
+}
 
 async function derivePassword(phone: string, pepper: string): Promise<string> {
   const key = await crypto.subtle.importKey(
