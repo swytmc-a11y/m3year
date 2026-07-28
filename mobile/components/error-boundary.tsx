@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
+import { reportError } from "@/lib/error-reporting";
 import { fonts, lightTokens, radius } from "@/theme";
 
 // This boundary wraps ThemeProvider itself, so it cannot read the theme context
@@ -26,6 +27,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[error-boundary]", error, info?.componentStack);
+    // console.error is invisible in a release build. Send it somewhere we can
+    // actually read it, without awaiting — rendering the fallback must not
+    // wait on a network call.
+    void reportError(error, `render:${info?.componentStack?.trim().split("\n")[0] ?? "unknown"}`);
   }
 
   render() {
