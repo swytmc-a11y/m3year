@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { ZoomIn } from "react-native-reanimated";
 import { Button, Card, IconButton, Skeleton, Tappable, staggerEnter, useToast } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon } from "@/components/icons";
-import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
+import { VerifiedBadge, StatusBadge, Metric, ListingCard, type ListingCardData } from "@/components/listings";
 import { MiyarBreakdown } from "@/components/miyar-index";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -15,6 +15,7 @@ import { getOrCreateConversation } from "@/lib/messaging";
 import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
 import { RatingSummaryLabel } from "@/components/rating-stars";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
+import { recordView, getSimilarListings, formatViewCount } from "@/lib/discovery";
 import {
   SECTOR_LABELS,
   REASON_FOR_SELLING_LABELS,
@@ -43,6 +44,7 @@ export default function ListingDetailScreen() {
   const [ownerRating, setOwnerRating] = useState<RatingSummary | null>(null);
   const [favorited, setFavorited] = useState(false);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
+  const [similar, setSimilar] = useState<ListingCardData[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -59,14 +61,20 @@ export default function ListingDetailScreen() {
       } else {
         setListing(data);
         if (data) {
-          const [summary, favorite] = await Promise.all([
+          const [summary, favorite, similarRows] = await Promise.all([
             getUserRatingSummary(data.owner_id),
             isFavorited(data.id),
+            getSimilarListings(data.id, data.sector),
           ]);
           if (active) {
             setOwnerRating(summary);
             setFavorited(favorite);
+            setSimilar(similarRows);
           }
+          // Counted after the ad has loaded, so a failed load is never
+          // recorded as a view. Not awaited — the counter must not delay
+          // rendering, and the server ignores the owner's own visits.
+          void recordView("listing", data.id);
         }
       }
       setLoading(false);
@@ -209,6 +217,12 @@ export default function ListingDetailScreen() {
                   <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
                     قطاع {SECTOR_LABELS[listing.sector]} · {listing.city}
                   </Text>
+                  {/* Only meaningful once published — a draft has no audience. */}
+                  {!isPreview ? (
+                    <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, marginTop: 3, textAlign: "right" }}>
+                      {formatViewCount(listing.view_count)}
+                    </Text>
+                  ) : null}
                 </View>
                 {isVerified ? <VerifiedBadge /> : null}
               </View>
@@ -311,6 +325,17 @@ export default function ListingDetailScreen() {
               }}
             />
           </Animated.View>
+
+          {similar.length > 0 ? (
+            <Animated.View entering={staggerEnter(2)} style={{ gap: 12 }}>
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
+                إعلانات مشابهة
+              </Text>
+              {similar.map((item, i) => (
+                <ListingCard key={item.id} listing={item} index={i} />
+              ))}
+            </Animated.View>
+          ) : null}
 
           {!isOwner ? (
             <Link href={{ pathname: "/report", params: { targetType: "listing", targetId: listing.id } }} asChild>

@@ -1,0 +1,12 @@
+# معيار — miyear.site
+User-agent: *
+Allow: /
+
+# Signed-in surfaces: nothing here is useful in a search result, and some of
+# it is per-user. Kept out of the index rather than relying on auth redirects.
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /accountant
+Disallow: /auth
+
+Sitemap: https://miyear.site/sitemap.xml

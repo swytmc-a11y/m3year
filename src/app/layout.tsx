@@ -20,10 +20,46 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["500", "600"],
 });
 
+const SITE_URL = "https://miyear.site";
+const DESCRIPTION =
+  "معيار توثّق الإيرادات الفعلية لمشروعك عبر شبكة محاسبين مستقلين، لترفع مصداقية عرضك أمام أي شريك ممول محتمل.";
+
 export const metadata: Metadata = {
-  title: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
-  description:
-    "معيار توثّق الإيرادات الفعلية لمشروعك عبر شبكة محاسبين مستقلين، لترفع مصداقية عرضك أمام أي شريك ممول محتمل.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    // Sub-pages set their own title and inherit the brand suffix, so a shared
+    // link reads as "اسم المشروع — معيار" instead of a bare page name.
+    template: "%s — معيار",
+  },
+  description: DESCRIPTION,
+  applicationName: "معيار",
+  keywords: [
+    "معيار",
+    "شريك ممول",
+    "تمويل المشاريع",
+    "امتياز تجاري",
+    "فرنشايز",
+    "توثيق مالي",
+    "محاسب قانوني",
+    "السعودية",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "معيار",
+    locale: "ar_SA",
+    url: SITE_URL,
+    title: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    description: DESCRIPTION,
+  },
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

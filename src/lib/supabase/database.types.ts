@@ -325,6 +325,7 @@ export type Database = {
           updated_at: string
           verification_status: Database["public"]["Enums"]["verification_status"]
           verified_at: string | null
+          view_count: number
         }
         Insert: {
           brand_name: string
@@ -366,6 +367,7 @@ export type Database = {
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
+          view_count?: number
         }
         Update: {
           brand_name?: string
@@ -407,6 +409,7 @@ export type Database = {
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
+          view_count?: number
         }
         Relationships: [
           {
@@ -496,6 +499,7 @@ export type Database = {
           updated_at: string
           verification_status: Database["public"]["Enums"]["verification_status"]
           verified_at: string | null
+          view_count: number
         }
         Insert: {
           asking_price?: number | null
@@ -532,6 +536,7 @@ export type Database = {
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
+          view_count?: number
         }
         Update: {
           asking_price?: number | null
@@ -568,6 +573,7 @@ export type Database = {
           updated_at?: string
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
+          view_count?: number
         }
         Relationships: [
           {
@@ -1110,6 +1116,10 @@ export type Database = {
         Returns: undefined
       }
       expire_featured_promotions: { Args: never; Returns: number }
+      increment_view_count: {
+        Args: { p_target_id: string; p_target_type: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: { uid: string }; Returns: boolean }
       log_audit: {

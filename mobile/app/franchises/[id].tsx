@@ -7,6 +7,7 @@ import Animated, { ZoomIn } from "react-native-reanimated";
 import { Button, Card, Field, IconButton, Skeleton, Tappable, staggerEnter } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon } from "@/components/icons";
 import { VerifiedBadge, StatusBadge, Metric } from "@/components/listings";
+import { FranchiseCard, type FranchiseCardData } from "@/components/franchises";
 import { MiyarBreakdown } from "@/components/miyar-index";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -15,6 +16,7 @@ import { getOrCreateFranchiseConversation, sendMessage } from "@/lib/messaging";
 import { getUserRatingSummary, type RatingSummary } from "@/lib/ratings";
 import { RatingSummaryLabel } from "@/components/rating-stars";
 import { isFranchiseFavorited, toggleFranchiseFavorite } from "@/lib/favorites";
+import { recordView, getSimilarFranchises, formatViewCount } from "@/lib/discovery";
 import { SECTOR_LABELS, formatSar, formatDate, franchiseShareUrl } from "@/lib/constants";
 import {
   formatSarRange,
@@ -30,6 +32,7 @@ export default function FranchiseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, user } = useAuth();
   const [franchise, setFranchise] = useState<Franchise | null>(null);
+  const [similar, setSimilar] = useState<FranchiseCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [contacting, setContacting] = useState(false);
@@ -57,14 +60,18 @@ export default function FranchiseDetailScreen() {
       } else {
         setFranchise(data);
         if (data) {
-          const [summary, favorite] = await Promise.all([
+          const [summary, favorite, similarRows] = await Promise.all([
             getUserRatingSummary(data.owner_id),
             isFranchiseFavorited(data.id),
+            getSimilarFranchises(data.id, data.sector),
           ]);
           if (active) {
             setOwnerRating(summary);
             setFavorited(favorite);
+            setSimilar(similarRows);
           }
+          // Counted only after a successful load, and never awaited.
+          void recordView("franchise", data.id);
         }
       }
       setLoading(false);
@@ -237,6 +244,11 @@ export default function FranchiseDetailScreen() {
                     <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
                       قطاع {SECTOR_LABELS[franchise.sector]} · {franchise.city}
                     </Text>
+                    {!isPreview ? (
+                      <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, marginTop: 3, textAlign: "right" }}>
+                        {formatViewCount(franchise.view_count)}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
                 {isVerified ? <VerifiedBadge /> : null}
@@ -340,6 +352,17 @@ export default function FranchiseDetailScreen() {
               }}
             />
           </Animated.View>
+
+          {similar.length > 0 ? (
+            <View style={{ gap: 12 }}>
+              <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
+                امتيازات مشابهة
+              </Text>
+              {similar.map((item, i) => (
+                <FranchiseCard key={item.id} franchise={item} index={i} />
+              ))}
+            </View>
+          ) : null}
 
           {!isOwner ? (
             <Link href={{ pathname: "/report", params: { targetType: "franchise", targetId: franchise.id } }} asChild>
