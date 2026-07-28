@@ -48,14 +48,6 @@ async function handleRequest(req: Request): Promise<Response> {
     return json({ error: "method not allowed" }, 405);
   }
 
-  const moyasarKey = Deno.env.get("MOYASAR_SECRET_KEY");
-  if (!moyasarKey) {
-    // The feature ships dormant: until the key is configured the app hides
-    // the promote button, and this is the backstop if it is reached anyway.
-    console.warn("[create-promotion-payment] MOYASAR_SECRET_KEY not configured");
-    return json({ error: "خدمة الدفع غير مفعّلة حاليًا." }, 503);
-  }
-
   let body: { targetType?: string; targetId?: string; planCode?: string };
   try {
     body = await req.json();
@@ -116,7 +108,7 @@ async function handleRequest(req: Request): Promise<Response> {
   // Price comes from the database, never the request.
   const { data: plan, error: planError } = await asUser
     .from("promotion_plans")
-    .select("code, name_ar, duration_days, price_halalas, is_active")
+    .select("code, name_ar, duration_days, price_halalas, is_active, is_test")
     .eq("code", planCode)
     .maybeSingle();
 
@@ -148,6 +140,30 @@ async function handleRequest(req: Request): Promise<Response> {
   if (orderError || !order) {
     console.error("[create-promotion-payment] order insert failed", orderError);
     return json({ error: "تعذّر إنشاء طلب الدفع." }, 500);
+  }
+
+  // Simulated plans never touch a payment provider: they hand back the
+  // simulator's own page, which settles the order internally. Keeps the whole
+  // flow testable before a merchant account exists. mock-payment refuses any
+  // order whose plan is not is_test, so this branch cannot be reached for a
+  // real priced plan even if the client asks for it.
+  if (plan.is_test) {
+    return json({
+      orderId: order.id,
+      paymentUrl: `${supabaseUrl}/functions/v1/mock-payment?order=${order.id}`,
+      simulated: true,
+    });
+  }
+
+  const moyasarKey = Deno.env.get("MOYASAR_SECRET_KEY");
+  if (!moyasarKey) {
+    // Real plans stay dormant until a provider key is configured.
+    console.warn("[create-promotion-payment] MOYASAR_SECRET_KEY not configured");
+    await asAdmin
+      .from("promotion_orders")
+      .update({ status: "failed", failure_reason: "provider_not_configured" })
+      .eq("id", order.id);
+    return json({ error: "خدمة الدفع غير مفعّلة حاليًا." }, 503);
   }
 
   // metadata comes back to us on the webhook, and is how a confirmed payment
