@@ -93,11 +93,6 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // TEMPORARY: verify-whatsapp-otp keeps rejecting valid codes in production
-  // even after three prior fixes (channel-scoped `method`, 4-digit length,
-  // single-use replay). Recording the exact request/response here — table
-  // dropped once the real cause is confirmed from live evidence.
-  const requestBody = JSON.stringify({ method: "whatsapp", phone });
   try {
     const res = await fetch(`${AUTHENTICA_BASE}/api/v2/send-otp`, {
       method: "POST",
@@ -106,30 +101,17 @@ Deno.serve(async (req: Request) => {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: requestBody,
-    });
-    const rawBody = await res.text().catch(() => "");
-    await asAdmin.from("whatsapp_otp_debug").insert({
-      kind: "send",
-      phone,
-      request_body: requestBody,
-      http_status: res.status,
-      response_body: rawBody,
+      body: JSON.stringify({ method: "whatsapp", phone }),
     });
 
     if (!res.ok) {
+      const rawBody = await res.text().catch(() => "");
       console.error("[send-whatsapp-otp] Authentica returned", res.status, rawBody);
       return json({ error: "تعذّر إرسال رمز التحقق الآن. حاول مرة أخرى." }, 502);
     }
 
     return json({ sent: true });
   } catch (err) {
-    await asAdmin.from("whatsapp_otp_debug").insert({
-      kind: "send",
-      phone,
-      request_body: requestBody,
-      error: String(err),
-    });
     console.error("[send-whatsapp-otp] Authentica request failed", err);
     return json({ error: "تعذّر إرسال رمز التحقق الآن. حاول مرة أخرى." }, 502);
   }

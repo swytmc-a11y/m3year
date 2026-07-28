@@ -670,18 +670,24 @@ export type Database = {
           last_sent_at: string | null
           phone: string
           send_count: number
+          verify_count: number
+          verify_window_start: string | null
           window_start: string
         }
         Insert: {
           last_sent_at?: string | null
           phone: string
           send_count?: number
+          verify_count?: number
+          verify_window_start?: string | null
           window_start?: string
         }
         Update: {
           last_sent_at?: string | null
           phone?: string
           send_count?: number
+          verify_count?: number
+          verify_window_start?: string | null
           window_start?: string
         }
         Relationships: []
@@ -970,42 +976,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      whatsapp_otp_debug: {
-        Row: {
-          created_at: string
-          error: string | null
-          http_status: number | null
-          id: number
-          kind: string
-          otp: string | null
-          phone: string
-          request_body: string
-          response_body: string | null
-        }
-        Insert: {
-          created_at?: string
-          error?: string | null
-          http_status?: number | null
-          id?: never
-          kind: string
-          otp?: string | null
-          phone: string
-          request_body: string
-          response_body?: string | null
-        }
-        Update: {
-          created_at?: string
-          error?: string | null
-          http_status?: number | null
-          id?: never
-          kind?: string
-          otp?: string | null
-          phone?: string
-          request_body?: string
-          response_body?: string | null
-        }
-        Relationships: []
       }
     }
     Views: {

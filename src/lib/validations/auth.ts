@@ -30,14 +30,6 @@ export const signInSchema = z.object({
   password: z.string().min(1, { error: "كلمة السر مطلوبة" }),
 });
 
-export const requestOtpSchema = z.object({
-  phone: phoneSchema,
-});
-
-export const verifyOtpSchema = z.object({
-  phone: phoneSchema,
-  code: z
-    .string()
-    .trim()
-    .regex(/^\d{6}$/, { error: "أدخل رمز التحقق المكون من 6 أرقام" }),
-});
+// requestOtpSchema/verifyOtpSchema were dropped along with the unused
+// Supabase SMS-OTP server actions. phoneSchema stays: it is the shared
+// normalizer for any Saudi number the control panel handles.
