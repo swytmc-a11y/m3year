@@ -129,8 +129,13 @@ Deno.serve(async (req: Request) => {
         console.error("[verify-whatsapp-otp] Authentica non-2xx", res.status, rawBody);
         return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
       }
+      // Confirmed from a captured live response (whatsapp_otp_debug row):
+      // Authentica returns {"status":true,"message":"OTP verified successfully"}
+      // on success — the field is `status`, not `verified`. Checking the wrong
+      // key meant a genuinely successful verification was always read as a
+      // failure and rejected with 401, regardless of the code entered.
       const result = rawBody ? JSON.parse(rawBody) : null;
-      if (result?.verified !== true) {
+      if (result?.status !== true) {
         console.error("[verify-whatsapp-otp] Authentica rejected otp", rawBody);
         return json({ error: "الرمز غير صحيح أو منتهي الصلاحية." }, 401);
       }
