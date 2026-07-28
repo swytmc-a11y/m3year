@@ -199,18 +199,6 @@ export default function ListingDetailScreen() {
           ) : null}
 
           <Animated.View entering={staggerEnter(0)}>
-            <MiyarBreakdown
-              fields={{
-                miyar_grade: listing.miyar_grade,
-                miyar_quality_score: listing.miyar_quality_score,
-                miyar_confidence_score: listing.miyar_confidence_score,
-                miyar_completeness_pct: listing.miyar_completeness_pct,
-                verification_status: listing.verification_status,
-              }}
-            />
-          </Animated.View>
-
-          <Animated.View entering={staggerEnter(1)}>
             <Card style={{ padding: 20, gap: 20 }}>
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <View style={{ flex: 1 }}>
@@ -269,11 +257,13 @@ export default function ListingDetailScreen() {
                   <DetailRow label="عدد الموظفين" value={String(listing.employee_count)} />
                 ) : null}
                 <DetailRow
-                  label="سبب البيع"
+                  label="سبب الطرح"
                   value={
-                    listing.reason_for_selling
-                      ? REASON_FOR_SELLING_LABELS[listing.reason_for_selling as ReasonForSelling]
-                      : "غير محدد"
+                    listing.reason_for_selling === "other"
+                      ? (listing.reason_for_selling_other ?? REASON_FOR_SELLING_LABELS.other)
+                      : listing.reason_for_selling
+                        ? REASON_FOR_SELLING_LABELS[listing.reason_for_selling as ReasonForSelling]
+                        : "غير محدد"
                   }
                 />
                 <DetailRow label="التزامات قانونية على المشروع" value={listing.has_legal_obligations ? "يوجد" : "لا يوجد"} />
@@ -307,6 +297,18 @@ export default function ListingDetailScreen() {
                 </View>
               ) : null}
             </Card>
+          </Animated.View>
+
+          <Animated.View entering={staggerEnter(1)}>
+            <MiyarBreakdown
+              fields={{
+                miyar_grade: listing.miyar_grade,
+                miyar_quality_score: listing.miyar_quality_score,
+                miyar_confidence_score: listing.miyar_confidence_score,
+                miyar_completeness_pct: listing.miyar_completeness_pct,
+                verification_status: listing.verification_status,
+              }}
+            />
           </Animated.View>
 
           {!isOwner ? (

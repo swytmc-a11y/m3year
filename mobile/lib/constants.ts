@@ -10,11 +10,13 @@ export type ListingConfidential =
 
 export type EntityType = "sole_proprietorship" | "company";
 export type ReasonForSelling =
-  | "retirement"
-  | "relocation"
+  | "expansion"
+  | "development"
+  | "liquidity_need"
   | "new_venture"
   | "partnership_dispute"
-  | "financial_distress"
+  | "retirement"
+  | "relocation"
   | "other";
 export type FinancialDataSharing = "now" | "on_request" | "none";
 
@@ -28,11 +30,13 @@ export const ENTITY_TYPE_OPTIONS = (
 ).map((value) => ({ value, label: ENTITY_TYPE_LABELS[value] }));
 
 export const REASON_FOR_SELLING_LABELS: Record<ReasonForSelling, string> = {
-  retirement: "التقاعد",
-  relocation: "الانتقال إلى مدينة أخرى",
+  expansion: "التوسع",
+  development: "تطوير المشروع",
+  liquidity_need: "الحاجة إلى سيولة",
   new_venture: "التفرغ لمشروع جديد",
   partnership_dispute: "خلاف بين الشركاء",
-  financial_distress: "ضائقة مالية",
+  retirement: "التقاعد",
+  relocation: "الانتقال إلى مدينة أخرى",
   other: "أخرى",
 };
 

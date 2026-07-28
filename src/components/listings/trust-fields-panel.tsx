@@ -19,16 +19,22 @@ export function TrustFieldsPanel({
 }: {
   listing: Pick<
     Listing,
-    "reason_for_selling" | "has_legal_obligations" | "financial_data_sharing"
+    | "reason_for_selling"
+    | "reason_for_selling_other"
+    | "has_legal_obligations"
+    | "financial_data_sharing"
   >;
   confidential: ListingConfidential | null;
 }) {
   const rows: { label: string; value: string; muted?: boolean }[] = [
     {
-      label: "سبب البيع",
-      value: listing.reason_for_selling
-        ? REASON_FOR_SELLING_LABELS[listing.reason_for_selling as ReasonForSelling]
-        : "غير محدد",
+      label: "سبب الطرح",
+      value:
+        listing.reason_for_selling === "other"
+          ? (listing.reason_for_selling_other ?? REASON_FOR_SELLING_LABELS.other)
+          : listing.reason_for_selling
+            ? REASON_FOR_SELLING_LABELS[listing.reason_for_selling as ReasonForSelling]
+            : "غير محدد",
     },
     {
       label: "التزامات قانونية على المشروع",

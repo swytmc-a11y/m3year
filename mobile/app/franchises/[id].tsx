@@ -219,18 +219,6 @@ export default function FranchiseDetailScreen() {
           ) : null}
 
           <Animated.View entering={staggerEnter(0)}>
-            <MiyarBreakdown
-              fields={{
-                miyar_grade: franchise.miyar_grade,
-                miyar_quality_score: franchise.miyar_quality_score,
-                miyar_confidence_score: franchise.miyar_confidence_score,
-                miyar_completeness_pct: franchise.miyar_completeness_pct,
-                verification_status: franchise.verification_status,
-              }}
-            />
-          </Animated.View>
-
-          <Animated.View entering={staggerEnter(1)}>
             <Card style={{ padding: 20, gap: 20 }}>
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <View style={{ flex: 1, flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
@@ -339,6 +327,18 @@ export default function FranchiseDetailScreen() {
                 </View>
               ) : null}
             </Card>
+          </Animated.View>
+
+          <Animated.View entering={staggerEnter(1)}>
+            <MiyarBreakdown
+              fields={{
+                miyar_grade: franchise.miyar_grade,
+                miyar_quality_score: franchise.miyar_quality_score,
+                miyar_confidence_score: franchise.miyar_confidence_score,
+                miyar_completeness_pct: franchise.miyar_completeness_pct,
+                verification_status: franchise.verification_status,
+              }}
+            />
           </Animated.View>
 
           {!isOwner ? (

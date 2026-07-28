@@ -67,6 +67,7 @@ export function ListingForm({
   const [reasonForSelling, setReasonForSelling] = useState<ReasonForSelling | undefined>(
     (listing?.reason_for_selling as ReasonForSelling | null) ?? undefined,
   );
+  const [reasonForSellingOther, setReasonForSellingOther] = useState(listing?.reason_for_selling_other ?? "");
   const [financialDataSharing, setFinancialDataSharing] = useState<FinancialDataSharing>(
     (listing?.financial_data_sharing as FinancialDataSharing) ?? "on_request",
   );
@@ -135,6 +136,7 @@ export function ListingForm({
       description,
       has_legal_obligations: hasLegalObligations,
       reason_for_selling: reasonForSelling,
+      reason_for_selling_other: reasonForSellingOther,
       financial_data_sharing: financialDataSharing,
       entity_type: entityType,
       commercial_registration_number: crNumber,
@@ -301,12 +303,22 @@ export function ListingForm({
           onChange={setHasLegalObligations}
         />
         <ChipGroup
-          label="سبب البيع"
+          label="سبب الطرح"
           options={REASON_FOR_SELLING_OPTIONS}
           value={reasonForSelling}
           onChange={setReasonForSelling}
           error={errors.reason_for_selling}
         />
+        {reasonForSelling === "other" ? (
+          <Field
+            label="اكتب السبب"
+            value={reasonForSellingOther}
+            onChangeText={setReasonForSellingOther}
+            placeholder="مثال: البحث عن خبرة تشغيلية إضافية"
+            maxLength={200}
+            error={errors.reason_for_selling_other}
+          />
+        ) : null}
         <ChipGroup
           label="مشاركة البيانات المالية مع المستثمرين"
           options={FINANCIAL_DATA_SHARING_OPTIONS}

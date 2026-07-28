@@ -28,6 +28,7 @@ type RequestRow = {
     monthly_revenue: number;
     description: string | null;
     reason_for_selling: string | null;
+    reason_for_selling_other: string | null;
     has_legal_obligations: boolean;
     financial_data_sharing: string;
   } | null;
@@ -58,7 +59,7 @@ export default async function AccountantRequestsPage() {
   const { data, error } = await supabase
     .from("verification_requests")
     .select(
-      "id, status, notes, report_path, financial_statement_path, verified_revenue, completed_at, created_at, listing:listings(id, title, city, monthly_revenue, description, reason_for_selling, has_legal_obligations, financial_data_sharing)",
+      "id, status, notes, report_path, financial_statement_path, verified_revenue, completed_at, created_at, listing:listings(id, title, city, monthly_revenue, description, reason_for_selling, reason_for_selling_other, has_legal_obligations, financial_data_sharing)",
     )
     .eq("accountant_id", accountant.id)
     .order("created_at", { ascending: false });

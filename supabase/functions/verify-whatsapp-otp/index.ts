@@ -84,6 +84,25 @@ Deno.serve(async (req: Request) => {
     Date.now() - new Date(cached.verified_at).getTime() < CACHE_WINDOW_MS;
 
   if (!isCachedHit) {
+    // TEMPORARY: this call keeps returning verified:false for real users
+    // entering the exact code shown in the WhatsApp message, even though
+    // send-otp (identical auth header, identical base URL) verifiably
+    // delivers the real code — so the mismatch is specific to this request's
+    // body shape, not auth or connectivity. Authentica's docs aren't
+    // reachable from here to confirm the exact field name for the code, so
+    // it's sent under every plausible key (otp/code/otp_code/verification_code)
+    // — extra unknown fields are ignored by virtually all JSON APIs, so this
+    // costs nothing if `otp` was already correct, and fixes it immediately
+    // if it wasn't. Recording the exact request/response here regardless —
+    // table dropped once the real cause is confirmed from live evidence.
+    const requestBody = JSON.stringify({
+      method: "whatsapp",
+      phone,
+      otp,
+      code: otp,
+      otp_code: otp,
+      verification_code: otp,
+    });
     try {
       const res = await fetch(`${AUTHENTICA_BASE}/api/v2/verify-otp`, {
         method: "POST",
@@ -94,9 +113,18 @@ Deno.serve(async (req: Request) => {
         },
         // `method` must match the channel used in send-otp — Authentica
         // stores/validates the OTP per delivery channel, not just per phone.
-        body: JSON.stringify({ method: "whatsapp", phone, otp }),
+        body: requestBody,
       });
       const rawBody = await res.text();
+      await asAdmin.from("whatsapp_otp_debug").insert({
+        kind: "verify",
+        phone,
+        otp,
+        request_body: requestBody,
+        http_status: res.status,
+        response_body: rawBody,
+      });
+
       if (!res.ok) {
         console.error("[verify-whatsapp-otp] Authentica non-2xx", res.status, rawBody);
         return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
@@ -107,6 +135,13 @@ Deno.serve(async (req: Request) => {
         return json({ error: "الرمز غير صحيح أو منتهي الصلاحية." }, 401);
       }
     } catch (err) {
+      await asAdmin.from("whatsapp_otp_debug").insert({
+        kind: "verify",
+        phone,
+        otp,
+        request_body: requestBody,
+        error: String(err),
+      });
       console.error("[verify-whatsapp-otp] Authentica request failed", err);
       return json({ error: "تعذّر التحقق من الرمز الآن. حاول مرة أخرى." }, 502);
     }

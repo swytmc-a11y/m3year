@@ -62,11 +62,13 @@ const sectorEnum = z.enum(["cafe", "restaurant", "retail", "services", "other"])
 
 export const entityTypeEnum = z.enum(["sole_proprietorship", "company"]);
 export const reasonForSellingEnum = z.enum([
-  "retirement",
-  "relocation",
+  "expansion",
+  "development",
+  "liquidity_need",
   "new_venture",
   "partnership_dispute",
-  "financial_distress",
+  "retirement",
+  "relocation",
   "other",
 ]);
 export const financialDataSharingEnum = z.enum(["now", "on_request", "none"]);
@@ -136,6 +138,12 @@ export const listingFormSchema = z.object({
   ),
   has_legal_obligations: z.boolean(),
   reason_for_selling: reasonForSellingEnum,
+  reason_for_selling_other: z
+    .string()
+    .trim()
+    .max(200, { error: "الوصف طويل جدًا" })
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
   financial_data_sharing: financialDataSharingEnum,
   entity_type: entityTypeEnum,
   commercial_registration_number: z
@@ -148,7 +156,10 @@ export const listingFormSchema = z.object({
     .refine((value) => value === true, {
       error: "يجب تأكيد خلو الصور من أي شعار أو علامة تجارية قبل المتابعة.",
     }),
-});
+}).refine(
+  (values) => values.reason_for_selling !== "other" || (values.reason_for_selling_other?.length ?? 0) > 0,
+  { error: "اكتب سبب الطرح.", path: ["reason_for_selling_other"] },
+);
 
 export type ListingFormValues = z.infer<typeof listingFormSchema>;
 

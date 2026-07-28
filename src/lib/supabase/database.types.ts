@@ -482,6 +482,7 @@ export type Database = {
           photo_urls: string[]
           price_negotiable: boolean
           reason_for_selling: string | null
+          reason_for_selling_other: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -516,6 +517,7 @@ export type Database = {
           photo_urls?: string[]
           price_negotiable?: boolean
           reason_for_selling?: string | null
+          reason_for_selling_other?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector: Database["public"]["Enums"]["business_sector"]
@@ -550,6 +552,7 @@ export type Database = {
           photo_urls?: string[]
           price_negotiable?: boolean
           reason_for_selling?: string | null
+          reason_for_selling_other?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           sector?: Database["public"]["Enums"]["business_sector"]
@@ -967,6 +970,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_otp_debug: {
+        Row: {
+          created_at: string
+          error: string | null
+          http_status: number | null
+          id: number
+          kind: string
+          otp: string | null
+          phone: string
+          request_body: string
+          response_body: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          http_status?: number | null
+          id?: never
+          kind: string
+          otp?: string | null
+          phone: string
+          request_body: string
+          response_body?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          http_status?: number | null
+          id?: never
+          kind?: string
+          otp?: string | null
+          phone?: string
+          request_body?: string
+          response_body?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

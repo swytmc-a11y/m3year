@@ -84,6 +84,7 @@ export async function updateListing(
       photo_urls: photoUrls,
       has_legal_obligations: values.has_legal_obligations,
       reason_for_selling: values.reason_for_selling,
+      reason_for_selling_other: values.reason_for_selling_other,
       financial_data_sharing: values.financial_data_sharing,
       asking_price: values.asking_price ?? null,
       price_negotiable: values.price_negotiable,
