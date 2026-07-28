@@ -71,6 +71,20 @@ export const completeWhatsAppSignupSchema = z.object({
   password: passwordSchema,
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const newPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, { error: "أكّد كلمة السر" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: "كلمتا السر غير متطابقتين",
+    path: ["confirmPassword"],
+  });
+
 export type CompleteWhatsAppSignupValues = z.infer<typeof completeWhatsAppSignupSchema>;
 
 const sectorEnum = z.enum(["cafe", "restaurant", "retail", "services", "other"]);

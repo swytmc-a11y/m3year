@@ -104,6 +104,8 @@ export default function SettingsScreen() {
               <Switch value={isDark} onValueChange={toggleDark} trackColor={{ true: t.primary, false: t.border }} />
             </View>
           </Card>
+
+          <Button label="حذف الحساب" variant="danger" fullWidth onPress={() => router.push("/delete-account")} />
         </ScrollView>
       )}
     </SafeAreaView>

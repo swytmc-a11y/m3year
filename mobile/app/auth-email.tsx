@@ -117,6 +117,14 @@ export default function AuthEmailScreen() {
             ) : null}
 
             <Button label="تسجيل الدخول" fullWidth loading={loading} onPress={onSubmit} />
+
+            <Link href="/forgot-password" asChild>
+              <Tappable haptic="none">
+                <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "center" }}>
+                  نسيت كلمة السر؟
+                </Text>
+              </Tappable>
+            </Link>
           </FadeInView>
 
           <FadeInView delay={220} style={{ alignItems: "center", marginTop: 28, gap: 12 }}>
