@@ -113,3 +113,25 @@ export async function isPromotionAvailable(): Promise<boolean> {
   if (error) return false;
   return (count ?? 0) > 0;
 }
+
+/**
+ * Asks the server to confirm a payment with the provider and apply the
+ * promotion if it really went through.
+ *
+ * Called when the user returns from the hosted payment page. The return
+ * itself proves nothing — the customer's browser controls it — so the answer
+ * always comes from the server checking with the provider directly.
+ */
+export async function verifyPromotionPayment(
+  orderId: string,
+): Promise<{ status?: string; applied?: boolean; error?: string }> {
+  const { data, error } = await supabase.functions.invoke("verify-promotion-payment", {
+    body: { orderId },
+  });
+  if (error) {
+    console.error("[promotions] verify failed", error);
+    return { error: "تعذّر التحقق من حالة الدفع." };
+  }
+  if (data?.error) return { error: data.error };
+  return { status: data?.status, applied: data?.applied };
+}

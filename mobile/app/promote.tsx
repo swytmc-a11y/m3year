@@ -10,6 +10,7 @@ import {
   listPromotionPlans,
   startPromotionCheckout,
   getPromotionOrder,
+  verifyPromotionPayment,
   formatHalalas,
   type PromotionPlan,
 } from "@/lib/promotions";
@@ -85,20 +86,28 @@ export default function PromoteScreen() {
   // than assume — and re-read the target too, since that is what the user
   // is really asking about.
   useEffect(() => {
-    const sub = AppState.addEventListener("change", (state) => {
+    const sub = AppState.addEventListener("change", async (state) => {
       if (state !== "active") return;
-      loadTarget();
-      if (!pendingOrderId) return;
-      getPromotionOrder(pendingOrderId).then((order) => {
-        if (!order) return;
-        if (order.status === "paid") {
-          toast("تم تفعيل التمييز بنجاح.", "success");
-          setPendingOrderId(null);
-        } else if (order.status === "failed" || order.status === "cancelled") {
-          toast("لم تكتمل عملية الدفع.", "error");
-          setPendingOrderId(null);
-        }
-      });
+      if (!pendingOrderId) {
+        loadTarget();
+        return;
+      }
+
+      // Ask the server to confirm with the provider first. The simulator
+      // settles its own orders, so this is a no-op there; for a real gateway
+      // it is what actually turns a completed checkout into a promotion.
+      await verifyPromotionPayment(pendingOrderId);
+      await loadTarget();
+
+      const order = await getPromotionOrder(pendingOrderId);
+      if (!order) return;
+      if (order.status === "paid") {
+        toast("تم تفعيل التمييز بنجاح.", "success");
+        setPendingOrderId(null);
+      } else if (order.status === "failed" || order.status === "cancelled") {
+        toast("لم تكتمل عملية الدفع.", "error");
+        setPendingOrderId(null);
+      }
     });
     return () => sub.remove();
   }, [pendingOrderId, loadTarget, toast]);

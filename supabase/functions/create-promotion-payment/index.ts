@@ -15,9 +15,14 @@
 // has no INSERT policy for authenticated users on purpose — if it did,
 // anyone could insert a row with status='paid' and promote themselves free.
 //
-// Card data never touches this code or the app: Moyasar hosts the payment
-// page and we only ever hold the invoice id and its URL, which keeps the
-// whole product out of PCI scope.
+// Card data never touches this code or the app: the provider hosts the
+// payment page and we only ever hold the invoice id and its URL, which keeps
+// the whole product out of PCI scope.
+//
+// Provider selection is by configuration, not by the caller: a simulated plan
+// uses the built-in simulator, otherwise Paylink if its keys are present,
+// otherwise Moyasar. Whichever is used, the promotion is applied only after
+// the payment is confirmed against that provider's own API.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -132,7 +137,9 @@ async function handleRequest(req: Request): Promise<Response> {
       amount_halalas: plan.price_halalas,
       currency: "SAR",
       status: "pending",
-      provider: "moyasar",
+      provider: plan.is_test
+        ? "simulator"
+        : (Deno.env.get("PAYLINK_API_ID") ? "paylink" : "moyasar"),
     })
     .select("id")
     .single();
@@ -155,14 +162,92 @@ async function handleRequest(req: Request): Promise<Response> {
     });
   }
 
+  const paylinkApiId = Deno.env.get("PAYLINK_API_ID");
+  const paylinkSecret = Deno.env.get("PAYLINK_SECRET_KEY");
+
+  if (paylinkApiId && paylinkSecret) {
+    const base = Deno.env.get("PAYLINK_BASE_URL") ?? "https://restapi.paylink.sa";
+
+    const authRes = await fetch(`${base}/api/auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ apiId: paylinkApiId, secretKey: paylinkSecret, persistToken: false }),
+    });
+    const auth = await authRes.json().catch(() => null);
+    const token = auth?.id_token ?? auth?.token ?? auth?.access_token ?? null;
+
+    if (!authRes.ok || !token) {
+      console.error("[create-promotion-payment] paylink auth failed", authRes.status, auth);
+      await failOrder(asAdmin, order.id, `paylink_auth_${authRes.status}`);
+      return json({ error: "تعذّر الاتصال ببوابة الدفع." }, 502);
+    }
+
+    // Paylink bills in riyals, not the smallest unit.
+    const amountSar = plan.price_halalas / 100;
+
+    const invoiceRes = await fetch(`${base}/api/addInvoice`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        // Our own order id, so the invoice can always be traced back.
+        orderNumber: order.id,
+        amount: amountSar,
+        // Where Paylink returns the customer's browser. It is only a
+        // redirect — the promotion is applied by verify-promotion-payment
+        // after asking Paylink directly, never by trusting this landing.
+        callBackUrl: "https://miyear.site/promotion/return",
+        cancelUrl: "https://miyear.site/promotion/cancelled",
+        clientName: userData.user.user_metadata?.full_name ?? "عميل معيار",
+        clientEmail: userData.user.email ?? undefined,
+        clientMobile: userData.user.phone ?? undefined,
+        currency: "SAR",
+        products: [
+          {
+            title: plan.name_ar,
+            price: amountSar,
+            qty: 1,
+            isDigital: true,
+          },
+        ],
+      }),
+    });
+
+    const invoice = await invoiceRes.json().catch(() => null);
+
+    if (!invoiceRes.ok || !invoice) {
+      console.error("[create-promotion-payment] paylink addInvoice failed", invoiceRes.status, invoice);
+      await failOrder(asAdmin, order.id, `paylink_invoice_${invoiceRes.status}`);
+      return json({ error: "تعذّر إنشاء فاتورة الدفع. حاول مرة أخرى." }, 502);
+    }
+
+    const paymentUrl: string | null = invoice.url ?? invoice.mobileUrl ?? invoice.paymentUrl ?? null;
+    const transactionNo: string | null = invoice.transactionNo ?? invoice.orderNumber ?? null;
+
+    if (!paymentUrl || !transactionNo) {
+      // Logged in full so the exact field names can be pinned on the first
+      // real run rather than guessed at.
+      console.error("[create-promotion-payment] unexpected paylink invoice shape", JSON.stringify(invoice));
+      await failOrder(asAdmin, order.id, "paylink_no_url");
+      return json({ error: "تعذّر فتح صفحة الدفع. حاول مرة أخرى." }, 502);
+    }
+
+    await asAdmin
+      .from("promotion_orders")
+      .update({ provider_invoice_id: transactionNo })
+      .eq("id", order.id);
+
+    return json({ orderId: order.id, paymentUrl });
+  }
+
   const moyasarKey = Deno.env.get("MOYASAR_SECRET_KEY");
   if (!moyasarKey) {
     // Real plans stay dormant until a provider key is configured.
-    console.warn("[create-promotion-payment] MOYASAR_SECRET_KEY not configured");
-    await asAdmin
-      .from("promotion_orders")
-      .update({ status: "failed", failure_reason: "provider_not_configured" })
-      .eq("id", order.id);
+    console.warn("[create-promotion-payment] no payment provider configured");
+    await failOrder(asAdmin, order.id, "provider_not_configured");
     return json({ error: "خدمة الدفع غير مفعّلة حاليًا." }, 503);
   }
 
@@ -228,6 +313,19 @@ async function handleRequest(req: Request): Promise<Response> {
     .eq("id", order.id);
 
   return json({ orderId: order.id, paymentUrl });
+}
+
+// Marks an order failed with a reason, so a stuck 'pending' row never hides
+// why a checkout did not complete.
+async function failOrder(
+  asAdmin: ReturnType<typeof createClient>,
+  orderId: string,
+  reason: string,
+): Promise<void> {
+  await asAdmin
+    .from("promotion_orders")
+    .update({ status: "failed", failure_reason: reason })
+    .eq("id", orderId);
 }
 
 function json(body: unknown, status = 200): Response {
