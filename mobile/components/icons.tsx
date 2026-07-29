@@ -368,6 +368,15 @@ export function CompareIcon({ color, size = 16 }: { color: ColorValue; size?: nu
   );
 }
 
+export function BlockIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={8.5} stroke={color} strokeWidth={1.7} />
+      <Path d="m6.2 6.2 11.6 11.6" stroke={color} strokeWidth={1.7} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export function FlagIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

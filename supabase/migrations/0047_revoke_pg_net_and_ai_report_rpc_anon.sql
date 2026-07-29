@@ -18,3 +18,7 @@ revoke execute on function public.pg_net_poll_request(bigint) from anon, authent
 -- but there's no reason to leave it granted.
 revoke execute on function public.complete_ai_report(uuid, jsonb, text) from anon;
 revoke execute on function public.fail_ai_report(uuid) from anon;
+
+-- NOTE: the two revokes above are necessary but NOT sufficient on their own —
+-- anon still reached these functions through the default PUBLIC grant.
+-- See 0052, which revokes EXECUTE from PUBLIC as well.

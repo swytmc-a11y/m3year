@@ -198,6 +198,15 @@ export async function sendMessage(
 
   if (error) {
     console.error("[messaging] send failed", error);
+    if (error.code === "54000") {
+      return { error: "أرسلت عددًا كبيرًا من الرسائل خلال وقت قصير. حاول بعد قليل." };
+    }
+    // RLS refuses the insert when a block exists in either direction. The
+    // wording stays neutral on purpose: if the other side blocked us, saying
+    // so would tell them something they are not meant to learn.
+    if (error.code === "42501") {
+      return { error: "لا يمكن إرسال رسائل في هذه المحادثة." };
+    }
     return { error: "تعذّر إرسال الرسالة الآن." };
   }
 

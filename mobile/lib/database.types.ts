@@ -677,6 +677,36 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          listing_status: boolean
+          new_message: boolean
+          promotion: boolean
+          saved_search: boolean
+          updated_at: string
+          user_id: string
+          verification: boolean
+        }
+        Insert: {
+          listing_status?: boolean
+          new_message?: boolean
+          promotion?: boolean
+          saved_search?: boolean
+          updated_at?: string
+          user_id: string
+          verification?: boolean
+        }
+        Update: {
+          listing_status?: boolean
+          new_message?: boolean
+          promotion?: boolean
+          saved_search?: boolean
+          updated_at?: string
+          user_id?: string
+          verification?: boolean
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -968,6 +998,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       ratings: {
         Row: {
           comment: string | null
@@ -1061,6 +1112,89 @@ export type Database = {
           },
         ]
       }
+      saved_searches: {
+        Row: {
+          alerts_enabled: boolean
+          city: string | null
+          created_at: string
+          id: string
+          kind: string
+          max_revenue: number | null
+          min_revenue: number | null
+          name: string
+          sector: Database["public"]["Enums"]["business_sector"] | null
+          user_id: string
+          verified_only: boolean
+        }
+        Insert: {
+          alerts_enabled?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          max_revenue?: number | null
+          min_revenue?: number | null
+          name: string
+          sector?: Database["public"]["Enums"]["business_sector"] | null
+          user_id: string
+          verified_only?: boolean
+        }
+        Update: {
+          alerts_enabled?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          max_revenue?: number | null
+          min_revenue?: number | null
+          name?: string
+          sector?: Database["public"]["Enums"]["business_sector"] | null
+          user_id?: string
+          verified_only?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_requests: {
         Row: {
           accountant_id: string | null
@@ -1146,6 +1280,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_ai_report: {
+        Args: { p_content: Json; p_model_version: string; p_report_id: string }
+        Returns: undefined
+      }
       create_notification: {
         Args: {
           p_body: string
@@ -1157,6 +1295,7 @@ export type Database = {
         Returns: undefined
       }
       expire_featured_promotions: { Args: never; Returns: number }
+      fail_ai_report: { Args: { p_report_id: string }; Returns: undefined }
       increment_view_count: {
         Args: { p_target_id: string; p_target_type: string }
         Returns: undefined
@@ -1175,6 +1314,16 @@ export type Database = {
       owns_ai_report_target: {
         Args: { p_target_id: string; p_target_type: string }
         Returns: boolean
+      }
+      pg_net_poll_request: { Args: { p_request_id: number }; Returns: Json }
+      pg_net_start_request: {
+        Args: {
+          p_body?: Json
+          p_headers: Json
+          p_method: string
+          p_url: string
+        }
+        Returns: number
       }
       recompute_all_miyar_index: { Args: never; Returns: undefined }
       recompute_miyar_index_franchise: {

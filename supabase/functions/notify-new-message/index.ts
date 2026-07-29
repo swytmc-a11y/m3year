@@ -106,10 +106,14 @@ Deno.serve(async (req: Request) => {
     "معيار";
   const senderName = senderProfile?.full_name || "مستخدم";
 
+  // body is null for an attachment-only message (see sendMessage), which
+  // used to throw here and turn the whole push into a 500.
+  const preview = message.body ? message.body.slice(0, 180) : "📎 مرفق";
+
   const messages = tokens.map((t) => ({
     to: t.expo_push_token,
     title: `${senderName} · ${listingTitle}`,
-    body: message.body.slice(0, 180),
+    body: preview,
     sound: "default",
     data: {
       type: "message",

@@ -8,8 +8,10 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { useFonts } from "expo-font";
 import { AppSplash } from "@/components/app-splash";
+import { Onboarding } from "@/components/onboarding";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ToastProvider } from "@/components/kit";
+import { hasSeenOnboarding, markOnboardingSeen } from "@/lib/onboarding";
 import {
   Almarai_700Bold,
   Almarai_800ExtraBold,
@@ -45,6 +47,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [splashDone, setSplashDone] = useState(false);
+  // null = still reading storage, so the intro never flashes for a returning
+  // user while the answer is in flight.
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
   const [fontsLoaded, fontError] = useFonts({
     Almarai_700Bold,
     Almarai_800ExtraBold,
@@ -65,6 +70,10 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    hasSeenOnboarding().then((seen) => setShowIntro(!seen));
+  }, []);
 
   // Tapping a "new message" push notification opens that conversation
   // directly, whether the app was backgrounded or launched cold by the tap.
@@ -101,7 +110,15 @@ export default function RootLayout() {
           <ThemeProvider>
             <AuthProvider>
               <ToastProvider>
-                <RootChrome splashDone={splashDone} onSplashDone={() => setSplashDone(true)} />
+                <RootChrome
+                  splashDone={splashDone}
+                  onSplashDone={() => setSplashDone(true)}
+                  showIntro={splashDone && showIntro === true}
+                  onIntroDone={() => {
+                    setShowIntro(false);
+                    markOnboardingSeen();
+                  }}
+                />
               </ToastProvider>
             </AuthProvider>
           </ThemeProvider>
@@ -116,9 +133,13 @@ export default function RootLayout() {
 function RootChrome({
   splashDone,
   onSplashDone,
+  showIntro,
+  onIntroDone,
 }: {
   splashDone: boolean;
   onSplashDone: () => void;
+  showIntro: boolean;
+  onIntroDone: () => void;
 }) {
   const { isDark, t } = useTheme();
   return (
@@ -132,6 +153,9 @@ function RootChrome({
             animation: "slide_from_left",
           }}
         />
+        {/* Order matters: the intro sits under the splash so the handoff is a
+            single fade rather than two overlays fighting. */}
+        {showIntro ? <Onboarding onDone={onIntroDone} /> : null}
         {!splashDone ? <AppSplash onDone={onSplashDone} /> : null}
       </View>
     </>

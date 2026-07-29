@@ -28,8 +28,15 @@ const TYPE_ROUTE: Record<string, (relatedId: string) => string> = {
   new_message: (id) => `/messages/${id}`,
   listing_published: (id) => `/listings/${id}`,
   listing_rejected: () => "/my-ads",
+  franchise_published: (id) => `/franchises/${id}`,
+  franchise_rejected: () => "/my-ads",
   verification_completed: (id) => `/listings/${id}`,
   verification_rejected: () => "/my-ads",
+  promotion_activated: (id) => `/listings/${id}`,
+  // Listing and franchise alerts are separate types precisely so the bare
+  // related_id can be routed to the right table.
+  saved_search_match: (id) => `/listings/${id}`,
+  saved_search_match_franchise: (id) => `/franchises/${id}`,
 };
 
 export default function NotificationsScreen() {

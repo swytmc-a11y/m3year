@@ -15,6 +15,7 @@ import {
   Tappable,
   useRefreshTint,
   useTabBarSpacing,
+  useToast,
 } from "@/components/kit";
 import { BellIcon, FilterIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { CreateTypeSheet } from "@/components/create-type-sheet";
@@ -22,8 +23,10 @@ import { ListingCard, LISTING_CARD_COLUMNS, type ListingCardData } from "@/compo
 import { FranchiseCard, FRANCHISE_CARD_COLUMNS, type FranchiseCardData } from "@/components/franchises";
 import { supabase } from "@/lib/supabase";
 import { getUnreadNotificationCount } from "@/lib/notifications";
+import { createSavedSearch } from "@/lib/saved-searches";
+import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
-import { SECTOR_OPTIONS, type BusinessSector } from "@/lib/constants";
+import { SECTOR_OPTIONS, SECTOR_LABELS, type BusinessSector } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
 type SortOption = "newest" | "revenue_desc" | "percentage_desc";
@@ -51,6 +54,8 @@ export default function HomeScreen() {
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
+  const toast = useToast();
+  const { session } = useAuth();
 
   const [mode, setMode] = useState<Mode>("listings");
   const [search, setSearch] = useState("");
@@ -63,6 +68,8 @@ export default function HomeScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
+  const [savingSearch, setSavingSearch] = useState(false);
 
   const [listings, setListings] = useState<ListingCardData[] | null>(null);
   const [franchises, setFranchises] = useState<FranchiseCardData[] | null>(null);
@@ -230,6 +237,43 @@ export default function HomeScreen() {
     setMaxRevenue("");
   }
 
+  // Suggested name, built from the filters themselves so the common case is
+  // "tap save, tap confirm" rather than "think of a name".
+  const defaultSearchName = useMemo(() => {
+    const parts = [mode === "listings" ? "فرص" : "امتيازات"];
+    if (sector) parts.push(SECTOR_LABELS[sector]);
+    if (verifiedOnly) parts.push("موثّقة");
+    return parts.join(" · ");
+  }, [mode, sector, verifiedOnly]);
+
+  function onSaveSearch() {
+    if (!session) {
+      toast("سجّل الدخول لحفظ البحث.", "error");
+      return;
+    }
+    setFiltersOpen(false);
+    setSavePromptOpen(true);
+  }
+
+  async function onConfirmSaveSearch(name: string) {
+    setSavingSearch(true);
+    const { error: saveError } = await createSavedSearch({
+      name,
+      kind: mode === "listings" ? "listing" : "franchise",
+      sector,
+      minRevenue: minRevenue ? Number(minRevenue) : null,
+      maxRevenue: maxRevenue ? Number(maxRevenue) : null,
+      verifiedOnly,
+    });
+    setSavingSearch(false);
+    if (saveError) {
+      toast(saveError, "error");
+      return;
+    }
+    setSavePromptOpen(false);
+    toast("تم حفظ البحث. سنُنبّهك عند تطابق جديد.", "success");
+  }
+
   // Everything the user changed away from its default, so the filter button can
   // show at a glance that a narrowed view is in effect.
   const activeFilters = useMemo(() => {
@@ -364,7 +408,16 @@ export default function HomeScreen() {
         maxRevenue={maxRevenue}
         setMaxRevenue={setMaxRevenue}
         onReset={resetFilters}
+        onSaveSearch={onSaveSearch}
         resultCount={activeCount}
+      />
+
+      <SaveSearchPrompt
+        visible={savePromptOpen}
+        defaultName={defaultSearchName}
+        saving={savingSearch}
+        onCancel={() => setSavePromptOpen(false)}
+        onConfirm={onConfirmSaveSearch}
       />
     </SafeAreaView>
   );
@@ -517,10 +570,12 @@ function FiltersSheet({
   maxRevenue,
   setMaxRevenue,
   onReset,
+  onSaveSearch,
   resultCount,
 }: {
   visible: boolean;
   onClose: () => void;
+  onSaveSearch: () => void;
   mode: Mode;
   sector: BusinessSector | null;
   setSector: (s: BusinessSector | null) => void;
@@ -604,6 +659,19 @@ function FiltersSheet({
             </View>
           </View>
         ) : null}
+
+        {/* Saving lives with the filters rather than in a separate menu: this
+            is the moment the user has just expressed what they want. */}
+        <View
+          style={{ borderTopWidth: 1, borderTopColor: t.border, paddingTop: 16, gap: 8 }}
+        >
+          <Button label="احفظ هذا البحث ونبّهني" variant="secondary" fullWidth onPress={onSaveSearch} />
+          <Text
+            style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.textMuted, textAlign: "center", lineHeight: 17 }}
+          >
+            يصلك إشعار عند نشر فرصة تطابق هذه الفلاتر.
+          </Text>
+        </View>
       </View>
     </Sheet>
   );
@@ -657,5 +725,80 @@ function HomeSkeletonList() {
         </View>
       ))}
     </View>
+  );
+}
+
+/**
+ * Names the search being saved. A Sheet rather than a prompt dialog because
+ * Android has no native text prompt, and the name is pre-filled from the
+ * filters so confirming without typing is the normal path.
+ */
+function SaveSearchPrompt({
+  visible,
+  defaultName,
+  saving,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  defaultName: string;
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: (name: string) => void;
+}) {
+  const { t } = useTheme();
+  const [name, setName] = useState(defaultName);
+
+  // The suggestion depends on the current filters, so it has to catch up when
+  // they change between openings.
+  useEffect(() => {
+    if (visible) setName(defaultName);
+  }, [visible, defaultName]);
+
+  const trimmed = name.trim();
+
+  return (
+    <Sheet
+      visible={visible}
+      onClose={onCancel}
+      title="حفظ البحث"
+      footer={
+        <View style={{ flexDirection: "row-reverse", gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Button
+              label="حفظ"
+              fullWidth
+              loading={saving}
+              disabled={trimmed.length === 0}
+              onPress={() => onConfirm(trimmed)}
+            />
+          </View>
+          <Button label="إلغاء" variant="secondary" onPress={onCancel} />
+        </View>
+      }
+    >
+      <View style={{ gap: 9 }}>
+        <FieldLabel>اسم البحث</FieldLabel>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="مثال: مقاهي الرياض"
+          placeholderTextColor={t.textMuted}
+          maxLength={60}
+          style={{
+            height: 46,
+            borderRadius: radius.lg,
+            borderWidth: 1,
+            borderColor: t.border,
+            backgroundColor: t.surface,
+            paddingHorizontal: 14,
+            fontFamily: fonts.body,
+            fontSize: 13.5,
+            color: t.text,
+            textAlign: "right",
+          }}
+        />
+      </View>
+    </Sheet>
   );
 }

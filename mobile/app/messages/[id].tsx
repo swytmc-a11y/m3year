@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   Linking,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -19,7 +20,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Button, IconButton, Tappable, useToast } from "@/components/kit";
-import { ChevronBackIcon, SendIcon, ImagePickIcon, FileClipIcon, FlagIcon } from "@/components/icons";
+import { ChevronBackIcon, SendIcon, ImagePickIcon, FileClipIcon, FlagIcon, BlockIcon } from "@/components/icons";
 import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -27,6 +28,7 @@ import { supabase } from "@/lib/supabase";
 import { sendMessage, markMessagesRead, type OutgoingAttachment } from "@/lib/messaging";
 import { uploadMessageAttachment, getMessageAttachmentSignedUrl } from "@/lib/storage";
 import { getUserRatingSummary, getMyRating, submitRating, type RatingSummary } from "@/lib/ratings";
+import { isBlockedByMe, blockUser, unblockUser } from "@/lib/blocks";
 import { ratingFormSchema } from "@/lib/validations";
 import { fonts, radius } from "@/theme";
 
@@ -73,6 +75,9 @@ export default function ChatScreen() {
   const [myComment, setMyComment] = useState("");
   const [rateError, setRateError] = useState<string | undefined>();
   const [rateSubmitting, setRateSubmitting] = useState(false);
+  // Only ever "am I blocking them". Whether they blocked us is deliberately
+  // unknowable to this client — see lib/blocks.
+  const [iBlockedThem, setIBlockedThem] = useState(false);
 
   useEffect(() => {
     const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -108,13 +113,16 @@ export default function ChatScreen() {
         setListingId(conv.listing_id);
         setCounterpartId(counterpart);
 
-        const [{ data: counterpartProfile }, summary, myRating] = await Promise.all([
+        const [{ data: counterpartProfile }, summary, myRating, blocked] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("id", counterpart).maybeSingle(),
           getUserRatingSummary(counterpart),
           getMyRating(counterpart, conv.listing_id),
+          isBlockedByMe(counterpart),
         ]);
 
         if (!isActive()) return;
+
+        setIBlockedThem(blocked);
 
         const listingTitle =
           (conv as unknown as { listing?: { title?: string } }).listing?.title ?? "";
@@ -309,6 +317,45 @@ export default function ChatScreen() {
     setRatingSummary(await getUserRatingSummary(counterpartId));
   }
 
+  function onToggleBlock() {
+    if (!counterpartId) return;
+    const name = counterpartName || "هذا المستخدم";
+
+    if (iBlockedThem) {
+      Alert.alert("إلغاء حظر " + name + "؟", "ستتمكنان من تبادل الرسائل مرة أخرى.", [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "إلغاء الحظر",
+          onPress: async () => {
+            const { error } = await unblockUser(counterpartId);
+            if (error) return toast(error, "error");
+            setIBlockedThem(false);
+            toast("تم إلغاء الحظر.", "success");
+          },
+        },
+      ]);
+      return;
+    }
+
+    Alert.alert(
+      "حظر " + name + "؟",
+      "لن يتمكن من مراسلتك، ولن تتمكن من مراسلته، وستبقى الرسائل السابقة كما هي.",
+      [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "حظر",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await blockUser(counterpartId);
+            if (error) return toast(error, "error");
+            setIBlockedThem(true);
+            toast("تم حظر المستخدم.", "success");
+          },
+        },
+      ],
+    );
+  }
+
   function renderBubble(item: Message, index: number) {
     const mine = item.sender_id === user?.id;
     const bubbleColor = mine ? t.primary : t.surface;
@@ -396,6 +443,12 @@ export default function ChatScreen() {
             >
               <FlagIcon color={t.textMuted} size={15} />
             </IconButton>
+            <IconButton
+              accessibilityLabel={iBlockedThem ? "إلغاء حظر هذا المستخدم" : "حظر هذا المستخدم"}
+              onPress={onToggleBlock}
+            >
+              <BlockIcon color={iBlockedThem ? t.danger : t.textMuted} size={15} />
+            </IconButton>
           </View>
         ) : null}
       </View>
@@ -473,6 +526,37 @@ export default function ChatScreen() {
           />
         )}
 
+        {/* When we are the blocker, the composer is replaced outright rather
+            than left there to fail on send — the database refuses the insert
+            either way, so offering the field would just be a lie. The
+            reverse case (they blocked us) deliberately has no banner: it
+            would reveal something the other side is entitled to keep private,
+            so sending simply fails with a neutral message. */}
+        {iBlockedThem ? (
+          <View
+            style={{
+              paddingHorizontal: 18,
+              paddingTop: 14,
+              paddingBottom: insets.bottom + 14,
+              backgroundColor: t.surface,
+              gap: 10,
+              ...t.shadowSm,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: fonts.bodyMedium,
+                fontSize: 12.5,
+                color: t.textMuted,
+                textAlign: "center",
+                lineHeight: 20,
+              }}
+            >
+              لقد حظرت {counterpartName || "هذا المستخدم"}. لا يمكن تبادل الرسائل حتى تلغي الحظر.
+            </Text>
+            <Button label="إلغاء الحظر" variant="secondary" fullWidth onPress={onToggleBlock} />
+          </View>
+        ) : (
         <View
           style={{
             flexDirection: "row-reverse",
@@ -531,6 +615,7 @@ export default function ChatScreen() {
             <SendIcon color={t.onPrimary} size={16} />
           </IconButton>
         </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
