@@ -188,9 +188,12 @@ export async function paylinkAuth(
   return call.body.id_token ?? call.body.token ?? call.body.access_token ?? null;
 }
 
-// Routes an HTTP call to Paylink through pg_net (via the service-role RPC)
+// Routes an HTTP call to Paylink through pg_net (via service-role RPCs)
 // instead of fetch(), since fetch() from this runtime hangs against
-// Paylink's host — see migration 0044_paylink_via_pg_net.
+// Paylink's host — see migration 0044_paylink_via_pg_net. The wait for a
+// response happens here, as repeated fast polls, rather than inside one SQL
+// statement — Postgres's statement_timeout for service_role (8s) killed the
+// single-statement version before Paylink replied — see 0045.
 async function paylinkNetCall(
   asAdmin: ReturnType<typeof createClient>,
   method: "POST" | "GET",
@@ -198,21 +201,33 @@ async function paylinkNetCall(
   headers: Record<string, string>,
   body?: unknown,
 ): Promise<{ status?: number; body?: any; error?: string }> {
-  const { data, error } = await asAdmin.rpc("pg_net_json_request", {
+  const { data: requestId, error: startError } = await asAdmin.rpc("pg_net_start_request", {
     p_method: method,
     p_url: url,
     p_headers: headers,
     p_body: body ?? null,
   });
-  if (error) return { error: error.message };
-  if (data?.error) return { error: data.error };
-  let parsed: any = null;
-  try {
-    parsed = data?.body ? JSON.parse(data.body) : null;
-  } catch {
-    // not JSON
+  if (startError || !requestId) return { error: startError?.message ?? "no_request_id" };
+
+  const deadline = Date.now() + 18000;
+  while (Date.now() < deadline) {
+    const { data: result, error: pollError } = await asAdmin.rpc("pg_net_poll_request", {
+      p_request_id: requestId,
+    });
+    if (pollError) return { error: pollError.message };
+    if (result) {
+      if (result.error) return { error: result.error };
+      let parsed: any = null;
+      try {
+        parsed = result.body ? JSON.parse(result.body) : null;
+      } catch {
+        // not JSON
+      }
+      return { status: result.status, body: parsed };
+    }
+    await new Promise((r) => setTimeout(r, 300));
   }
-  return { status: data?.status, body: parsed };
+  return { error: "poll_timeout" };
 }
 
 function json(body: unknown, status = 200): Response {
