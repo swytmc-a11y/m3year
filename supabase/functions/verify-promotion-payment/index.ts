@@ -74,19 +74,21 @@ async function handleRequest(req: Request): Promise<Response> {
   if (!apiId || !secretKey) return json({ error: "خدمة الدفع غير مفعّلة حاليًا." }, 503);
   if (!order.provider_invoice_id) return json({ status: "pending", applied: false });
 
-  const token = await paylinkAuth(base, apiId, secretKey);
+  const token = await paylinkAuth(asAdmin, base, apiId, secretKey);
   if (!token) return json({ error: "تعذّر الاتصال ببوابة الدفع." }, 502);
 
-  const invRes = await fetch(
+  const invCall = await paylinkNetCall(
+    asAdmin,
+    "GET",
     `${base}/api/getInvoice/${encodeURIComponent(order.provider_invoice_id)}`,
-    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } },
+    { Authorization: `Bearer ${token}`, Accept: "application/json" },
   );
-  const invoice = await invRes.json().catch(() => null);
 
-  if (!invRes.ok || !invoice) {
-    console.error("[verify-promotion-payment] getInvoice failed", invRes.status, invoice);
+  if (invCall.error || invCall.status !== 200 || !invCall.body) {
+    console.error("[verify-promotion-payment] getInvoice failed", invCall.status, invCall.error, invCall.body);
     return json({ error: "تعذّر التحقق من حالة الدفع." }, 502);
   }
+  const invoice = invCall.body;
 
   // Paylink reports Paid / Pending / Cancelled / Failed on orderStatus.
   const status = String(invoice.orderStatus ?? invoice.status ?? "").toLowerCase();
@@ -168,18 +170,49 @@ async function handleRequest(req: Request): Promise<Response> {
   return json({ status: "paid", applied: true, featuredUntil: until.toISOString() });
 }
 
-export async function paylinkAuth(base: string, apiId: string, secretKey: string): Promise<string | null> {
-  const res = await fetch(`${base}/api/auth`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ apiId, secretKey, persistToken: false }),
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok || !data) {
-    console.error("[paylink] auth failed", res.status, data);
+export async function paylinkAuth(
+  asAdmin: ReturnType<typeof createClient>,
+  base: string,
+  apiId: string,
+  secretKey: string,
+): Promise<string | null> {
+  const call = await paylinkNetCall(asAdmin, "POST", `${base}/api/auth`, {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  }, { apiId, secretKey, persistToken: false });
+
+  if (call.error || call.status !== 200 || !call.body) {
+    console.error("[paylink] auth failed", call.status, call.error, call.body);
     return null;
   }
-  return data.id_token ?? data.token ?? data.access_token ?? null;
+  return call.body.id_token ?? call.body.token ?? call.body.access_token ?? null;
+}
+
+// Routes an HTTP call to Paylink through pg_net (via the service-role RPC)
+// instead of fetch(), since fetch() from this runtime hangs against
+// Paylink's host — see migration 0044_paylink_via_pg_net.
+async function paylinkNetCall(
+  asAdmin: ReturnType<typeof createClient>,
+  method: "POST" | "GET",
+  url: string,
+  headers: Record<string, string>,
+  body?: unknown,
+): Promise<{ status?: number; body?: any; error?: string }> {
+  const { data, error } = await asAdmin.rpc("pg_net_json_request", {
+    p_method: method,
+    p_url: url,
+    p_headers: headers,
+    p_body: body ?? null,
+  });
+  if (error) return { error: error.message };
+  if (data?.error) return { error: data.error };
+  let parsed: any = null;
+  try {
+    parsed = data?.body ? JSON.parse(data.body) : null;
+  } catch {
+    // not JSON
+  }
+  return { status: data?.status, body: parsed };
 }
 
 function json(body: unknown, status = 200): Response {

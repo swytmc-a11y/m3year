@@ -153,54 +153,63 @@ async function handleRequest(req: Request): Promise<Response> {
   if (paylinkApiId && paylinkSecret) {
     const base = Deno.env.get("PAYLINK_BASE_URL") ?? "https://restapi.paylink.sa";
 
-    const authRes = await fetch(`${base}/api/auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ apiId: paylinkApiId, secretKey: paylinkSecret, persistToken: false }),
-    });
-    const auth = await authRes.json().catch(() => null);
+    // fetch() from inside this runtime hangs indefinitely against Paylink's
+    // host (confirmed live), so the actual HTTP call is made through pg_net
+    // from Postgres instead — same request, a network path that works.
+    const authCall = await paylinkNetCall(asAdmin, "POST", `${base}/api/auth`, {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }, { apiId: paylinkApiId, secretKey: paylinkSecret, persistToken: false });
+
+    if (authCall.error) {
+      console.error("[create-promotion-payment] paylink auth call failed", authCall.error);
+      await failOrder(asAdmin, order.id, `paylink_auth_error`);
+      return json({ error: "تعذّر الاتصال ببوابة الدفع." }, 502);
+    }
+    const auth = authCall.body;
     const token = auth?.id_token ?? auth?.token ?? auth?.access_token ?? null;
 
-    if (!authRes.ok || !token) {
-      console.error("[create-promotion-payment] paylink auth failed", authRes.status, JSON.stringify(auth));
-      await failOrder(asAdmin, order.id, `paylink_auth_${authRes.status}`);
+    if (authCall.status !== 200 || !token) {
+      console.error("[create-promotion-payment] paylink auth failed", authCall.status, JSON.stringify(auth));
+      await failOrder(asAdmin, order.id, `paylink_auth_${authCall.status}`);
       return json({ error: "تعذّر الاتصال ببوابة الدفع." }, 502);
     }
 
     // Paylink bills in riyals, not the smallest unit.
     const amountSar = plan.price_halalas / 100;
 
-    const invoiceRes = await fetch(`${base}/api/addInvoice`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        // Our own order id, so the invoice can always be traced back.
-        orderNumber: order.id,
-        amount: amountSar,
-        // Where Paylink returns the customer's browser. It is only a
-        // redirect — the promotion is applied by verify-promotion-payment
-        // after asking Paylink directly, never by trusting this landing.
-        callBackUrl: "https://miyear.site/promotion/return",
-        cancelUrl: "https://miyear.site/promotion/cancelled",
-        clientName: userData.user.user_metadata?.full_name ?? "عميل معيار",
-        clientEmail: userData.user.email ?? undefined,
-        clientMobile: userData.user.phone ?? undefined,
-        currency: "SAR",
-        products: [
-          { title: plan.name_ar, price: amountSar, qty: 1, isDigital: true },
-        ],
-      }),
+    const invoiceCall = await paylinkNetCall(asAdmin, "POST", `${base}/api/addInvoice`, {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    }, {
+      // Our own order id, so the invoice can always be traced back.
+      orderNumber: order.id,
+      amount: amountSar,
+      // Where Paylink returns the customer's browser. It is only a
+      // redirect — the promotion is applied by verify-promotion-payment
+      // after asking Paylink directly, never by trusting this landing.
+      callBackUrl: "https://miyear.site/promotion/return",
+      cancelUrl: "https://miyear.site/promotion/cancelled",
+      clientName: userData.user.user_metadata?.full_name ?? "عميل معيار",
+      clientEmail: userData.user.email ?? undefined,
+      clientMobile: userData.user.phone ?? undefined,
+      currency: "SAR",
+      products: [
+        { title: plan.name_ar, price: amountSar, qty: 1, isDigital: true },
+      ],
     });
 
-    const invoice = await invoiceRes.json().catch(() => null);
+    if (invoiceCall.error) {
+      console.error("[create-promotion-payment] paylink addInvoice call failed", invoiceCall.error);
+      await failOrder(asAdmin, order.id, "paylink_invoice_error");
+      return json({ error: "تعذّر إنشاء فاتورة الدفع. حاول مرة أخرى." }, 502);
+    }
+    const invoice = invoiceCall.body;
 
-    if (!invoiceRes.ok || !invoice) {
-      console.error("[create-promotion-payment] paylink addInvoice failed", invoiceRes.status, JSON.stringify(invoice));
-      await failOrder(asAdmin, order.id, `paylink_invoice_${invoiceRes.status}`);
+    if (invoiceCall.status !== 200 || !invoice) {
+      console.error("[create-promotion-payment] paylink addInvoice failed", invoiceCall.status, JSON.stringify(invoice));
+      await failOrder(asAdmin, order.id, `paylink_invoice_${invoiceCall.status}`);
       return json({ error: "تعذّر إنشاء فاتورة الدفع. حاول مرة أخرى." }, 502);
     }
 
@@ -304,4 +313,31 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
+}
+
+// Routes an HTTP call to Paylink through pg_net (via the service-role RPC)
+// instead of fetch(), since fetch() from this runtime hangs against
+// Paylink's host — see migration 0044_paylink_via_pg_net.
+export async function paylinkNetCall(
+  asAdmin: ReturnType<typeof createClient>,
+  method: "POST" | "GET",
+  url: string,
+  headers: Record<string, string>,
+  body?: unknown,
+): Promise<{ status?: number; body?: any; error?: string }> {
+  const { data, error } = await asAdmin.rpc("pg_net_json_request", {
+    p_method: method,
+    p_url: url,
+    p_headers: headers,
+    p_body: body ?? null,
+  });
+  if (error) return { error: error.message };
+  if (data?.error) return { error: data.error };
+  let parsed: any = null;
+  try {
+    parsed = data?.body ? JSON.parse(data.body) : null;
+  } catch {
+    // not JSON — leave null, caller treats a missing token/field as failure
+  }
+  return { status: data?.status, body: parsed };
 }
