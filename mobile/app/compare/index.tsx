@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TextInput, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -9,6 +9,7 @@ import {
   SegmentedControl,
   Sheet,
   Tappable,
+  useRefreshTint,
 } from "@/components/kit";
 import { ChevronBackIcon, CompareIcon, SearchIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
@@ -36,6 +37,7 @@ type Row = { label: string; a: string; b: string; better: Slot | null };
 export default function CompareScreen() {
   const router = useRouter();
   const { t } = useTheme();
+  const refreshTint = useRefreshTint();
 
   const [kind, setKind] = useState<Kind>("listings");
   const [picking, setPicking] = useState<Slot | null>(null);
@@ -43,6 +45,7 @@ export default function CompareScreen() {
 
   const [options, setOptions] = useState<(Listing | Franchise)[] | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [picked, setPicked] = useState<[string | null, string | null]>([null, null]);
 
   // Reset the picks when switching kind — a listing and a franchise have no
@@ -71,6 +74,12 @@ export default function CompareScreen() {
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await loadOptions();
+    setRefreshing(false);
+  }
 
   function titleOf(item: Listing | Franchise): string {
     return kind === "listings" ? (item as Listing).title : (item as Franchise).brand_name;
@@ -236,7 +245,10 @@ export default function CompareScreen() {
         <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>مقارنة عرضين</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 14 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 14 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
+      >
         <SegmentedControl options={KIND_OPTIONS} value={kind} onChange={setKind} />
 
         <View style={{ flexDirection: "row-reverse", gap: 10 }}>

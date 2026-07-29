@@ -158,3 +158,17 @@ export async function archiveFranchise(id: string): Promise<Result> {
   }
   return {};
 }
+
+// Restores to draft rather than back to "published" directly — an archived
+// franchise goes through review again before it can reappear in the feed.
+export async function unarchiveFranchise(id: string): Promise<Result> {
+  const { error } = await supabase
+    .from("franchises")
+    .update({ status: "draft" })
+    .eq("id", id);
+  if (error) {
+    console.error("[franchises] unarchive failed", error);
+    return { error: "تعذّر إلغاء الأرشفة الآن." };
+  }
+  return {};
+}

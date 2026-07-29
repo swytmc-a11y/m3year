@@ -10,21 +10,25 @@ export type AppNotification = {
   created_at: string;
 };
 
-export async function listMyNotifications(): Promise<{
+const PAGE_SIZE = 30;
+
+export async function listMyNotifications(page = 0): Promise<{
   data?: AppNotification[];
+  hasMore?: boolean;
   error?: string;
 }> {
+  const from = page * PAGE_SIZE;
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(50);
+    .range(from, from + PAGE_SIZE - 1);
 
   if (error) {
     console.error("[notifications] list failed", error);
     return { error: "تعذّر تحميل الإشعارات الآن." };
   }
-  return { data: data ?? [] };
+  return { data: data ?? [], hasMore: (data ?? []).length === PAGE_SIZE };
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {

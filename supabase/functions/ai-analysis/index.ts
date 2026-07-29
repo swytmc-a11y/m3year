@@ -133,14 +133,14 @@ Deno.serve(async (req: Request) => {
   try {
     const content = await runAnalysis(apiKey, targetType, target);
 
-    const { error: updateError } = await asUser
-      .from("ai_reports")
-      .update({
-        status: "completed",
-        model_version: "claude-sonnet-5",
-        content,
-      })
-      .eq("id", report.id);
+    // content/model_version are locked by guard_ai_report_columns to this
+    // RPC (see migration 0046) — an ordinary update() here would be silently
+    // rejected the moment a non-admin caller isn't running inside it.
+    const { error: updateError } = await asUser.rpc("complete_ai_report", {
+      p_report_id: report.id,
+      p_content: content,
+      p_model_version: "claude-sonnet-5",
+    });
 
     if (updateError) {
       console.error("[ai-analysis] failed to save completed report", updateError);
@@ -150,7 +150,7 @@ Deno.serve(async (req: Request) => {
     return json({ reportId: report.id, content });
   } catch (err) {
     console.error("[ai-analysis] model call failed", err);
-    await asUser.from("ai_reports").update({ status: "failed" }).eq("id", report.id);
+    await asUser.rpc("fail_ai_report", { p_report_id: report.id });
     return json({ error: "analysis failed" }, 502);
   }
 });

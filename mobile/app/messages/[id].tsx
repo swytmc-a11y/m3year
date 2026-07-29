@@ -19,7 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Button, IconButton, Tappable, useToast } from "@/components/kit";
-import { ChevronBackIcon, SendIcon, ImagePickIcon, FileClipIcon } from "@/components/icons";
+import { ChevronBackIcon, SendIcon, ImagePickIcon, FileClipIcon, FlagIcon } from "@/components/icons";
 import { RatingStarsInput, RatingSummaryLabel } from "@/components/rating-stars";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -383,12 +383,20 @@ export default function ChatScreen() {
           </Text>
         </View>
         {counterpartId ? (
-          <Tappable onPress={() => setRateModalOpen(true)} haptic="light" style={{ alignItems: "flex-end", gap: 2 }}>
-            <RatingSummaryLabel average={ratingSummary.average} count={ratingSummary.count} />
-            <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.primary }}>
-              {myScore > 0 ? "عدّل تقييمك" : "قيّم"}
-            </Text>
-          </Tappable>
+          <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 6 }}>
+            <Tappable onPress={() => setRateModalOpen(true)} haptic="light" style={{ alignItems: "flex-end", gap: 2 }}>
+              <RatingSummaryLabel average={ratingSummary.average} count={ratingSummary.count} />
+              <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.primary }}>
+                {myScore > 0 ? "عدّل تقييمك" : "قيّم"}
+              </Text>
+            </Tappable>
+            <IconButton
+              accessibilityLabel="الإبلاغ عن هذا المستخدم"
+              onPress={() => router.push(`/report?targetType=user&targetId=${counterpartId}`)}
+            >
+              <FlagIcon color={t.textMuted} size={15} />
+            </IconButton>
+          </View>
         ) : null}
       </View>
 

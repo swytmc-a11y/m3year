@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, RefreshControl } from "react-native";
+import { View, Text, FlatList, RefreshControl, Alert } from "react-native";
 import { useRouter, useFocusEffect, useLocalSearchParams, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -18,8 +18,8 @@ import { StatusBadge, VerifiedBadge, VerificationStatusPill, Metric } from "@/co
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { supabase } from "@/lib/supabase";
-import { submitListingForReview, archiveListing } from "@/lib/listings-actions";
-import { submitFranchiseForReview, archiveFranchise } from "@/lib/franchises-actions";
+import { submitListingForReview, archiveListing, unarchiveListing } from "@/lib/listings-actions";
+import { submitFranchiseForReview, archiveFranchise, unarchiveFranchise } from "@/lib/franchises-actions";
 import { requestVerification, requestFranchiseVerification } from "@/lib/verification-actions";
 import { SECTOR_LABELS, formatSar, formatPercentage, type Listing } from "@/lib/constants";
 import { formatSarRange, type Franchise } from "@/lib/franchise-constants";
@@ -96,6 +96,16 @@ export default function MyAdsScreen() {
     setBusyId(null);
   }
 
+  // Archiving pulls a live (possibly promoted) ad out of the marketplace with
+  // no other undo path in this screen, so it gets a confirm step rather than
+  // firing on a single tap.
+  function confirmArchive(title: string, onConfirm: () => void) {
+    Alert.alert("أرشفة الإعلان؟", `سيتم إخفاء "${title}" من نتائج التصفح. يمكنك إلغاء الأرشفة لاحقًا.`, [
+      { text: "إلغاء", style: "cancel" },
+      { text: "أرشفة", style: "destructive", onPress: onConfirm },
+    ]);
+  }
+
   async function onRefresh() {
     setRefreshing(true);
     await load();
@@ -143,7 +153,12 @@ export default function MyAdsScreen() {
               onEdit={() => router.push(`/my-listings/${item.id}/edit`)}
               onView={() => router.push(`/listings/${item.id}`)}
               onSubmit={() => runAction(() => submitListingForReview(item.id), item.id, "أُرسل الإعلان للمراجعة.")}
-              onArchive={() => runAction(() => archiveListing(item.id), item.id, "تمت الأرشفة.")}
+              onArchive={() =>
+                confirmArchive((item as Listing).title, () =>
+                  runAction(() => archiveListing(item.id), item.id, "تمت الأرشفة."),
+                )
+              }
+              onUnarchive={() => runAction(() => unarchiveListing(item.id), item.id, "أُلغيت الأرشفة.")}
               onRequestVerification={() =>
                 runAction(() => requestVerification(item.id), item.id, "أُرسل طلب التوثيق.")
               }
@@ -157,7 +172,12 @@ export default function MyAdsScreen() {
               onEdit={() => router.push(`/my-franchises/${item.id}/edit`)}
               onView={() => router.push(`/franchises/${item.id}`)}
               onSubmit={() => runAction(() => submitFranchiseForReview(item.id), item.id, "أُرسل الامتياز للمراجعة.")}
-              onArchive={() => runAction(() => archiveFranchise(item.id), item.id, "تمت الأرشفة.")}
+              onArchive={() =>
+                confirmArchive((item as Franchise).brand_name, () =>
+                  runAction(() => archiveFranchise(item.id), item.id, "تمت الأرشفة."),
+                )
+              }
+              onUnarchive={() => runAction(() => unarchiveFranchise(item.id), item.id, "أُلغيت الأرشفة.")}
               onRequestVerification={() =>
                 runAction(() => requestFranchiseVerification(item.id), item.id, "أُرسل طلب التوثيق.")
               }
@@ -212,12 +232,14 @@ function RowShell({
   busy,
   canSubmit,
   canArchive,
+  isArchived,
   published,
   featuredUntil,
   onEdit,
   onView,
   onSubmit,
   onArchive,
+  onUnarchive,
   onRequestVerification,
   onManageVerification,
   onPromote,
@@ -232,12 +254,14 @@ function RowShell({
   busy: boolean;
   canSubmit: boolean;
   canArchive: boolean;
+  isArchived: boolean;
   published: boolean;
   featuredUntil?: string | null;
   onEdit: () => void;
   onView: () => void;
   onSubmit: () => void;
   onArchive: () => void;
+  onUnarchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
   onPromote: () => void;
@@ -317,6 +341,7 @@ function RowShell({
         {published ? <Button label="عرض عام" variant="secondary" onPress={onView} /> : null}
         {canSubmit ? <Button label="إرسال للمراجعة" onPress={onSubmit} /> : null}
         {canArchive ? <Button label="أرشفة" variant="secondary" onPress={onArchive} /> : null}
+        {isArchived ? <Button label="إلغاء الأرشفة" variant="secondary" onPress={onUnarchive} /> : null}
       </View>
     </Card>
   );
@@ -332,6 +357,7 @@ function ListingRow({
   onView: () => void;
   onSubmit: () => void;
   onArchive: () => void;
+  onUnarchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
   onPromote: () => void;
@@ -346,6 +372,7 @@ function ListingRow({
       rejectionReason={listing.status === "rejected" ? listing.rejection_reason : null}
       canSubmit={listing.status === "draft" || listing.status === "rejected"}
       canArchive={listing.status !== "archived"}
+      isArchived={listing.status === "archived"}
       published={listing.status === "published"}
       featuredUntil={listing.featured_until}
       metrics={
@@ -369,6 +396,7 @@ function FranchiseRow({
   onView: () => void;
   onSubmit: () => void;
   onArchive: () => void;
+  onUnarchive: () => void;
   onRequestVerification: () => void;
   onManageVerification: () => void;
   onPromote: () => void;
@@ -383,6 +411,7 @@ function FranchiseRow({
       rejectionReason={franchise.status === "rejected" ? franchise.rejection_reason : null}
       canSubmit={franchise.status === "draft" || franchise.status === "rejected"}
       canArchive={franchise.status !== "archived"}
+      isArchived={franchise.status === "archived"}
       published={franchise.status === "published"}
       featuredUntil={franchise.featured_until}
       metrics={

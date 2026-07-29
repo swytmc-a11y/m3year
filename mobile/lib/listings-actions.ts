@@ -145,3 +145,17 @@ export async function archiveListing(id: string): Promise<Result> {
   }
   return {};
 }
+
+// Restores to draft rather than back to "published" directly — an archived
+// listing goes through review again before it can reappear in the feed.
+export async function unarchiveListing(id: string): Promise<Result> {
+  const { error } = await supabase
+    .from("listings")
+    .update({ status: "draft" })
+    .eq("id", id);
+  if (error) {
+    console.error("[listings] unarchive failed", error);
+    return { error: "تعذّر إلغاء الأرشفة الآن." };
+  }
+  return {};
+}

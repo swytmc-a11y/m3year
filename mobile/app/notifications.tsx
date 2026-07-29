@@ -41,12 +41,17 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(async () => {
     setError(false);
-    const { data, error: err } = await listMyNotifications();
+    const { data, error: err, hasMore: more } = await listMyNotifications(0);
     if (err) setError(true);
-    else setItems(data ?? []);
+    else {
+      setItems(data ?? []);
+      setHasMore(Boolean(more));
+    }
     setLoading(false);
   }, []);
 
@@ -55,6 +60,18 @@ export default function NotificationsScreen() {
     await load();
     setRefreshing(false);
   }, [load]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || loading || error || !items) return;
+    setLoadingMore(true);
+    const page = Math.floor(items.length / 30);
+    const { data, error: err, hasMore: more } = await listMyNotifications(page);
+    if (!err) {
+      setItems((prev) => [...(prev ?? []), ...(data ?? [])]);
+      setHasMore(Boolean(more));
+    }
+    setLoadingMore(false);
+  }, [loadingMore, hasMore, loading, error, items]);
 
   useFocusEffect(
     useCallback(() => {
@@ -103,6 +120,9 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 10, flexGrow: 1 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={loadingMore ? <Skeleton width="100%" height={64} radius={radius.xl} /> : null}
         renderItem={({ item }) => (
           <Tappable onPress={() => onPressItem(item)} haptic="light">
             <View

@@ -367,3 +367,17 @@ export function CompareIcon({ color, size = 16 }: { color: ColorValue; size?: nu
     </Svg>
   );
 }
+
+export function FlagIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 3.5v17" stroke={color} strokeWidth={1.7} strokeLinecap="round" />
+      <Path
+        d="M6 4.5c2.2-1.3 4.4-1.3 6.5 0 2.1 1.3 4.3 1.3 6.5 0v8c-2.2 1.3-4.4 1.3-6.5 0-2.1-1.3-4.3-1.3-6.5 0v-8Z"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

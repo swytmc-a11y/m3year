@@ -1,0 +1,37 @@
+# Miyar (معيار) — explicit verify_jwt per Edge Function.
+#
+# Each function's verify_jwt requirement was previously documented only in a
+# code comment inside the function itself, with no version-controlled source
+# of truth enforcing it at deploy time — a dashboard/CLI redeploy without
+# knowing the convention could silently flip a function's auth posture (e.g.
+# moyasar-webhook accidentally requiring a JWT, which Moyasar cannot send,
+# breaking payment confirmation with no error visible in this repo). This
+# file makes the setting reviewable in the same PR as the function's code.
+
+[functions.ai-analysis]
+verify_jwt = true
+
+[functions.create-promotion-payment]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.moyasar-webhook]
+# Moyasar signs its webhook payload with a shared secret checked in code
+# (constant-time comparison) — it cannot send a Supabase user JWT.
+verify_jwt = false
+
+[functions.notify-new-message]
+verify_jwt = true
+
+[functions.send-whatsapp-otp]
+# Called before a session exists — this is the start of login.
+verify_jwt = false
+
+[functions.verify-promotion-payment]
+verify_jwt = true
+
+[functions.verify-whatsapp-otp]
+# Called before a session exists — this is the start of login.
+verify_jwt = false
