@@ -93,9 +93,8 @@ export default function PromoteScreen() {
         return;
       }
 
-      // Ask the server to confirm with the provider first. The simulator
-      // settles its own orders, so this is a no-op there; for a real gateway
-      // it is what actually turns a completed checkout into a promotion.
+      // Ask the server to confirm with the payment provider directly — this
+      // is what actually turns a completed checkout into a promotion.
       await verifyPromotionPayment(pendingOrderId);
       await loadTarget();
 
@@ -208,27 +207,9 @@ export default function PromoteScreen() {
                     }}
                   >
                     <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
-                      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 7, flex: 1 }}>
-                        <Text style={{ fontFamily: fonts.displayBold, fontSize: 14.5, color: t.text, textAlign: "right" }}>
-                          {plan.name_ar}
-                        </Text>
-                        {/* Unmistakable, so a simulated plan can never be
-                            mistaken for a real charge during testing. */}
-                        {plan.is_test ? (
-                          <View
-                            style={{
-                              backgroundColor: t.surface2,
-                              paddingHorizontal: 8,
-                              paddingVertical: 3,
-                              borderRadius: radius.pill,
-                            }}
-                          >
-                            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 10, color: t.textMuted }}>
-                              محاكاة
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
+                      <Text style={{ fontFamily: fonts.displayBold, fontSize: 14.5, color: t.text, textAlign: "right" }}>
+                        {plan.name_ar}
+                      </Text>
                       <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.primary }}>
                         {formatHalalas(plan.price_halalas)}
                       </Text>

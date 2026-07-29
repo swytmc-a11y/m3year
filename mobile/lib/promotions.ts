@@ -6,8 +6,6 @@ export type PromotionPlan = {
   description_ar: string | null;
   duration_days: number;
   price_halalas: number;
-  /** Settled by the built-in simulator, not a real payment provider. */
-  is_test: boolean;
 };
 
 export type PromotionOrder = {
@@ -34,7 +32,7 @@ export function formatHalalas(halalas: number): string {
 export async function listPromotionPlans(): Promise<PromotionPlan[]> {
   const { data, error } = await supabase
     .from("promotion_plans")
-    .select("code, name_ar, description_ar, duration_days, price_halalas, is_test")
+    .select("code, name_ar, description_ar, duration_days, price_halalas")
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 

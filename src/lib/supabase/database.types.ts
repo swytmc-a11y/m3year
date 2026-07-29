@@ -904,7 +904,6 @@ export type Database = {
           description_ar: string | null
           duration_days: number
           is_active: boolean
-          is_test: boolean
           name_ar: string
           price_halalas: number
           sort_order: number
@@ -916,7 +915,6 @@ export type Database = {
           description_ar?: string | null
           duration_days: number
           is_active?: boolean
-          is_test?: boolean
           name_ar: string
           price_halalas: number
           sort_order?: number
@@ -928,7 +926,6 @@ export type Database = {
           description_ar?: string | null
           duration_days?: number
           is_active?: boolean
-          is_test?: boolean
           name_ar?: string
           price_halalas?: number
           sort_order?: number
