@@ -12,6 +12,11 @@ const buttonVariants = cva(
         primary: "bg-ink text-white hover:bg-ink/90",
         ghost: "border-[1.5px] border-ink text-ink hover:bg-ink/5",
         verify: "bg-verify text-white hover:bg-verify/90",
+        // Admin control panel's brand accent (indigo) — opt-in so the
+        // public site's monochrome "primary" button is untouched.
+        brand: "bg-admin-primary text-admin-on-primary hover:bg-admin-primary-pressed focus-visible:ring-admin-primary",
+        "brand-ghost": "border-[1.5px] border-admin-primary text-admin-primary hover:bg-admin-primary/5 focus-visible:ring-admin-primary",
+        danger: "border-[1.5px] border-admin-danger text-admin-danger hover:bg-admin-danger/5 focus-visible:ring-admin-danger",
       },
       size: {
         default: "h-11 px-6",

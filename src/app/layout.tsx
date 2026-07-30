@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Almarai, IBM_Plex_Sans_Arabic, IBM_Plex_Mono } from "next/font/google";
+import { Almarai, IBM_Plex_Sans_Arabic, IBM_Plex_Mono, Alexandria, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const almarai = Almarai({
@@ -18,6 +18,21 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   subsets: ["latin"],
   weight: ["500", "600"],
+});
+
+// Admin control panel only — matches the mobile app's current identity
+// (display headings in Alexandria, numeric/mono in JetBrains Mono). See
+// .admin-shell in globals.css.
+const alexandria = Alexandria({
+  variable: "--font-alexandria",
+  subsets: ["arabic", "latin"],
+  weight: ["600", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["500", "700"],
 });
 
 const SITE_URL = "https://miyear.site";
@@ -71,7 +86,7 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${almarai.variable} ${ibmPlexSansArabic.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${almarai.variable} ${ibmPlexSansArabic.variable} ${ibmPlexMono.variable} ${alexandria.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
         {children}

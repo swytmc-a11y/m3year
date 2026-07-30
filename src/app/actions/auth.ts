@@ -43,6 +43,17 @@ export async function signInWithEmail(
 
 export async function signOut() {
   const supabase = await createClient();
+
+  // Best-effort: clear this admin's OTP step-up so signing back in — even
+  // with the same browser/cookies — always asks for a fresh code rather
+  // than silently inheriting the last one's 12h window.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from("admin_otp_verifications").delete().eq("user_id", user.id);
+  }
+
   await supabase.auth.signOut();
   redirect("/");
 }

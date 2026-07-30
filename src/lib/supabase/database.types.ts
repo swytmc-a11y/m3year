@@ -52,6 +52,32 @@ export type Database = {
           },
         ]
       }
+      admin_otp_verifications: {
+        Row: {
+          expires_at: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          expires_at: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          expires_at?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_otp_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_reports: {
         Row: {
           content: Json | null
