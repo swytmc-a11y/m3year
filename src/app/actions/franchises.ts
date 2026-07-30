@@ -32,8 +32,8 @@ function parseFranchiseForm(formData: FormData) {
 
 function revalidateFranchiseSurfaces() {
   revalidatePath("/franchises");
-  revalidatePath("/admin/franchises");
-  revalidatePath("/admin/all-franchises");
+  revalidatePath("/admin/listings");
+  revalidatePath("/admin/all-listings");
 }
 
 // --- Admin: update (content only, does not change status) -------------------
@@ -80,7 +80,7 @@ export async function adminUpdateFranchise(
   }
 
   revalidateFranchiseSurfaces();
-  redirect("/admin/all-franchises");
+  redirect("/admin/all-listings?type=franchise");
 }
 
 // --- Admin moderation ---------------------------------------------------------
@@ -109,7 +109,7 @@ export async function approveFranchise(formData: FormData) {
   }
 
   revalidateFranchiseSurfaces();
-  redirect("/admin/franchises");
+  redirect("/admin/listings?type=franchise");
 }
 
 export async function rejectFranchise(
@@ -147,7 +147,7 @@ export async function rejectFranchise(
   });
 
   revalidateFranchiseSurfaces();
-  redirect("/admin/franchises");
+  redirect("/admin/listings?type=franchise");
 }
 
 export async function adminDeleteFranchise(formData: FormData) {
@@ -168,7 +168,7 @@ export async function adminDeleteFranchise(formData: FormData) {
   }
 
   revalidateFranchiseSurfaces();
-  redirect("/admin/all-franchises");
+  redirect("/admin/all-listings?type=franchise");
 }
 
 export async function adminSetFranchiseVerification(formData: FormData) {
@@ -196,5 +196,5 @@ export async function adminSetFranchiseVerification(formData: FormData) {
   }
 
   revalidateFranchiseSurfaces();
-  redirect("/admin/all-franchises");
+  redirect("/admin/all-listings?type=franchise");
 }

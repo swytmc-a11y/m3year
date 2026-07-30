@@ -15,7 +15,7 @@ export type AdminNavCounts = {
 type NavLink = {
   href: string;
   label: string;
-  countKey?: keyof AdminNavCounts;
+  countKey?: keyof AdminNavCounts | "reviewQueue";
 };
 
 type NavGroup = {
@@ -35,18 +35,14 @@ const GROUPS: NavGroup[] = [
   {
     label: "المراجعة",
     links: [
-      { href: "/admin/listings", label: "إعلانات بانتظار المراجعة", countKey: "listings" },
-      { href: "/admin/franchises", label: "امتيازات بانتظار المراجعة", countKey: "franchises" },
+      { href: "/admin/listings", label: "الإعلانات بانتظار المراجعة", countKey: "reviewQueue" },
       { href: "/admin/verification-requests", label: "طلبات التوثيق", countKey: "verifications" },
       { href: "/admin/reports", label: "البلاغات", countKey: "reports" },
     ],
   },
   {
     label: "الكتالوج الكامل",
-    links: [
-      { href: "/admin/all-listings", label: "كل الإعلانات" },
-      { href: "/admin/all-franchises", label: "كل الامتيازات" },
-    ],
+    links: [{ href: "/admin/all-listings", label: "كل الإعلانات والامتيازات" }],
   },
   {
     label: "الحسابات",
@@ -57,7 +53,10 @@ const GROUPS: NavGroup[] = [
   },
   {
     label: "النظام",
-    links: [{ href: "/admin/errors", label: "سجل الأخطاء" }],
+    links: [
+      { href: "/admin/audit-log", label: "سجل العمليات" },
+      { href: "/admin/errors", label: "سجل الأخطاء" },
+    ],
   },
 ];
 
@@ -74,7 +73,12 @@ export function AdminNav({ counts }: { counts: AdminNavCounts }) {
           {group.links.map((link) => {
             const active =
               link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
-            const count = link.countKey ? counts[link.countKey] : 0;
+            const count =
+              link.countKey === "reviewQueue"
+                ? counts.listings + counts.franchises
+                : link.countKey
+                  ? counts[link.countKey]
+                  : 0;
             return (
               <Link
                 key={link.href}

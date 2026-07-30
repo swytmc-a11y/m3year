@@ -72,7 +72,7 @@ export default async function AdminOverviewPage() {
           urgent: (pendingListings ?? 0) > 0,
         },
         {
-          href: "/admin/franchises",
+          href: "/admin/listings?type=franchise",
           label: "امتيازات بانتظار المراجعة",
           value: String(pendingFranchises ?? 0),
           urgent: (pendingFranchises ?? 0) > 0,
@@ -129,7 +129,7 @@ export default async function AdminOverviewPage() {
       description: "الحجم الكلي.",
       stats: [
         { href: "/admin/all-listings", label: "كل الإعلانات", value: String(totalListings ?? 0) },
-        { href: "/admin/all-franchises", label: "كل الامتيازات", value: String(totalFranchises ?? 0) },
+        { href: "/admin/all-listings?type=franchise", label: "كل الامتيازات", value: String(totalFranchises ?? 0) },
         { href: "/admin/users", label: "كل الحسابات", value: String(totalUsers ?? 0) },
       ],
     },

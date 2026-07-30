@@ -51,3 +51,32 @@ export async function reportError(
     // Intentionally silent: see above.
   }
 }
+
+/**
+ * Records a problem the user described themselves, from the Settings
+ * screen — same table and admin view as automatic crash reports, tagged
+ * "user_report" so the two are distinguishable there. Unlike reportError,
+ * this one surfaces its own failure back to the caller: it's the one path
+ * where the user is actively waiting on confirmation their report went out.
+ */
+export async function reportUserFeedback(message: string): Promise<{ error?: string }> {
+  const trimmed = message.trim().slice(0, MESSAGE_LIMIT);
+  if (!trimmed) return { error: "اكتب وصفًا للمشكلة أولًا." };
+
+  try {
+    const { data } = await supabase.auth.getSession();
+
+    const { error } = await supabase.from("client_errors").insert({
+      user_id: data.session?.user.id ?? null,
+      platform: Platform.OS,
+      app_version: Constants.expoConfig?.version ?? null,
+      message: trimmed,
+      context: "user_report",
+    });
+
+    if (error) return { error: "تعذّر إرسال البلاغ الآن. حاول مرة أخرى." };
+    return {};
+  } catch {
+    return { error: "تعذّر إرسال البلاغ الآن. حاول مرة أخرى." };
+  }
+}

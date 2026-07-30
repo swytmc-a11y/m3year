@@ -175,6 +175,12 @@ export default function SettingsScreen() {
                 <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted }}>عرض</Text>
               </View>
             </Tappable>
+            <Tappable onPress={() => router.push("/report-problem")} haptic="light">
+              <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, minHeight: 44 }}>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13.5, color: t.text }}>الإبلاغ عن مشكلة</Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted }}>عرض</Text>
+              </View>
+            </Tappable>
           </Card>
 
           <Button label="حذف الحساب" variant="danger" fullWidth onPress={() => router.push("/delete-account")} />

@@ -28,7 +28,7 @@ export function DeleteListingButton({
         type="submit"
         variant="ghost"
         size="sm"
-        className="border-red-300 text-red-700 hover:bg-red-50"
+        className="border-admin-danger/40 text-admin-danger hover:bg-admin-danger-tint"
       >
         حذف
       </Button>

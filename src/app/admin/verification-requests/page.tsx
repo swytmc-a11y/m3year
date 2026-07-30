@@ -156,7 +156,7 @@ export default async function AdminVerificationRequestsPage() {
               ) : null}
 
               {r.status === "rejected" && r.notes ? (
-                <p className="mb-3 text-[13px] text-red-700">
+                <p className="mb-3 text-[13px] text-admin-danger">
                   سبب الرفض: {r.notes}
                 </p>
               ) : null}
