@@ -46,10 +46,13 @@ export async function sendAdminOtp(
   return { sent: true, email: user.email };
 }
 
+// Supabase's own docs describe email OTPs as 6 digits, but the actual
+// length is project-configurable server-side and this project sends 8 —
+// so the length isn't asserted here, only that it's all digits.
 const codeSchema = z
   .string()
   .trim()
-  .regex(/^\d{6}$/, { error: "أدخل الرمز المكوّن من 6 أرقام." });
+  .regex(/^\d{4,10}$/, { error: "أدخل الرمز الرقمي من الإيميل." });
 
 export async function verifyAdminOtp(
   _prev: AdminOtpState,

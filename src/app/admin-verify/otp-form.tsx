@@ -41,7 +41,7 @@ export function AdminOtpForm({ email }: { email: string }) {
         </h1>
         <p className="mb-8 text-sm leading-6 text-admin-text-muted">
           {codeStepShown
-            ? <>أرسلنا رمزًا مكوّنًا من 6 أرقام إلى <bdi dir="ltr" className="font-mono text-admin-text">{email}</bdi>.</>
+            ? <>أرسلنا رمز تحقق إلى <bdi dir="ltr" className="font-mono text-admin-text">{email}</bdi>.</>
             : <>لحماية إضافية، سنرسل رمز تحقق إلى بريدك <bdi dir="ltr" className="font-mono text-admin-text">{email}</bdi> قبل الدخول للوحة الإدارة.</>}
         </p>
 
@@ -66,10 +66,10 @@ export function AdminOtpForm({ email }: { email: string }) {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
+                maxLength={10}
                 placeholder="000000"
                 dir="ltr"
-                className="text-center font-mono text-lg tracking-[0.4em]"
+                className="text-center font-mono text-lg tracking-[0.3em]"
                 required
                 autoFocus
                 aria-invalid={Boolean(verifyState.error)}
