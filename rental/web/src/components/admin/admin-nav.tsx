@@ -5,17 +5,15 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export type AdminNavCounts = {
-  listings: number;
-  franchises: number;
-  verifications: number;
-  accountants: number;
-  reports: number;
+  pendingBookings: number;
+  todayPickups: number;
+  todayReturns: number;
 };
 
 type NavLink = {
   href: string;
   label: string;
-  countKey?: keyof AdminNavCounts | "reviewQueue";
+  countKey?: keyof AdminNavCounts;
 };
 
 type NavGroup = {
@@ -23,37 +21,36 @@ type NavGroup = {
   links: NavLink[];
 };
 
-// Grouped rather than one flat row: at nine-plus destinations a flat list
-// stops communicating anything, and "what kind of thing is this" (review
-// queue vs. full catalogue vs. account management) is exactly what an
-// operator needs to scan for.
+// Ordered the way an operator actually works a day: what needs answering
+// now, then the fleet, then the accounts, then the system trail.
 const GROUPS: NavGroup[] = [
   {
     label: "نظرة عامة",
     links: [{ href: "/admin", label: "الرئيسية" }],
   },
   {
-    label: "المراجعة",
+    label: "التشغيل",
     links: [
-      { href: "/admin/listings", label: "الإعلانات بانتظار المراجعة", countKey: "reviewQueue" },
-      { href: "/admin/verification-requests", label: "طلبات التوثيق", countKey: "verifications" },
-      { href: "/admin/reports", label: "البلاغات", countKey: "reports" },
+      { href: "/admin/bookings", label: "الحجوزات", countKey: "pendingBookings" },
+      { href: "/admin/today", label: "حركة اليوم", countKey: "todayPickups" },
     ],
   },
   {
-    label: "الكتالوج الكامل",
-    links: [{ href: "/admin/all-listings", label: "كل الإعلانات والامتيازات" }],
+    label: "الأسطول",
+    links: [
+      { href: "/admin/cars", label: "السيارات" },
+      { href: "/admin/branches", label: "الفروع" },
+      { href: "/admin/addons", label: "الخدمات الإضافية" },
+    ],
   },
   {
     label: "الحسابات",
-    links: [
-      { href: "/admin/accountants", label: "المحاسبون", countKey: "accountants" },
-      { href: "/admin/users", label: "كل الحسابات" },
-    ],
+    links: [{ href: "/admin/users", label: "العملاء" }],
   },
   {
     label: "النظام",
     links: [
+      { href: "/admin/settings", label: "الإعدادات" },
       { href: "/admin/audit-log", label: "سجل العمليات" },
       { href: "/admin/errors", label: "سجل الأخطاء" },
     ],
@@ -73,12 +70,7 @@ export function AdminNav({ counts }: { counts: AdminNavCounts }) {
           {group.links.map((link) => {
             const active =
               link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
-            const count =
-              link.countKey === "reviewQueue"
-                ? counts.listings + counts.franchises
-                : link.countKey
-                  ? counts[link.countKey]
-                  : 0;
+            const count = link.countKey ? counts[link.countKey] : 0;
             return (
               <Link
                 key={link.href}

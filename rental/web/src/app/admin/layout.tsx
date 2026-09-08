@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
@@ -6,40 +5,36 @@ import { Logo } from "@/components/logo";
 import { AdminNav, type AdminNavCounts } from "@/components/admin/admin-nav";
 import { Button } from "@/components/ui/button";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Server-side admin gate for every /admin route: role + email allowlist +
-  // a live OTP step-up (see requireAdmin in lib/auth.ts). RLS is the final
-  // backstop for all of it.
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Server-side gate for every /admin route: role + email allowlist + a live
+  // OTP step-up (see requireAdmin). RLS is the backstop behind all of it.
   const user = await requireAdmin();
 
-  // Counts feed the small badges on the nav — fetched once here (server
-  // component) rather than in the client nav, so the nav itself can stay a
-  // thin client component that only owns active-path highlighting.
   const supabase = await createClient();
-  const [
-    { count: pendingListings },
-    { count: pendingFranchises },
-    { count: openVerifications },
-    { count: pendingAccountants },
-    { count: openReports },
-  ] = await Promise.all([
-    supabase.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
-    supabase.from("franchises").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
-    supabase.from("verification_requests").select("id", { count: "exact", head: true }).eq("status", "requested"),
-    supabase.from("accountants").select("id", { count: "exact", head: true }).eq("is_active", false),
-    supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
-  ]);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ count: pendingBookings }, { count: todayPickups }, { count: todayReturns }] =
+    await Promise.all([
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending_confirmation"),
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("start_date", today)
+        .in("status", ["confirmed", "active"]),
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("end_date", today)
+        .in("status", ["confirmed", "active"]),
+    ]);
 
   const counts: AdminNavCounts = {
-    listings: pendingListings ?? 0,
-    franchises: pendingFranchises ?? 0,
-    verifications: openVerifications ?? 0,
-    accountants: pendingAccountants ?? 0,
-    reports: openReports ?? 0,
+    pendingBookings: pendingBookings ?? 0,
+    todayPickups: todayPickups ?? 0,
+    todayReturns: todayReturns ?? 0,
   };
 
   return (
@@ -53,15 +48,7 @@ export default async function AdminLayout({
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-[13px] text-admin-text-muted lg:inline">
-              {user.email}
-            </span>
-            <Link
-              href="/dashboard"
-              className="hidden text-sm text-admin-text-muted hover:text-admin-text sm:inline"
-            >
-              لوحتي كمستخدم
-            </Link>
+            <span className="hidden text-[13px] text-admin-text-muted lg:inline">{user.email}</span>
             <form action={signOut}>
               <Button type="submit" variant="ghost" size="sm">
                 تسجيل الخروج
@@ -75,3 +62,7 @@ export default async function AdminLayout({
     </div>
   );
 }
+
+export const metadata = {
+  title: "لوحة الإدارة",
+};

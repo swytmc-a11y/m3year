@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatSar } from "@/lib/cars/constants";
 
 type Stat = {
   href: string;
@@ -16,141 +17,147 @@ type Section = {
   stats: Stat[];
 };
 
-function formatSar(halalas: number): string {
-  const riyals = halalas / 100;
-  return `${Number.isInteger(riyals) ? riyals : riyals.toFixed(2)} ر.س`;
-}
-
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
 
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const today = new Date().toISOString().slice(0, 10);
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
 
   const [
-    { count: totalListings },
-    { count: pendingListings },
-    { count: totalFranchises },
-    { count: pendingFranchises },
-    { count: openVerifications },
-    { count: pendingAccountants },
-    { count: totalUsers },
-    { count: newUsersThisWeek },
-    { count: openReports },
-    { count: blockedUserPairs },
+    { count: pendingConfirmation },
+    { count: pendingPayment },
+    { count: todayPickups },
+    { count: todayReturns },
+    { count: activeRentals },
+    { count: totalCars },
+    { count: availableCars },
+    { count: maintenanceCars },
+    { count: branches },
+    { count: customers },
     { data: paidThisMonth },
   ] = await Promise.all([
-    supabase.from("listings").select("id", { count: "exact", head: true }),
-    supabase.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
-    supabase.from("franchises").select("id", { count: "exact", head: true }),
-    supabase.from("franchises").select("id", { count: "exact", head: true }).eq("status", "pending_review"),
-    supabase.from("verification_requests").select("id", { count: "exact", head: true }).eq("status", "requested"),
-    supabase.from("accountants").select("id", { count: "exact", head: true }).eq("is_active", false),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekStart),
-    supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
-    supabase.from("user_blocks").select("blocker_id", { count: "exact", head: true }),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending_confirmation"),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending_payment"),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("start_date", today).in("status", ["confirmed", "active"]),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("end_date", today).in("status", ["confirmed", "active"]),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("cars").select("id", { count: "exact", head: true }),
+    supabase.from("cars").select("id", { count: "exact", head: true }).eq("status", "available"),
+    supabase.from("cars").select("id", { count: "exact", head: true }).eq("status", "maintenance"),
+    supabase.from("branches").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "customer"),
     supabase
-      .from("promotion_orders")
-      .select("amount_halalas")
-      .eq("status", "paid")
-      .gte("paid_at", monthStart),
+      .from("bookings")
+      .select("total")
+      .eq("payment_status", "paid")
+      .gte("start_date", monthStart),
   ]);
 
-  const monthRevenueHalalas = (paidThisMonth ?? []).reduce((sum, o) => sum + o.amount_halalas, 0);
+  const monthRevenue = (paidThisMonth ?? []).reduce((sum, b) => sum + Number(b.total), 0);
 
   const sections: Section[] = [
     {
-      title: "قائمة الانتظار",
-      description: "يحتاج فعلًا منك الآن.",
+      title: "يحتاجك الآن",
+      description: "عمليات معلّقة على ردّك.",
       stats: [
         {
-          href: "/admin/listings",
-          label: "إعلانات بانتظار المراجعة",
-          value: String(pendingListings ?? 0),
-          urgent: (pendingListings ?? 0) > 0,
+          href: "/admin/bookings?status=pending_confirmation",
+          label: "حجوزات بانتظار تأكيدك",
+          value: String(pendingConfirmation ?? 0),
+          urgent: (pendingConfirmation ?? 0) > 0,
         },
         {
-          href: "/admin/listings?type=franchise",
-          label: "امتيازات بانتظار المراجعة",
-          value: String(pendingFranchises ?? 0),
-          urgent: (pendingFranchises ?? 0) > 0,
-        },
-        {
-          href: "/admin/verification-requests",
-          label: "طلبات توثيق بانتظار الإسناد",
-          value: String(openVerifications ?? 0),
-          urgent: (openVerifications ?? 0) > 0,
-        },
-        {
-          href: "/admin/accountants",
-          label: "محاسبون بانتظار التفعيل",
-          value: String(pendingAccountants ?? 0),
-          urgent: (pendingAccountants ?? 0) > 0,
+          href: "/admin/bookings?status=pending_payment",
+          label: "حجوزات بانتظار الدفع",
+          value: String(pendingPayment ?? 0),
         },
       ],
     },
     {
-      title: "الثقة والسلامة",
-      description: "بلاغات وحظر بين المستخدمين.",
+      title: "حركة اليوم",
+      description: "ما يحدث في الفروع اليوم.",
       stats: [
         {
-          href: "/admin/reports",
-          label: "بلاغات مفتوحة",
-          value: String(openReports ?? 0),
-          urgent: (openReports ?? 0) > 0,
+          href: "/admin/today",
+          label: "استلامات اليوم",
+          value: String(todayPickups ?? 0),
+          urgent: (todayPickups ?? 0) > 0,
         },
         {
-          href: "/admin/users",
-          label: "حالات حظر بين مستخدمين (تراكمي)",
-          value: String(blockedUserPairs ?? 0),
+          href: "/admin/today",
+          label: "تسليمات اليوم",
+          value: String(todayReturns ?? 0),
+          urgent: (todayReturns ?? 0) > 0,
         },
+        {
+          href: "/admin/bookings?status=active",
+          label: "إيجارات جارية",
+          value: String(activeRentals ?? 0),
+        },
+      ],
+    },
+    {
+      title: "الأسطول",
+      description: "سيارة واقفة = خسارة.",
+      stats: [
+        { href: "/admin/cars", label: "إجمالي السيارات", value: String(totalCars ?? 0) },
+        { href: "/admin/cars?status=available", label: "متاحة", value: String(availableCars ?? 0) },
+        {
+          href: "/admin/cars?status=maintenance",
+          label: "في الصيانة",
+          value: String(maintenanceCars ?? 0),
+          urgent: (maintenanceCars ?? 0) > 0,
+        },
+        { href: "/admin/branches", label: "فروع نشطة", value: String(branches ?? 0) },
       ],
     },
     {
       title: "النمو والإيراد",
       description: "هذا الشهر.",
       stats: [
-        {
-          href: "/admin/all-listings",
-          label: "إيراد التمييز هذا الشهر",
-          value: formatSar(monthRevenueHalalas),
-        },
-        {
-          href: "/admin/users",
-          label: "حسابات جديدة آخر 7 أيام",
-          value: String(newUsersThisWeek ?? 0),
-        },
-      ],
-    },
-    {
-      title: "الكتالوج",
-      description: "الحجم الكلي.",
-      stats: [
-        { href: "/admin/all-listings", label: "كل الإعلانات", value: String(totalListings ?? 0) },
-        { href: "/admin/all-listings?type=franchise", label: "كل الامتيازات", value: String(totalFranchises ?? 0) },
-        { href: "/admin/users", label: "كل الحسابات", value: String(totalUsers ?? 0) },
+        { href: "/admin/bookings", label: "إيراد الحجوزات المدفوعة", value: formatSar(monthRevenue) },
+        { href: "/admin/users", label: "إجمالي العملاء", value: String(customers ?? 0) },
       ],
     },
   ];
 
+  const noFleetYet = (branches ?? 0) === 0 || (totalCars ?? 0) === 0;
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <div className="mb-2 font-mono text-[13px] tracking-wide text-admin-primary">
-        لوحة الإدارة
-      </div>
-      <h1 className="mb-10 font-heading text-2xl font-extrabold text-admin-text">
-        نظرة عامة
-      </h1>
+      <div className="mb-2 font-mono text-[13px] tracking-wide text-admin-primary">لوحة الإدارة</div>
+      <h1 className="mb-10 font-heading text-2xl font-extrabold text-admin-text">نظرة عامة</h1>
+
+      {noFleetYet ? (
+        <Card className="mb-10 border-admin-primary/30 bg-admin-primary/5 p-5 sm:p-6">
+          <h2 className="mb-1 font-heading text-base font-extrabold text-admin-text">ابدأ من هنا</h2>
+          <p className="mb-4 text-[13px] leading-6 text-admin-text-muted">
+            التطبيق لا يعرض شيئًا حتى يوجد فرع وسيارة. أضف فرعًا أولًا، ثم أضف سياراته.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/branches/new"
+              className="rounded-lg bg-admin-primary px-4 py-2 text-sm font-bold text-admin-on-primary"
+            >
+              إضافة فرع
+            </Link>
+            <Link
+              href="/admin/cars/new"
+              className="rounded-lg border border-admin-border px-4 py-2 text-sm font-bold text-admin-text"
+            >
+              إضافة سيارة
+            </Link>
+          </div>
+        </Card>
+      ) : null}
 
       <div className="flex flex-col gap-10">
         {sections.map((section) => (
           <section key={section.title}>
             <div className="mb-4 flex items-baseline justify-between gap-2">
-              <h2 className="font-heading text-base font-extrabold text-admin-text">
-                {section.title}
-              </h2>
+              <h2 className="font-heading text-base font-extrabold text-admin-text">{section.title}</h2>
               <span className="text-[12px] text-admin-text-muted">{section.description}</span>
             </div>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -165,9 +172,7 @@ export default async function AdminOverviewPage() {
                     >
                       {stat.value}
                     </div>
-                    <div className="text-[13px] leading-6 text-admin-text-muted">
-                      {stat.label}
-                    </div>
+                    <div className="text-[13px] leading-6 text-admin-text-muted">{stat.label}</div>
                   </Card>
                 </Link>
               ))}

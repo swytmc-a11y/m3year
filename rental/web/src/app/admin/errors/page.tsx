@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/listings/constants";
+import { formatDate } from "@/lib/cars/constants";
 
 /**
  * Two feeds share one table: automatic crash reports (fired by

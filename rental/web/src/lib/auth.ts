@@ -107,20 +107,3 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   const { data } = await supabase.rpc("is_admin");
   return data === true;
 }
-
-/**
- * Returns the signed-in user plus their accountant row, if any (null if they
- * have never applied). Does NOT require is_active — the accountant portal
- * itself shows a "pending approval" state for inactive accountants.
- */
-export async function requireAccountantContext() {
-  const user = await requireUser();
-  const supabase = await createClient();
-  const { data: accountant } = await supabase
-    .from("accountants")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  return { user, accountant };
-}
