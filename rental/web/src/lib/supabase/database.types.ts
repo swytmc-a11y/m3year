@@ -1,6 +1,7 @@
-// Hand-authored to match supabase/migrations/0001-0004 exactly, so the app
-// could be built before the project existed. Regenerate from the live
-// database once it is provisioned and diff against this file.
+// Verified against the live database: generated types were diffed against
+// this file after migrations 0001-0004 were applied, and the only real
+// difference (bookings.reference being required on insert, since a trigger
+// fills it) was folded in. Regeneration from the database is canonical.
 
 export type Json =
   | string
@@ -199,7 +200,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pickup_time?: string
           rate_tier: string
-          reference?: string
+          reference: string
           refund_amount?: number | null
           refunded_at?: string | null
           rental_total: number
@@ -777,6 +778,7 @@ export type Database = {
         Returns: { start_date: string; end_date: string }[]
       }
       expire_stale_bookings: { Args: Record<string, never>; Returns: number }
+      generate_booking_reference: { Args: Record<string, never>; Returns: string }
       is_admin: { Args: Record<string, never>; Returns: boolean }
       is_blocked: { Args: { uid: string }; Returns: boolean }
       log_audit: {

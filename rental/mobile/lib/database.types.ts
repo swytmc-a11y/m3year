@@ -1,3 +1,8 @@
+// Verified against the live database: generated types were diffed against
+// this file after migrations 0001-0004 were applied, and the only real
+// difference (bookings.reference being required on insert, since a trigger
+// fills it) was folded in. Regeneration from the database is canonical.
+
 export type Json =
   | string
   | number
@@ -7,100 +12,60 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
-      accountants: {
+      addons: {
         Row: {
-          bio: string | null
+          code: string
           created_at: string
+          description: string | null
           id: string
           is_active: boolean
-          rating_avg: number
-          socpa_number: string | null
-          updated_at: string
+          name: string
+          pricing_type: Database["public"]["Enums"]["addon_pricing"]
+          sort_order: number
         }
         Insert: {
-          bio?: string | null
+          code: string
           created_at?: string
-          id: string
-          is_active?: boolean
-          rating_avg?: number
-          socpa_number?: string | null
-          updated_at?: string
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string
+          description?: string | null
           id?: string
           is_active?: boolean
-          rating_avg?: number
-          socpa_number?: string | null
-          updated_at?: string
+          name: string
+          pricing_type: Database["public"]["Enums"]["addon_pricing"]
+          sort_order?: number
         }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pricing_type?: Database["public"]["Enums"]["addon_pricing"]
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      admin_otp_verifications: {
+        Row: { expires_at: string; user_id: string; verified_at: string }
+        Insert: { expires_at: string; user_id: string; verified_at?: string }
+        Update: { expires_at?: string; user_id?: string; verified_at?: string }
         Relationships: [
           {
-            foreignKeyName: "accountants_id_fkey"
-            columns: ["id"]
+            foreignKeyName: "admin_otp_verifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      ai_reports: {
-        Row: {
-          content: Json | null
-          created_at: string
-          id: string
-          model_version: string | null
-          published: boolean
-          published_at: string | null
-          requested_by: string
-          status: string
-          target_id: string
-          target_type: string
-          updated_at: string
-        }
-        Insert: {
-          content?: Json | null
-          created_at?: string
-          id?: string
-          model_version?: string | null
-          published?: boolean
-          published_at?: string | null
-          requested_by: string
-          status?: string
-          target_id: string
-          target_type: string
-          updated_at?: string
-        }
-        Update: {
-          content?: Json | null
-          created_at?: string
-          id?: string
-          model_version?: string | null
-          published?: boolean
-          published_at?: string | null
-          requested_by?: string
-          status?: string
-          target_id?: string
-          target_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_reports_requested_by_fkey"
-            columns: ["requested_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+      app_settings: {
+        Row: { key: string; updated_at: string; value: Json }
+        Insert: { key: string; updated_at?: string; value: Json }
+        Update: { key?: string; updated_at?: string; value?: Json }
+        Relationships: []
       }
       audit_log: {
         Row: {
@@ -136,6 +101,430 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_addons: {
+        Row: {
+          addon_id: string
+          booking_id: string
+          name: string
+          pricing_type: Database["public"]["Enums"]["addon_pricing"]
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          addon_id: string
+          booking_id: string
+          name: string
+          pricing_type: Database["public"]["Enums"]["addon_pricing"]
+          total: number
+          unit_price: number
+        }
+        Update: {
+          addon_id?: string
+          booking_id?: string
+          name?: string
+          pricing_type?: Database["public"]["Enums"]["addon_pricing"]
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_addons_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addons_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          addons_total: number
+          admin_note: string | null
+          branch_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          car_id: string
+          confirmed_at: string | null
+          created_at: string
+          customer_id: string
+          customer_note: string | null
+          daily_rate: number
+          days: number
+          end_date: string
+          id: string
+          paid_at: string | null
+          payment_ref: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          pickup_time: string
+          rate_tier: string
+          reference: string
+          refund_amount: number | null
+          refunded_at: string | null
+          rental_total: number
+          return_time: string
+          start_date: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total: number
+          updated_at: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Insert: {
+          addons_total?: number
+          admin_note?: string | null
+          branch_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          car_id: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id: string
+          customer_note?: string | null
+          daily_rate: number
+          days: number
+          end_date: string
+          id?: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          pickup_time?: string
+          rate_tier: string
+          reference: string
+          refund_amount?: number | null
+          refunded_at?: string | null
+          rental_total: number
+          return_time?: string
+          start_date: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total: number
+          updated_at?: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Update: {
+          addons_total?: number
+          admin_note?: string | null
+          branch_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          car_id?: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id?: string
+          customer_note?: string | null
+          daily_rate?: number
+          days?: number
+          end_date?: string
+          id?: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          pickup_time?: string
+          rate_tier?: string
+          reference?: string
+          refund_amount?: number | null
+          refunded_at?: string | null
+          rental_total?: number
+          return_time?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          total?: number
+          updated_at?: string
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          default_confirmation_mode: Database["public"]["Enums"]["confirmation_mode"]
+          deposit_note: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          sort_order: number
+          updated_at: string
+          whatsapp: string | null
+          working_hours: string | null
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          created_at?: string
+          default_confirmation_mode?: Database["public"]["Enums"]["confirmation_mode"]
+          deposit_note?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+          whatsapp?: string | null
+          working_hours?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          default_confirmation_mode?: Database["public"]["Enums"]["confirmation_mode"]
+          deposit_note?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+          whatsapp?: string | null
+          working_hours?: string | null
+        }
+        Relationships: []
+      }
+      car_addons: {
+        Row: { addon_id: string; car_id: string; is_available: boolean; price: number }
+        Insert: { addon_id: string; car_id: string; is_available?: boolean; price: number }
+        Update: { addon_id?: string; car_id?: string; is_available?: boolean; price?: number }
+        Relationships: [
+          {
+            foreignKeyName: "car_addons_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "car_addons_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      car_blocks: {
+        Row: {
+          car_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          reason: string | null
+          start_date: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          reason?: string | null
+          start_date: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_blocks_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      car_private: {
+        Row: {
+          car_id: string
+          insurance_expiry: string | null
+          insurance_policy_no: string | null
+          notes: string | null
+          odometer_km: number | null
+          plate_number: string | null
+          purchase_date: string | null
+          registration_expiry: string | null
+          updated_at: string
+          vin: string | null
+        }
+        Insert: {
+          car_id: string
+          insurance_expiry?: string | null
+          insurance_policy_no?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          plate_number?: string | null
+          purchase_date?: string | null
+          registration_expiry?: string | null
+          updated_at?: string
+          vin?: string | null
+        }
+        Update: {
+          car_id?: string
+          insurance_expiry?: string | null
+          insurance_policy_no?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          plate_number?: string | null
+          purchase_date?: string | null
+          registration_expiry?: string | null
+          updated_at?: string
+          vin?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_private_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: true
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cars: {
+        Row: {
+          branch_id: string
+          category: Database["public"]["Enums"]["car_category"]
+          color: string | null
+          confirmation_mode: Database["public"]["Enums"]["confirmation_mode"]
+          cover_image: string | null
+          created_at: string
+          daily_km_limit: number | null
+          daily_price: number
+          description: string | null
+          doors: number | null
+          extra_km_fee: number | null
+          features: string[]
+          fuel: Database["public"]["Enums"]["fuel_type"]
+          id: string
+          images: string[]
+          make: string
+          max_rental_days: number | null
+          min_rental_days: number
+          model: string
+          monthly_price: number | null
+          seats: number
+          sort_order: number
+          status: Database["public"]["Enums"]["car_status"]
+          transmission: Database["public"]["Enums"]["transmission_type"]
+          updated_at: string
+          view_count: number
+          weekly_price: number | null
+          year: number
+        }
+        Insert: {
+          branch_id: string
+          category: Database["public"]["Enums"]["car_category"]
+          color?: string | null
+          confirmation_mode?: Database["public"]["Enums"]["confirmation_mode"]
+          cover_image?: string | null
+          created_at?: string
+          daily_km_limit?: number | null
+          daily_price: number
+          description?: string | null
+          doors?: number | null
+          extra_km_fee?: number | null
+          features?: string[]
+          fuel: Database["public"]["Enums"]["fuel_type"]
+          id?: string
+          images?: string[]
+          make: string
+          max_rental_days?: number | null
+          min_rental_days?: number
+          model: string
+          monthly_price?: number | null
+          seats: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["car_status"]
+          transmission: Database["public"]["Enums"]["transmission_type"]
+          updated_at?: string
+          view_count?: number
+          weekly_price?: number | null
+          year: number
+        }
+        Update: {
+          branch_id?: string
+          category?: Database["public"]["Enums"]["car_category"]
+          color?: string | null
+          confirmation_mode?: Database["public"]["Enums"]["confirmation_mode"]
+          cover_image?: string | null
+          created_at?: string
+          daily_km_limit?: number | null
+          daily_price?: number
+          description?: string | null
+          doors?: number | null
+          extra_km_fee?: number | null
+          features?: string[]
+          fuel?: Database["public"]["Enums"]["fuel_type"]
+          id?: string
+          images?: string[]
+          make?: string
+          max_rental_days?: number | null
+          min_rental_days?: number
+          model?: string
+          monthly_price?: number | null
+          seats?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["car_status"]
+          transmission?: Database["public"]["Enums"]["transmission_type"]
+          updated_at?: string
+          view_count?: number
+          weekly_price?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cars_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]
@@ -181,1320 +570,265 @@ export type Database = {
           },
         ]
       }
-      conversations: {
-        Row: {
-          created_at: string
-          franchise_id: string | null
-          id: string
-          investor_id: string
-          listing_id: string | null
-          owner_id: string
-        }
-        Insert: {
-          created_at?: string
-          franchise_id?: string | null
-          id?: string
-          investor_id: string
-          listing_id?: string | null
-          owner_id: string
-        }
-        Update: {
-          created_at?: string
-          franchise_id?: string | null
-          id?: string
-          investor_id?: string
-          listing_id?: string | null
-          owner_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_franchise_id_fkey"
-            columns: ["franchise_id"]
-            isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       favorites: {
-        Row: {
-          created_at: string
-          franchise_id: string | null
-          id: string
-          listing_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          franchise_id?: string | null
-          id?: string
-          listing_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          franchise_id?: string | null
-          id?: string
-          listing_id?: string | null
-          user_id?: string
-        }
+        Row: { car_id: string; created_at: string; user_id: string }
+        Insert: { car_id: string; created_at?: string; user_id: string }
+        Update: { car_id?: string; created_at?: string; user_id?: string }
         Relationships: [
           {
-            foreignKeyName: "favorites_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: "favorites_car_id_fkey"
+            columns: ["car_id"]
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      franchise_confidential: {
-        Row: {
-          commercial_registration_number: string | null
-          created_at: string
-          entity_type: string
-          franchise_id: string
-          owner_id: string
-          updated_at: string
-        }
-        Insert: {
-          commercial_registration_number?: string | null
-          created_at?: string
-          entity_type: string
-          franchise_id: string
-          owner_id: string
-          updated_at?: string
-        }
-        Update: {
-          commercial_registration_number?: string | null
-          created_at?: string
-          entity_type?: string
-          franchise_id?: string
-          owner_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "franchise_confidential_franchise_id_fkey"
-            columns: ["franchise_id"]
-            isOneToOne: true
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "franchise_confidential_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      franchises: {
-        Row: {
-          brand_name: string
-          cities_available: string[]
-          city: string
-          contract_duration_years: number | null
-          countries_available: string[]
-          created_at: string
-          current_branches_count: number | null
-          description: string | null
-          expected_payback_months: number | null
-          featured_until: string | null
-          founding_year: number | null
-          franchise_fee: number
-          franchise_type: string
-          id: string
-          initial_investment_max: number | null
-          initial_investment_min: number | null
-          is_featured: boolean
-          logo_url: string | null
-          marketing_support: string | null
-          miyar_completeness_pct: number | null
-          miyar_computed_at: string | null
-          miyar_confidence_score: number | null
-          miyar_formula_version: number | null
-          miyar_grade: string | null
-          miyar_quality_score: number | null
-          operational_support: string | null
-          owner_id: string
-          photo_urls: string[]
-          rejection_reason: string | null
-          required_employees_count: number | null
-          required_space_sqm: number | null
-          reviewed_at: string | null
-          royalty_percentage: number | null
-          sector: Database["public"]["Enums"]["business_sector"]
-          status: Database["public"]["Enums"]["listing_status"]
-          training_provided: boolean
-          updated_at: string
-          verification_status: Database["public"]["Enums"]["verification_status"]
-          verified_at: string | null
-          view_count: number
-        }
-        Insert: {
-          brand_name: string
-          cities_available?: string[]
-          city: string
-          contract_duration_years?: number | null
-          countries_available?: string[]
-          created_at?: string
-          current_branches_count?: number | null
-          description?: string | null
-          expected_payback_months?: number | null
-          featured_until?: string | null
-          founding_year?: number | null
-          franchise_fee: number
-          franchise_type?: string
-          id?: string
-          initial_investment_max?: number | null
-          initial_investment_min?: number | null
-          is_featured?: boolean
-          logo_url?: string | null
-          marketing_support?: string | null
-          miyar_completeness_pct?: number | null
-          miyar_computed_at?: string | null
-          miyar_confidence_score?: number | null
-          miyar_formula_version?: number | null
-          miyar_grade?: string | null
-          miyar_quality_score?: number | null
-          operational_support?: string | null
-          owner_id: string
-          photo_urls?: string[]
-          rejection_reason?: string | null
-          required_employees_count?: number | null
-          required_space_sqm?: number | null
-          reviewed_at?: string | null
-          royalty_percentage?: number | null
-          sector: Database["public"]["Enums"]["business_sector"]
-          status?: Database["public"]["Enums"]["listing_status"]
-          training_provided?: boolean
-          updated_at?: string
-          verification_status?: Database["public"]["Enums"]["verification_status"]
-          verified_at?: string | null
-          view_count?: number
-        }
-        Update: {
-          brand_name?: string
-          cities_available?: string[]
-          city?: string
-          contract_duration_years?: number | null
-          countries_available?: string[]
-          created_at?: string
-          current_branches_count?: number | null
-          description?: string | null
-          expected_payback_months?: number | null
-          featured_until?: string | null
-          founding_year?: number | null
-          franchise_fee?: number
-          franchise_type?: string
-          id?: string
-          initial_investment_max?: number | null
-          initial_investment_min?: number | null
-          is_featured?: boolean
-          logo_url?: string | null
-          marketing_support?: string | null
-          miyar_completeness_pct?: number | null
-          miyar_computed_at?: string | null
-          miyar_confidence_score?: number | null
-          miyar_formula_version?: number | null
-          miyar_grade?: string | null
-          miyar_quality_score?: number | null
-          operational_support?: string | null
-          owner_id?: string
-          photo_urls?: string[]
-          rejection_reason?: string | null
-          required_employees_count?: number | null
-          required_space_sqm?: number | null
-          reviewed_at?: string | null
-          royalty_percentage?: number | null
-          sector?: Database["public"]["Enums"]["business_sector"]
-          status?: Database["public"]["Enums"]["listing_status"]
-          training_provided?: boolean
-          updated_at?: string
-          verification_status?: Database["public"]["Enums"]["verification_status"]
-          verified_at?: string | null
-          view_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "franchises_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      listing_confidential: {
-        Row: {
-          commercial_registration_number: string | null
-          created_at: string
-          entity_type: string
-          listing_id: string
-          owner_id: string
-          updated_at: string
-        }
-        Insert: {
-          commercial_registration_number?: string | null
-          created_at?: string
-          entity_type: string
-          listing_id: string
-          owner_id: string
-          updated_at?: string
-        }
-        Update: {
-          commercial_registration_number?: string | null
-          created_at?: string
-          entity_type?: string
-          listing_id?: string
-          owner_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "listing_confidential_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: true
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "listing_confidential_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      listings: {
-        Row: {
-          asking_price: number | null
-          city: string
-          created_at: string
-          description: string | null
-          employee_count: number | null
-          featured_until: string | null
-          financial_data_sharing: string
-          founding_year: number | null
-          has_legal_obligations: boolean
-          id: string
-          is_featured: boolean
-          miyar_completeness_pct: number | null
-          miyar_computed_at: string | null
-          miyar_confidence_score: number | null
-          miyar_formula_version: number | null
-          miyar_grade: string | null
-          miyar_quality_score: number | null
-          monthly_profit: number | null
-          monthly_revenue: number
-          offered_percentage: number
-          owner_id: string
-          photo_urls: string[]
-          price_negotiable: boolean
-          reason_for_selling: string | null
-          reason_for_selling_other: string | null
-          rejection_reason: string | null
-          reviewed_at: string | null
-          sector: Database["public"]["Enums"]["business_sector"]
-          show_profit: boolean
-          status: Database["public"]["Enums"]["listing_status"]
-          title: string
-          updated_at: string
-          verification_status: Database["public"]["Enums"]["verification_status"]
-          verified_at: string | null
-          view_count: number
-        }
-        Insert: {
-          asking_price?: number | null
-          city: string
-          created_at?: string
-          description?: string | null
-          employee_count?: number | null
-          featured_until?: string | null
-          financial_data_sharing?: string
-          founding_year?: number | null
-          has_legal_obligations?: boolean
-          id?: string
-          is_featured?: boolean
-          miyar_completeness_pct?: number | null
-          miyar_computed_at?: string | null
-          miyar_confidence_score?: number | null
-          miyar_formula_version?: number | null
-          miyar_grade?: string | null
-          miyar_quality_score?: number | null
-          monthly_profit?: number | null
-          monthly_revenue: number
-          offered_percentage: number
-          owner_id: string
-          photo_urls?: string[]
-          price_negotiable?: boolean
-          reason_for_selling?: string | null
-          reason_for_selling_other?: string | null
-          rejection_reason?: string | null
-          reviewed_at?: string | null
-          sector: Database["public"]["Enums"]["business_sector"]
-          show_profit?: boolean
-          status?: Database["public"]["Enums"]["listing_status"]
-          title: string
-          updated_at?: string
-          verification_status?: Database["public"]["Enums"]["verification_status"]
-          verified_at?: string | null
-          view_count?: number
-        }
-        Update: {
-          asking_price?: number | null
-          city?: string
-          created_at?: string
-          description?: string | null
-          employee_count?: number | null
-          featured_until?: string | null
-          financial_data_sharing?: string
-          founding_year?: number | null
-          has_legal_obligations?: boolean
-          id?: string
-          is_featured?: boolean
-          miyar_completeness_pct?: number | null
-          miyar_computed_at?: string | null
-          miyar_confidence_score?: number | null
-          miyar_formula_version?: number | null
-          miyar_grade?: string | null
-          miyar_quality_score?: number | null
-          monthly_profit?: number | null
-          monthly_revenue?: number
-          offered_percentage?: number
-          owner_id?: string
-          photo_urls?: string[]
-          price_negotiable?: boolean
-          reason_for_selling?: string | null
-          reason_for_selling_other?: string | null
-          rejection_reason?: string | null
-          reviewed_at?: string | null
-          sector?: Database["public"]["Enums"]["business_sector"]
-          show_profit?: boolean
-          status?: Database["public"]["Enums"]["listing_status"]
-          title?: string
-          updated_at?: string
-          verification_status?: Database["public"]["Enums"]["verification_status"]
-          verified_at?: string | null
-          view_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "listings_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          attachment_name: string | null
-          attachment_path: string | null
-          attachment_type: string | null
-          body: string | null
-          conversation_id: string
-          created_at: string
-          id: string
-          read_at: string | null
-          sender_id: string
-        }
-        Insert: {
-          attachment_name?: string | null
-          attachment_path?: string | null
-          attachment_type?: string | null
-          body?: string | null
-          conversation_id: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id: string
-        }
-        Update: {
-          attachment_name?: string | null
-          attachment_path?: string | null
-          attachment_type?: string | null
-          body?: string | null
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
       }
       notification_preferences: {
         Row: {
-          listing_status: boolean
-          new_message: boolean
-          promotion: boolean
-          saved_search: boolean
+          booking_updates: boolean
+          offers: boolean
+          reminders: boolean
+          saved_search_alerts: boolean
           updated_at: string
           user_id: string
-          verification: boolean
         }
         Insert: {
-          listing_status?: boolean
-          new_message?: boolean
-          promotion?: boolean
-          saved_search?: boolean
+          booking_updates?: boolean
+          offers?: boolean
+          reminders?: boolean
+          saved_search_alerts?: boolean
           updated_at?: string
           user_id: string
-          verification?: boolean
         }
         Update: {
-          listing_status?: boolean
-          new_message?: boolean
-          promotion?: boolean
-          saved_search?: boolean
+          booking_updates?: boolean
+          offers?: boolean
+          reminders?: boolean
+          saved_search_alerts?: boolean
           updated_at?: string
           user_id?: string
-          verification?: boolean
         }
         Relationships: []
       }
       notifications: {
         Row: {
           body: string | null
+          category: string
           created_at: string
+          data: Json
           id: string
           read_at: string | null
-          related_id: string | null
           title: string
-          type: string
           user_id: string
         }
         Insert: {
           body?: string | null
+          category: string
           created_at?: string
+          data?: Json
           id?: string
           read_at?: string | null
-          related_id?: string | null
           title: string
-          type: string
           user_id: string
         }
         Update: {
           body?: string | null
+          category?: string
           created_at?: string
+          data?: Json
           id?: string
           read_at?: string | null
-          related_id?: string | null
           title?: string
-          type?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      phone_otp_throttle: {
-        Row: {
-          last_sent_at: string | null
-          phone: string
-          send_count: number
-          verify_count: number
-          verify_window_start: string | null
-          window_start: string
-        }
-        Insert: {
-          last_sent_at?: string | null
-          phone: string
-          send_count?: number
-          verify_count?: number
-          verify_window_start?: string | null
-          window_start?: string
-        }
-        Update: {
-          last_sent_at?: string | null
-          phone?: string
-          send_count?: number
-          verify_count?: number
-          verify_window_start?: string | null
-          window_start?: string
-        }
         Relationships: []
-      }
-      phone_verifications: {
-        Row: {
-          otp: string
-          phone: string
-          verified_at: string
-        }
-        Insert: {
-          otp: string
-          phone: string
-          verified_at?: string
-        }
-        Update: {
-          otp?: string
-          phone?: string
-          verified_at?: string
-        }
-        Relationships: []
-      }
-      profile_contact: {
-        Row: {
-          email: string | null
-          id: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          email?: string | null
-          id: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          email?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profile_contact_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
           city: string | null
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           is_blocked: boolean
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
           city?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
           is_blocked?: boolean
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
           city?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           is_blocked?: boolean
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
       }
-      promotion_orders: {
-        Row: {
-          amount_halalas: number
-          created_at: string
-          currency: string
-          failure_reason: string | null
-          featured_from: string | null
-          featured_until: string | null
-          id: string
-          paid_at: string | null
-          plan_code: string
-          provider: string
-          provider_invoice_id: string | null
-          provider_payment_id: string | null
-          status: string
-          target_id: string
-          target_type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount_halalas: number
-          created_at?: string
-          currency?: string
-          failure_reason?: string | null
-          featured_from?: string | null
-          featured_until?: string | null
-          id?: string
-          paid_at?: string | null
-          plan_code: string
-          provider?: string
-          provider_invoice_id?: string | null
-          provider_payment_id?: string | null
-          status?: string
-          target_id: string
-          target_type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount_halalas?: number
-          created_at?: string
-          currency?: string
-          failure_reason?: string | null
-          featured_from?: string | null
-          featured_until?: string | null
-          id?: string
-          paid_at?: string | null
-          plan_code?: string
-          provider?: string
-          provider_invoice_id?: string | null
-          provider_payment_id?: string | null
-          status?: string
-          target_id?: string
-          target_type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promotion_orders_plan_code_fkey"
-            columns: ["plan_code"]
-            isOneToOne: false
-            referencedRelation: "promotion_plans"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "promotion_orders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      promotion_plans: {
-        Row: {
-          code: string
-          created_at: string
-          description_ar: string | null
-          duration_days: number
-          is_active: boolean
-          name_ar: string
-          price_halalas: number
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description_ar?: string | null
-          duration_days: number
-          is_active?: boolean
-          name_ar: string
-          price_halalas: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description_ar?: string | null
-          duration_days?: number
-          is_active?: boolean
-          name_ar?: string
-          price_halalas?: number
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       push_tokens: {
-        Row: {
-          created_at: string
-          expo_push_token: string
-          id: string
-          platform: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expo_push_token: string
-          id?: string
-          platform: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expo_push_token?: string
-          id?: string
-          platform?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_tokens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Row: { created_at: string; platform: string | null; token: string; user_id: string }
+        Insert: { created_at?: string; platform?: string | null; token: string; user_id: string }
+        Update: { created_at?: string; platform?: string | null; token?: string; user_id?: string }
+        Relationships: []
       }
       rate_limits: {
-        Row: {
-          action: string
-          count: number
-          user_id: string
-          window_start: string
-        }
-        Insert: {
-          action: string
-          count?: number
-          user_id: string
-          window_start: string
-        }
-        Update: {
-          action?: string
-          count?: number
-          user_id?: string
-          window_start?: string
-        }
+        Row: { action: string; created_at: string; id: number; user_id: string | null }
+        Insert: { action: string; created_at?: string; id?: never; user_id?: string | null }
+        Update: { action?: string; created_at?: string; id?: never; user_id?: string | null }
         Relationships: []
       }
-      ratings: {
+      reviews: {
         Row: {
+          author_id: string
+          booking_id: string
+          branch_id: string
+          car_id: string
           comment: string | null
           created_at: string
           id: string
-          listing_id: string | null
-          rated_id: string
-          rater_id: string
-          score: number
-          updated_at: string
+          rating: number
         }
         Insert: {
+          author_id: string
+          booking_id: string
+          branch_id: string
+          car_id: string
           comment?: string | null
           created_at?: string
           id?: string
-          listing_id?: string | null
-          rated_id: string
-          rater_id: string
-          score: number
-          updated_at?: string
+          rating: number
         }
         Update: {
+          author_id?: string
+          booking_id?: string
+          branch_id?: string
+          car_id?: string
           comment?: string | null
           created_at?: string
           id?: string
-          listing_id?: string | null
-          rated_id?: string
-          rater_id?: string
-          score?: number
-          updated_at?: string
+          rating?: number
         }
         Relationships: [
           {
-            foreignKeyName: "ratings_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ratings_rated_id_fkey"
-            columns: ["rated_id"]
+            foreignKeyName: "reviews_car_id_fkey"
+            columns: ["car_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reports: {
-        Row: {
-          created_at: string
-          id: string
-          reason: string
-          reporter_id: string
-          status: string
-          target_id: string
-          target_type: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          reason: string
-          reporter_id: string
-          status?: string
-          target_id: string
-          target_type: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          reason?: string
-          reporter_id?: string
-          status?: string
-          target_id?: string
-          target_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
       }
       saved_searches: {
         Row: {
-          alerts_enabled: boolean
-          city: string | null
           created_at: string
+          filters: Json
           id: string
-          kind: string
-          max_revenue: number | null
-          min_revenue: number | null
+          last_notified_at: string | null
           name: string
-          sector: Database["public"]["Enums"]["business_sector"] | null
+          notify: boolean
           user_id: string
-          verified_only: boolean
         }
         Insert: {
-          alerts_enabled?: boolean
-          city?: string | null
           created_at?: string
+          filters?: Json
           id?: string
-          kind: string
-          max_revenue?: number | null
-          min_revenue?: number | null
+          last_notified_at?: string | null
           name: string
-          sector?: Database["public"]["Enums"]["business_sector"] | null
+          notify?: boolean
           user_id: string
-          verified_only?: boolean
         }
         Update: {
-          alerts_enabled?: boolean
-          city?: string | null
           created_at?: string
+          filters?: Json
           id?: string
-          kind?: string
-          max_revenue?: number | null
-          min_revenue?: number | null
+          last_notified_at?: string | null
           name?: string
-          sector?: Database["public"]["Enums"]["business_sector"] | null
+          notify?: boolean
           user_id?: string
-          verified_only?: boolean
         }
-        Relationships: [
-          {
-            foreignKeyName: "saved_searches_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_blocks: {
-        Row: {
-          blocked_id: string
-          blocker_id: string
-          created_at: string
-        }
-        Insert: {
-          blocked_id: string
-          blocker_id: string
-          created_at?: string
-        }
-        Update: {
-          blocked_id?: string
-          blocker_id?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_blocks_blocked_id_fkey"
-            columns: ["blocked_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_blocks_blocker_id_fkey"
-            columns: ["blocker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      verification_requests: {
-        Row: {
-          accountant_id: string | null
-          completed_at: string | null
-          created_at: string
-          fee_amount: number | null
-          financial_statement_path: string | null
-          franchise_id: string | null
-          id: string
-          listing_id: string | null
-          notes: string | null
-          owner_id: string
-          report_path: string | null
-          status: Database["public"]["Enums"]["verification_request_status"]
-          updated_at: string
-          verified_revenue: number | null
-        }
-        Insert: {
-          accountant_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          fee_amount?: number | null
-          financial_statement_path?: string | null
-          franchise_id?: string | null
-          id?: string
-          listing_id?: string | null
-          notes?: string | null
-          owner_id: string
-          report_path?: string | null
-          status?: Database["public"]["Enums"]["verification_request_status"]
-          updated_at?: string
-          verified_revenue?: number | null
-        }
-        Update: {
-          accountant_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          fee_amount?: number | null
-          financial_statement_path?: string | null
-          franchise_id?: string | null
-          id?: string
-          listing_id?: string | null
-          notes?: string | null
-          owner_id?: string
-          report_path?: string | null
-          status?: Database["public"]["Enums"]["verification_request_status"]
-          updated_at?: string
-          verified_revenue?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "verification_requests_accountant_id_fkey"
-            columns: ["accountant_id"]
-            isOneToOne: false
-            referencedRelation: "accountants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_requests_franchise_id_fkey"
-            columns: ["franchise_id"]
-            isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_requests_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_requests_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
-    Views: {
-      [_ in never]: never
-    }
+    Views: Record<never, never>
     Functions: {
-      complete_ai_report: {
-        Args: { p_content: Json; p_model_version: string; p_report_id: string }
-        Returns: undefined
+      car_unavailable_ranges: {
+        Args: { p_car_id: string }
+        Returns: { start_date: string; end_date: string }[]
       }
-      create_notification: {
-        Args: {
-          p_body: string
-          p_related_id?: string
-          p_title: string
-          p_type: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
-      expire_featured_promotions: { Args: never; Returns: number }
-      fail_ai_report: { Args: { p_report_id: string }; Returns: undefined }
-      increment_view_count: {
-        Args: { p_target_id: string; p_target_type: string }
-        Returns: undefined
-      }
-      is_admin: { Args: never; Returns: boolean }
+      expire_stale_bookings: { Args: Record<string, never>; Returns: number }
+      generate_booking_reference: { Args: Record<string, never>; Returns: string }
+      is_admin: { Args: Record<string, never>; Returns: boolean }
       is_blocked: { Args: { uid: string }; Returns: boolean }
       log_audit: {
         Args: {
           p_action: string
-          p_entity_id: string
-          p_entity_type: string
+          p_entity_type?: string
+          p_entity_id?: string
           p_metadata?: Json
         }
         Returns: undefined
       }
-      owns_ai_report_target: {
-        Args: { p_target_id: string; p_target_type: string }
-        Returns: boolean
-      }
-      pg_net_poll_request: { Args: { p_request_id: number }; Returns: Json }
-      pg_net_start_request: {
+      quote_booking: {
         Args: {
-          p_body?: Json
-          p_headers: Json
-          p_method: string
-          p_url: string
+          p_car_id: string
+          p_start_date: string
+          p_end_date: string
+          p_addon_ids?: string[]
         }
-        Returns: number
-      }
-      recompute_all_miyar_index: { Args: never; Returns: undefined }
-      recompute_miyar_index_franchise: {
-        Args: { p_franchise_id: string }
-        Returns: undefined
-      }
-      recompute_miyar_index_listing: {
-        Args: { p_listing_id: string }
-        Returns: undefined
+        Returns: Json
       }
     }
     Enums: {
-      business_sector: "cafe" | "restaurant" | "retail" | "services" | "other"
-      listing_status:
-        | "draft"
-        | "published"
-        | "archived"
-        | "pending_review"
-        | "rejected"
-      user_role: "project_owner" | "investor" | "accountant" | "admin"
-      verification_request_status:
-        | "requested"
-        | "assigned"
-        | "in_review"
+      addon_pricing: "per_day" | "one_time"
+      booking_status:
+        | "pending_payment"
+        | "pending_confirmation"
+        | "confirmed"
+        | "active"
         | "completed"
+        | "cancelled"
         | "rejected"
-      verification_status: "none" | "pending" | "verified" | "rejected"
+        | "expired"
+      car_category: "economy" | "family" | "luxury" | "suv" | "commercial"
+      car_status: "draft" | "available" | "maintenance" | "hidden"
+      confirmation_mode: "instant" | "manual"
+      fuel_type: "petrol" | "diesel" | "hybrid" | "electric"
+      payment_status: "unpaid" | "paid" | "refunded" | "partially_refunded" | "failed"
+      transmission_type: "automatic" | "manual"
+      user_role: "customer" | "admin"
     }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    CompositeTypes: Record<never, never>
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type PublicSchema = Database["public"]
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      business_sector: ["cafe", "restaurant", "retail", "services", "other"],
-      listing_status: [
-        "draft",
-        "published",
-        "archived",
-        "pending_review",
-        "rejected",
-      ],
-      user_role: ["project_owner", "investor", "accountant", "admin"],
-      verification_request_status: [
-        "requested",
-        "assigned",
-        "in_review",
-        "completed",
-        "rejected",
-      ],
-      verification_status: ["none", "pending", "verified", "rejected"],
-    },
-  },
-} as const
+export type Tables<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Row"]
+export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Insert"]
+export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
+  PublicSchema["Tables"][T]["Update"]
+export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T]
