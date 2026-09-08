@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #171a1c;
+  --color-verify: #0f6b66;
+  --color-amber: #d9762b;
+  --color-paper: #edeee9;
+  --color-grid: #c7cbc6;
+
+  /* Admin control panel — the mobile app's current identity (indigo accent,
+     Alexandria display, JetBrains Mono numerics), ported here rather than
+     changed in place on the tokens above: the public marketing site
+     (miyar.app root pages) still uses the legacy caliper/paper look on
+     purpose, and this is scoped to .admin-shell below instead of replacing
+     it globally. */
+  --color-admin-bg: #f5f5f1;
+  --color-admin-surface: #ffffff;
+  --color-admin-surface-2: #ededea;
+  --color-admin-border: #e7e6e1;
+  --color-admin-text: #14161a;
+  --color-admin-text-muted: #6b7075;
+  --color-admin-primary: #4338ca;
+  --color-admin-primary-pressed: #332caa;
+  --color-admin-on-primary: #ffffff;
+  --color-admin-success: #16803d;
+  --color-admin-success-tint: #e6f4ea;
+  --color-admin-danger: #dc2626;
+  --color-admin-danger-tint: #fde8e8;
+  --color-admin-amber: #b45309;
+  --color-admin-amber-tint: #fef3e2;
+}
+
+@theme inline {
+  --font-heading: var(--font-almarai);
+  --font-sans: var(--font-ibm-plex-sans-arabic);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-admin-display: var(--font-alexandria);
+  --font-admin-numeric: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+/* Everything under /admin and /admin-verify renders inside this wrapper.
+   Re-points the legacy tokens the existing admin pages already use
+   (text-ink, bg-paper, border-grid, text-verify, text-amber) to the new
+   identity's values — every admin page and every ui/* primitive built on
+   those tokens picks this up with zero per-file changes, since Tailwind v4
+   utilities read the CSS custom property at paint time rather than inlining
+   it. New admin-specific markup (nav, overview, reports, the OTP page) uses
+   the explicit --color-admin-* tokens above directly instead. */
+.admin-shell {
+  --color-ink: var(--color-admin-text);
+  --color-paper: var(--color-admin-bg);
+  --color-grid: var(--color-admin-border);
+  --color-verify: var(--color-admin-success);
+  --color-amber: var(--color-admin-amber);
+  --font-heading: var(--font-alexandria);
+  --font-mono: var(--font-jetbrains-mono);
+
+  background: var(--color-admin-bg);
+  color: var(--color-admin-text);
+  min-height: 100vh;
+}
+
+.grid-bg {
+  background-image: linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* Caliper brand mark: two opposing curved brackets, like a measuring tool's jaws. */
+.caliper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.caliper::before,
+.caliper::after {
+  content: "";
+  width: 9px;
+  height: 22px;
+  border: 2.5px solid currentColor;
+  border-radius: 2px;
+}
+.caliper::before {
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  transform: skewY(-6deg);
+}
+.caliper::after {
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  transform: skewY(6deg);
+}
