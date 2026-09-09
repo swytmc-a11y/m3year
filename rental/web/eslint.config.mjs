@@ -18,10 +18,6 @@ const eslintConfig = defineConfig([
     // Deno runtime source (Supabase Edge Functions) uses jsr:/npm: specifiers
     // that Next.js's Node-oriented ESLint/TS setup can't and shouldn't parse.
     "supabase/functions/**",
-    // The car rental platform is a separate project living in this repo
-    // with its own tsconfig, ESLint config and @/* root. Linting it from
-    // here resolves its imports against Miyar's src/ and fails.
-    "rental/**",
   ]),
 ]);
 

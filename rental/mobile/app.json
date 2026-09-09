@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "سمو",
+    "slug": "sumu-rental",
+    "scheme": "sumu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "backgroundColor": "#F5F5F1",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.miyar.rental",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.miyar.rental",
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F5F1",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F5F1",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#101014",
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 160
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4338CA"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يستخدم سمو صورك لرفع هويتك ورخصتك عند الحجز."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "supabaseUrl": "https://eaaayvxzohgcweyllsey.supabase.co",
+      "supabaseAnonKey": "sb_publishable_4rBDo5NWk9wG5jSfOuSwUg_UNu8GcLv"
+    },
+    "owner": "swe6mm"
+  }
+}
