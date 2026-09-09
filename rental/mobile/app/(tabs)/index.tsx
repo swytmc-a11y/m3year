@@ -66,7 +66,6 @@ export default function HomeScreen() {
   const [cars, setCars] = useState<(CarCardData & { distance: number | null })[] | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [error, setError] = useState(false);
-  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -95,15 +94,13 @@ export default function HomeScreen() {
         setCars((prev) => (mode === "append" && prev ? [...prev, ...rows] : rows));
         setHasMore(more);
         setError(false);
-        setErrorDetail(null);
       } catch (err) {
         if (token !== requestToken.current) return;
+        // Logged, not shown: the raw Postgres/PostgREST message is the only
+        // way to tell a dropped connection from an RLS denial, and it belongs
+        // in the error reporter rather than in front of a customer.
+        console.error("[cars] load failed", err);
         setError(true);
-        setErrorDetail(
-          err && typeof err === "object" && "message" in err
-            ? String((err as { message: unknown }).message)
-            : String(err),
-        );
       } finally {
         if (token === requestToken.current) {
           setLoading(false);
@@ -254,7 +251,7 @@ export default function HomeScreen() {
       ) : error ? (
         <EmptyState
           title="تعذّر تحميل السيارات"
-          description={errorDetail ? `تحقق من اتصالك وحاول مرة أخرى.\n\n${errorDetail}` : "تحقق من اتصالك وحاول مرة أخرى."}
+          description="تحقق من اتصالك وحاول مرة أخرى."
           action={<Button label="إعادة المحاولة" onPress={() => load(0, "replace")} />}
         />
       ) : (cars ?? []).length === 0 ? (

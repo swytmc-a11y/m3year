@@ -125,7 +125,7 @@ export default function SignUpScreen() {
                     إنشاء حساب جديد
                   </Text>
                   <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-                    اعرض مشروعك أو ابحث عن فرصة شراكة موثّقة.
+                    أنشئ حسابك لتحجز سيارتك في دقيقة.
                   </Text>
                 </View>
 

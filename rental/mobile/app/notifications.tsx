@@ -168,7 +168,7 @@ export default function NotificationsScreen() {
             <EmptyState
               icon={<BellIcon color={t.textMuted} size={20} />}
               title="لا إشعارات بعد"
-              description="ستصلك هنا تحديثات إعلاناتك ومحادثاتك."
+              description="ستصلك هنا تحديثات حجوزاتك وتذكيرات الاستلام والتسليم."
             />
           )
         }

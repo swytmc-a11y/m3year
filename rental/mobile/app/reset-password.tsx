@@ -20,7 +20,7 @@ import { fonts, radius } from "@/theme";
 type SessionState = "checking" | "ready" | "invalid";
 
 // The reset-password link Supabase emails opens this screen via the
-// `miyar://reset-password` deep link with a recovery access/refresh token in
+// `miyarrental://reset-password` deep link with a recovery access/refresh token in
 // the URL. The mobile client has detectSessionInUrl off (there's no browser
 // to auto-parse it), so the token has to be pulled out of the incoming URL
 // by hand and turned into a session before updateUser({ password }) has

@@ -36,27 +36,27 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = "https://miyear.site";
+const TITLE = "معيار — تأجير سيارات بسعر واضح شامل الضريبة";
 const DESCRIPTION =
-  "معيار توثّق الإيرادات الفعلية لمشروعك عبر شبكة محاسبين مستقلين، لترفع مصداقية عرضك أمام أي شريك ممول محتمل.";
+  "استأجر سيارتك من أقرب فرع بسعر شامل الضريبة وبلا رسوم مفاجئة عند الاستلام — وكلما طالت المدة انخفض سعر اليوم.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    default: TITLE,
     // Sub-pages set their own title and inherit the brand suffix, so a shared
-    // link reads as "اسم المشروع — معيار" instead of a bare page name.
+    // link reads as "اسم الصفحة — معيار" instead of a bare page name.
     template: "%s — معيار",
   },
   description: DESCRIPTION,
   applicationName: "معيار",
   keywords: [
     "معيار",
-    "شريك ممول",
-    "تمويل المشاريع",
-    "امتياز تجاري",
-    "فرنشايز",
-    "توثيق مالي",
-    "محاسب قانوني",
+    "تأجير سيارات",
+    "إيجار سيارة",
+    "تأجير سيارات يومي",
+    "تأجير سيارات شهري",
+    "حجز سيارة",
     "السعودية",
   ],
   alternates: { canonical: "/" },
@@ -65,12 +65,12 @@ export const metadata: Metadata = {
     siteName: "معيار",
     locale: "ar_SA",
     url: SITE_URL,
-    title: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    title: TITLE,
     description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول",
+    title: TITLE,
     description: DESCRIPTION,
   },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },

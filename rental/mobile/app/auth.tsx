@@ -137,7 +137,7 @@ export default function AuthScreen() {
             </View>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>معيار</Text>
             <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
-              منصة إعلانات وتوثيق فرص الشراكة
+              تأجير سيارات بسعر واضح
             </Text>
           </FadeInView>
 

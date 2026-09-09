@@ -65,7 +65,7 @@ export default function ReportProblemScreen() {
               label="وصف المشكلة"
               value={message}
               onChangeText={setMessage}
-              placeholder="مثال: عند فتح صفحة الإعلان تظهر شاشة فارغة..."
+              placeholder="مثال: عند فتح صفحة السيارة تظهر شاشة فارغة..."
               multiline
               maxLength={500}
             />

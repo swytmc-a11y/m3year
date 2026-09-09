@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: "miyar://reset-password",
+      redirectTo: "miyarrental://reset-password",
     });
     setLoading(false);
 

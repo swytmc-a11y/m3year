@@ -83,7 +83,7 @@ export function ProfileIcon({ focused, color, size = 24, activeFill = "none" }: 
   );
 }
 
-/** A compact "＋" glyph used by the create-listing action button. */
+/** A compact "＋" glyph. */
 export function PlusIcon({ color = colors.white, size = 20 }: { color?: ColorValue; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -205,7 +205,7 @@ export function FilterIcon({ color, size = 17 }: { color: ColorValue; size?: num
   );
 }
 
-/** Growth/opportunity glyph — used for "فرصة استثمارية". */
+/** Growth glyph. */
 export function OpportunityIcon({ color, size = 20 }: { color: ColorValue; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -219,7 +219,7 @@ export function OpportunityIcon({ color, size = 20 }: { color: ColorValue; size?
   );
 }
 
-/** Storefront glyph — used for "امتياز تجاري". */
+/** Storefront glyph — the branches tab and anything branch-related. */
 export function StorefrontIcon({ color, size = 20 }: { color: ColorValue; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

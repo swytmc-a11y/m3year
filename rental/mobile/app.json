@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "معيار",
-    "slug": "miyar",
-    "scheme": "miyar",
+    "slug": "miyar-rental",
+    "scheme": "miyarrental",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,21 +12,13 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "updates": {
-      "enabled": true,
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/3181f2de-2100-4965-9c82-a20feb37668f",
-      "requestHeaders": {
-        "expo-channel-name": "production"
-      }
-    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miyar.app",
-      "buildNumber": "4"
+      "bundleIdentifier": "com.miyar.rental",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.miyar.app",
+      "package": "com.miyar.rental",
       "adaptiveIcon": {
         "backgroundColor": "#F5F5F1",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -74,9 +66,6 @@
     },
     "extra": {
       "router": {},
-      "eas": {
-        "projectId": "3181f2de-2100-4965-9c82-a20feb37668f"
-      },
       "supabaseUrl": "https://eaaayvxzohgcweyllsey.supabase.co",
       "supabaseAnonKey": "sb_publishable_4rBDo5NWk9wG5jSfOuSwUg_UNu8GcLv"
     },

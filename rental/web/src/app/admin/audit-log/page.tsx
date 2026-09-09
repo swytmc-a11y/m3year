@@ -29,7 +29,7 @@ export default async function AdminAuditLogPage() {
       </div>
       <h1 className="mb-2 font-heading text-2xl font-extrabold text-admin-text">سجل العمليات</h1>
       <p className="mb-8 text-[13px] text-admin-text-muted">
-        كل إجراء إداري مؤثر — موافقة، رفض، حذف، توثيق، منح صلاحيات — بمن قام به ومتى.
+        كل إجراء إداري مؤثر — تأكيد حجز، رفض، إلغاء، استرداد، تعديل أسطول، منح صلاحيات — بمن قام به ومتى.
       </p>
 
       {error ? (

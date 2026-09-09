@@ -27,15 +27,15 @@ export default function AboutScreen() {
         <Card style={{ alignItems: "center", gap: 12, paddingVertical: 32 }}>
           <Logo size={24} />
           <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center", lineHeight: 21, maxWidth: 280 }}>
-            منصة إعلانات وتوثيق للمشاريع التجارية والامتيازات في السعودية — نربط أصحاب المشاريع بالمستثمرين، ونوثّق الأرقام عبر محاسبين مرخّصين.
+            تأجير سيارات في السعودية بسعر واضح من أول لحظة — تختار سيارتك ومدتك من أقرب فرع لك، وكلما طالت المدة انخفض سعر اليوم.
           </Text>
           <Text style={{ fontFamily: fonts.numeric, fontSize: 11.5, color: t.textMuted }}>الإصدار {version}</Text>
         </Card>
 
         <Card style={{ padding: 20, gap: 14 }}>
-          <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>إخلاء مسؤولية</Text>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>ما تحتاج معرفته</Text>
           <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-            معيار منصة إعلانات وتوثيق فقط، وليست طرفًا في أي صفقة. توثيق الأرقام لا يشكّل ضمانًا أو نصيحة استثمارية — تحقّق دائمًا بنفسك وراجع محاميًا قبل توقيع أي عقد.
+            الأسعار المعروضة شاملة ضريبة القيمة المضافة. لا نستوفي مبلغ التأمين عبر التطبيق — إن طلبه الفرع فيُسوّى عند الاستلام ويُعاد عند التسليم. يلزم لاستلام السيارة رخصة قيادة سارية وهوية باسم المستأجر نفسه.
           </Text>
         </Card>
 

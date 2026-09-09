@@ -1,13 +1,14 @@
 import { ImageResponse } from "next/og";
 
 // The link preview card. Without this, every share of a معيار link on
-// WhatsApp or X rendered as a bare URL with no image and no identity — for a
-// platform whose product is trust, that is the worst possible first impression.
+// WhatsApp or X rendered as a bare URL with no image and no identity — the
+// worst possible first impression for a link someone is deciding to trust
+// with a booking.
 //
 // Generated rather than shipped as a static PNG so it stays in sync with the
 // brand colours defined in globals.css.
 
-export const alt = "معيار — منصة توثيق المشاريع الباحثة عن شريك ممول";
+export const alt = "معيار — تأجير سيارات بسعر واضح شامل الضريبة";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -97,7 +98,7 @@ export default async function OpengraphImage() {
             display: "flex",
           }}
         >
-          توثيق مالي مستقل للمشاريع الباحثة عن شريك ممول
+          تأجير سيارات بسعر واضح شامل الضريبة
         </div>
 
         <div

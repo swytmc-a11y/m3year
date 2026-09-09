@@ -4,19 +4,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { Button, Tappable } from "@/components/kit";
 import { LogoMark } from "@/components/logo";
-import { OpportunityIcon, StorefrontIcon, ShieldIcon, ChatIcon } from "@/components/icons";
+import { SearchIcon, CalculatorIcon, ShieldIcon, StorefrontIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
 
 /**
  * First-run introduction.
  *
- * The one thing a new user cannot guess from the UI is what Miyar actually
- * does at the end: it is an ads-and-verification platform, and the deal
- * itself happens off-platform between the two parties. That was previously
- * stated only in one line at the bottom of a listing page, which is far too
- * late — someone could reasonably assume the app holds the money. The last
- * slide says it plainly, before anyone signs up.
+ * The things a customer cannot guess from the UI are the ones that decide
+ * whether they trust the price: that the rate drops as the rental gets
+ * longer, that what they see already includes VAT, and that a deposit may
+ * still be arranged at the branch counter even though nothing extra is
+ * charged here. Saying those before signup is the point — finding them at
+ * checkout is what makes a rental feel like a bait price.
  *
  * Rendered as an overlay by the root layout rather than as a route, matching
  * how AppSplash works: it must appear regardless of auth state and without
@@ -33,27 +33,27 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     key: "browse",
-    icon: (c) => <OpportunityIcon color={c} size={30} />,
-    title: "فرص استثمارية حقيقية",
-    body: "تصفّح مشاريع قائمة تعرض حصة للبيع، بأرقامها ومدينتها وقطاعها — كل ما تحتاجه للمقارنة قبل أن تتواصل.",
+    icon: (c) => <SearchIcon color={c} size={30} />,
+    title: "اختر سيارتك في دقيقة",
+    body: "تصفّح السيارات المتاحة فعلًا بسعر اليوم وموقع الفرع. رتّبها بالأرخص أو بالأقرب لك، أو بالاثنين معًا.",
   },
   {
-    key: "franchises",
-    icon: (c) => <StorefrontIcon color={c} size={30} />,
-    title: "وامتيازات تجارية للتوسّع",
-    body: "علامات تجارية تطرح امتيازها: رسوم الامتياز، الاستثمار المبدئي، الدعم والتدريب، ومدة العقد.",
+    key: "pricing",
+    icon: (c) => <CalculatorIcon color={c} size={30} />,
+    title: "كلما طالت المدة قلّ سعر اليوم",
+    body: "للأيام سعر، وللأسبوع سعر أقل، وللشهر أقل. تختار مدتك فيُحتسب السعر المناسب لها تلقائيًا قبل أن تدفع.",
   },
   {
-    key: "trust",
+    key: "vat",
     icon: (c) => <ShieldIcon color={c} size={30} />,
-    title: "توثيق مالي ومؤشر معيار",
-    body: "الإعلان الموثّق راجع أرقامه محاسب معتمد. ومؤشر معيار يلخّص جودة البيانات ومدى اكتمالها في تقدير واحد.",
+    title: "السعر الظاهر شامل الضريبة",
+    body: "ما تراه في صفحة السيارة هو ما تدفعه — بلا رسوم تظهر عند الاستلام. أي مبلغ تأمين يُوضّح لك مسبقًا ويُسوّى في الفرع.",
   },
   {
-    key: "deal",
-    icon: (c) => <ChatIcon focused={false} color={c} size={30} />,
-    title: "التفاوض بينك وبين الطرف الآخر",
-    body: "تتواصلان مباشرة داخل التطبيق. معيار منصة إعلانات وتوثيق فقط — الصفقة نفسها تتم بينكما خارج المنصة، ولا نحتفظ بأي مبالغ.",
+    key: "branch",
+    icon: (c) => <StorefrontIcon color={c} size={30} />,
+    title: "تستلم من الفرع مباشرة",
+    body: "بعد تأكيد الحجز تجد بيانات الفرع ورقمه في حجزك، وتقدر تتواصل معه مباشرة قبل موعد الاستلام.",
   },
 ];
 
