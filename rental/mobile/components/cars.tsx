@@ -3,9 +3,9 @@ import Animated from "react-native-reanimated";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Tappable, Card, staggerEnter } from "@/components/kit";
-import { CarIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
+import { carImageSource } from "@/lib/car-images";
 import {
   CAR_CATEGORY_LABELS,
   TRANSMISSION_LABELS,
@@ -56,41 +56,31 @@ export function CarCard({
     <Animated.View entering={staggerEnter(Math.min(index, 8))}>
       <Tappable onPress={() => router.push(`/cars/${car.id}`)} haptic="light">
         <Card style={{ padding: 0, overflow: "hidden" }}>
-          {car.cover_image ? (
+          <View style={{ backgroundColor: "#F0F3F0", paddingHorizontal: 18, paddingTop: 18 }}>
+            <View
+              style={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                zIndex: 2,
+                borderRadius: radius.sm,
+                paddingHorizontal: 9,
+                paddingVertical: 4,
+                backgroundColor: t.primary,
+              }}
+            >
+              <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 10.5, color: t.onPrimary }}>
+                متاحة الآن
+              </Text>
+            </View>
             <Image
-              source={{ uri: car.cover_image }}
-              style={{ width: "100%", aspectRatio: 16 / 9, backgroundColor: t.surface2 }}
-              contentFit="cover"
+              source={carImageSource(car)}
+              style={{ width: "100%", aspectRatio: 16 / 9 }}
+              contentFit="contain"
               transition={200}
               cachePolicy="memory-disk"
             />
-          ) : (
-            // A photo the operator hasn't uploaded yet is not an error, so the
-            // placeholder carries the car's own name rather than announcing an
-            // absence — the card still reads as a car, not a broken image.
-            <View
-              style={{
-                width: "100%",
-                aspectRatio: 16 / 9,
-                backgroundColor: t.surface2,
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-              }}
-            >
-              <CarIcon color={t.textMuted} size={44} />
-              <Text
-                style={{
-                  fontFamily: fonts.bodyMedium,
-                  fontSize: 12.5,
-                  color: t.textMuted,
-                  textAlign: "center",
-                }}
-              >
-                {carTitle(car)}
-              </Text>
-            </View>
-          )}
+          </View>
 
           <View style={{ padding: 18 }}>
             <View
@@ -129,7 +119,7 @@ export function CarCard({
                   {formatSar(Number(car.daily_price))}
                 </Text>
                 <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted, marginTop: 2 }}>
-                  لليوم · شامل الضريبة
+                  / يوم · شامل الضريبة
                 </Text>
               </View>
             </View>

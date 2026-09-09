@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Button, Card, IconButton, Skeleton, Tappable, useToast } from "@/components/kit";
-import { ChevronBackIcon, HeartIcon, CarIcon } from "@/components/icons";
+import { ChevronBackIcon, HeartIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import { fetchCarDetail, type CarDetail, type CarAddon } from "@/lib/car-detail";
@@ -18,6 +18,7 @@ import {
   tierSavingPercent,
 } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
+import { carImageSource } from "@/lib/car-images";
 
 export default function CarDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -74,7 +75,9 @@ export default function CarDetailScreen() {
     );
   }
 
-  const images = car.images?.length ? car.images : car.cover_image ? [car.cover_image] : [];
+  const images = car.images?.length
+    ? car.images.map((uri) => ({ uri }))
+    : [carImageSource(car)];
   const branch = car.branch;
 
   return (
@@ -108,34 +111,18 @@ export default function CarDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        {images.length > 0 ? (
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-            {images.map((uri) => (
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+            {images.map((source, index) => (
               <Image
-                key={uri}
-                source={{ uri }}
-                style={{ width, aspectRatio: 16 / 9, backgroundColor: t.surface2 }}
-                contentFit="cover"
+                key={index}
+                source={source}
+                style={{ width, aspectRatio: 16 / 9, backgroundColor: "#F0F3F0" }}
+                contentFit="contain"
                 transition={200}
                 cachePolicy="memory-disk"
               />
             ))}
-          </ScrollView>
-        ) : (
-          // Matches the browse card: a car with no photo yet still opens onto
-          // something that reads as a car, not a page that starts mid-air.
-          <View
-            style={{
-              width,
-              aspectRatio: 16 / 9,
-              backgroundColor: t.surface2,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <CarIcon color={t.textMuted} size={56} />
-          </View>
-        )}
+        </ScrollView>
 
         <View style={{ padding: 18, gap: 16 }}>
           <View>

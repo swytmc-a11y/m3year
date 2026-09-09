@@ -1,26 +1,26 @@
 {
   "expo": {
-    "name": "معيار",
-    "slug": "miyar-rental",
-    "scheme": "miyarrental",
+    "name": "سمو",
+    "slug": "smo-rental",
+    "scheme": "smorental",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "backgroundColor": "#F5F5F1",
+    "backgroundColor": "#F7F9F8",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miyar.rental",
+      "bundleIdentifier": "com.smo.rental",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.miyar.rental",
+      "package": "com.smo.rental",
       "adaptiveIcon": {
-        "backgroundColor": "#F5F5F1",
+        "backgroundColor": "#F7F9F8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -37,7 +37,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F5F5F1",
+          "backgroundColor": "#F7F9F8",
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "dark": {
@@ -51,13 +51,13 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#4338CA"
+          "color": "#D5F46B"
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "يستخدم معيار صورك لإضافتها إلى إعلان مشروعك."
+          "photosPermission": "يستخدم سمو صورك لإرفاق مستندات الحجز."
         }
       ]
     ],

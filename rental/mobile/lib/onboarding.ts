@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * The key is versioned so a materially different intro can be shown again
  * later without clashing with an old "seen" flag.
  */
-const KEY = "miyar.onboarding.seen.v1";
+const KEY = "smo.onboarding.seen.v1";
 
 export async function hasSeenOnboarding(): Promise<boolean> {
   try {

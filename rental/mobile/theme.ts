@@ -1,20 +1,20 @@
-// Miyar (معيار) brand system.
+// Smo (سمو) brand system.
 //
 // `colors`/`fonts` below are the legacy static palette — kept unchanged so
 // screens not yet migrated to the new identity keep working. New screens
 // should use `useTheme()` (contexts/theme.tsx) for the light/dark-aware
 // `palette` tokens defined here instead.
 export const colors = {
-  ink: "#171A1C", // primary text / dark surfaces
-  verify: "#0F6B66", // "موثّق" badge, success
-  amber: "#D9762B", // critical numbers, primary buttons accent
-  paper: "#EDEEE9", // page background (engineering paper)
-  grid: "#C7CBC6", // hairlines / borders
+  ink: "#142C2D",
+  verify: "#5E7A36",
+  amber: "#D5F46B",
+  paper: "#F7F9F8",
+  grid: "#E5EAE7",
   white: "#FFFFFF",
   danger: "#B42318",
   dangerBg: "#FEECEB",
-  mutedText: "#75807C",
-  subtleText: "#4B5250",
+  mutedText: "#6D797A",
+  subtleText: "#4D6054",
 };
 
 export const fonts = {
@@ -48,7 +48,7 @@ export const spacing = (n: number) => n * 4;
 
 // ---- New identity: light/dark design tokens ----
 //
-// One brand accent (indigo) used only for interactive/brand elements.
+// Smo uses a deep evergreen base and a clear lime action colour.
 // "success" is a dedicated, separate color for the "موثّق" (verified) trust
 // state — it must never double as the brand accent, so a verified badge and
 // a "tap here" button never compete for the same color meaning.
@@ -90,46 +90,46 @@ const shadow = (
 
 export const lightTokens = {
   mode: "light" as const,
-  bg: "#F5F5F1",
+  bg: "#F7F9F8",
   surface: "#FFFFFF",
-  surface2: "#EDEDE8",
-  border: "#E7E6E1",
-  text: "#14161A",
-  textMuted: "#6B7075",
-  primary: "#4338CA",
-  primaryPressed: "#332CAA",
-  onPrimary: "#FFFFFF",
-  success: "#16803D",
-  successTint: "#E6F4EA",
+  surface2: "#EDF3E9",
+  border: "#E5EAE7",
+  text: "#142C2D",
+  textMuted: "#6D797A",
+  primary: "#D5F46B",
+  primaryPressed: "#C3E058",
+  onPrimary: "#142C2D",
+  success: "#5E7A36",
+  successTint: "#EBF2DD",
   danger: "#DC2626",
   dangerTint: "#FDE8E8",
   white: "#FFFFFF",
-  shadowSm: shadow("#14161A", 0.06, 3, 2),
-  shadowMd: shadow("#14161A", 0.08, 10, 5),
-  shadowLg: shadow("#14161A", 0.16, 20, 10),
-  shadowPrimary: shadow("#4338CA", 0.25, 14, 8),
+  shadowSm: shadow("#142C2D", 0.05, 4, 2),
+  shadowMd: shadow("#142C2D", 0.08, 12, 5),
+  shadowLg: shadow("#142C2D", 0.14, 22, 10),
+  shadowPrimary: shadow("#8FAE37", 0.22, 14, 8),
 };
 
 export const darkTokens: ThemeTokens = {
   mode: "dark",
-  bg: "#101014",
-  surface: "#1B1C20",
-  surface2: "#232429",
-  border: "#2E2F34",
-  text: "#EDEDE8",
-  textMuted: "#9A9D9F",
-  primary: "#7C74E8",
-  primaryPressed: "#9A93EE",
-  onPrimary: "#101014",
-  success: "#34D399",
-  successTint: "#123322",
+  bg: "#0E2021",
+  surface: "#142C2D",
+  surface2: "#203B3C",
+  border: "#315052",
+  text: "#F7F9F8",
+  textMuted: "#B8C7C2",
+  primary: "#D5F46B",
+  primaryPressed: "#E2FA8F",
+  onPrimary: "#142C2D",
+  success: "#D5F46B",
+  successTint: "#294438",
   danger: "#F87171",
   dangerTint: "#3A1B1B",
   white: "#FFFFFF",
   shadowSm: shadow("#000000", 0.3, 3, 2),
   shadowMd: shadow("#000000", 0.35, 10, 5),
   shadowLg: shadow("#000000", 0.45, 20, 10),
-  shadowPrimary: shadow("#7C74E8", 0.35, 14, 8),
+  shadowPrimary: shadow("#D5F46B", 0.22, 14, 8),
 };
 
 // Documented motion constants (used by shared animated components) so every

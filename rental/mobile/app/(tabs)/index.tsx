@@ -7,6 +7,7 @@ import {
   FlatList,
   ScrollView,
   RefreshControl,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,6 +20,7 @@ import {
   IconButton,
   Sheet,
   Skeleton,
+  Tappable,
   useRefreshTint,
   useTabBarSpacing,
   useToast,
@@ -52,6 +54,7 @@ export default function HomeScreen() {
   const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
   const toast = useToast();
+  const { width } = useWindowDimensions();
 
   const [filters, setFilters] = useState<CarFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState<CarFilters>(EMPTY_FILTERS);
@@ -163,87 +166,173 @@ export default function HomeScreen() {
   }
 
   const activeFilterCount = countActive(filters);
+  const columns = width >= 1100 ? 3 : width >= 700 ? 2 : 1;
+  const contentPadding = width >= 700 ? 28 : 18;
+  const cardWidth = (Math.min(width, 1260) - contentPadding * 2 - 18 * (columns - 1)) / columns;
+  const selectedBranch = branches.find((branch) => branch.id === filters.branchId);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 18,
-          paddingVertical: 10,
-        }}
-      >
-        <Logo />
-        <IconButton accessibilityLabel="الإشعارات" onPress={() => router.push("/notifications")}>
-          <BellIcon color={t.text} />
-          {unreadCount > 0 ? (
-            <View
-              style={{
-                position: "absolute",
-                top: 6,
-                left: 6,
-                minWidth: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: t.primary,
-              }}
-            />
-          ) : null}
-        </IconButton>
-      </View>
-
-      <View style={{ paddingHorizontal: 18, gap: 12 }}>
+      <View style={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding }}>
         <View
           style={{
             flexDirection: "row-reverse",
             alignItems: "center",
-            gap: 10,
+            justifyContent: "space-between",
+            paddingVertical: width >= 700 ? 16 : 10,
+          }}
+        >
+          <Logo size={width >= 700 ? 35 : 29} />
+          <IconButton accessibilityLabel="الإشعارات" badge={unreadCount > 0} onPress={() => router.push("/notifications")}>
+            <BellIcon color={t.text} />
+          </IconButton>
+        </View>
+
+        <View
+          style={{
+            minHeight: width >= 700 ? 238 : 250,
+            backgroundColor: "#142C2D",
+            borderRadius: width >= 700 ? 24 : 20,
+            paddingHorizontal: width >= 700 ? 36 : 22,
+            paddingTop: width >= 700 ? 30 : 24,
+            paddingBottom: 58,
+            overflow: "hidden",
+          }}
+        >
+          <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: "#D5F46B", textAlign: "right" }}>
+            خيارات أكثر، وطريق أوضح
+          </Text>
+          <Text
+            style={{
+              maxWidth: 600,
+              fontFamily: fonts.displayBold,
+              fontSize: width >= 700 ? 36 : 27,
+              lineHeight: width >= 700 ? 53 : 42,
+              color: "#FFFFFF",
+              textAlign: "right",
+              marginTop: 5,
+            }}
+          >
+            رحلتك تبدأ من <Text style={{ color: "#D5F46B" }}>اختيارك</Text>
+          </Text>
+          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: "#C1CFCA", textAlign: "right", marginTop: 5 }}>
+            قارن السيارات المتاحة واحجزها مباشرة من أقرب فرع.
+          </Text>
+          {width >= 700 ? (
+            <Text
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: 26,
+                top: -18,
+                fontFamily: fonts.displayBold,
+                fontSize: 150,
+                color: "#244041",
+                transform: [{ rotate: "-7deg" }],
+              }}
+            >
+              سمو
+            </Text>
+          ) : null}
+        </View>
+
+        <View
+          style={{
+            marginHorizontal: width >= 700 ? 22 : 12,
+            marginTop: -34,
+            padding: 12,
+            borderRadius: 15,
             backgroundColor: t.surface,
             borderWidth: 1,
             borderColor: t.border,
-            borderRadius: radius.lg,
-            paddingHorizontal: 14,
-            height: 46,
+            ...t.shadowMd,
+            gap: 10,
           }}
         >
-          <SearchIcon color={t.textMuted} />
-          <TextInput
-            value={filters.search}
-            onChangeText={(v) => setFilters((f) => ({ ...f, search: v }))}
-            placeholder="ابحث بالماركة أو الموديل"
-            placeholderTextColor={t.textMuted}
-            style={{
-              flex: 1,
-              fontFamily: fonts.body,
-              fontSize: 13.5,
-              color: t.text,
-              textAlign: "right",
-            }}
-          />
+          <View style={{ flexDirection: width >= 700 ? "row-reverse" : "column", gap: 10 }}>
+            <View
+              style={{
+                flex: 1.4,
+                flexDirection: "row-reverse",
+                alignItems: "center",
+                gap: 10,
+                borderWidth: 1,
+                borderColor: t.border,
+                borderRadius: radius.lg,
+                paddingHorizontal: 14,
+                minHeight: 48,
+              }}
+            >
+              <SearchIcon color={t.textMuted} />
+              <TextInput
+                value={filters.search}
+                onChangeText={(value) => setFilters((current) => ({ ...current, search: value }))}
+                placeholder="ابحث بالماركة أو الموديل"
+                placeholderTextColor={t.textMuted}
+                accessibilityLabel="البحث عن سيارة"
+                style={{ flex: 1, fontFamily: fonts.body, fontSize: 13.5, color: t.text, textAlign: "right" }}
+              />
+            </View>
+            <Tappable
+              onPress={() => { setDraft(filters); setFiltersOpen(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="اختيار الفرع والفلاتر"
+              style={{ flex: 1 }}
+            >
+              <View
+                style={{
+                  minHeight: 48,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  borderRadius: radius.lg,
+                  paddingHorizontal: 14,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.textMuted, textAlign: "right" }}>موقع الاستلام</Text>
+                <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: t.text, textAlign: "right", marginTop: 1 }}>
+                  {selectedBranch ? `${selectedBranch.name} — ${selectedBranch.city}` : "جميع الفروع"}
+                </Text>
+              </View>
+            </Tappable>
+            <View style={{ minWidth: width >= 700 ? 150 : undefined }}>
+              <Button
+                label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "عرض الفلاتر"}
+                fullWidth
+                onPress={() => { setDraft(filters); setFiltersOpen(true); }}
+              />
+            </View>
+          </View>
         </View>
 
-        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
-          <Chip
-            label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "الفلاتر"}
-            active={activeFilterCount > 0}
-            onPress={() => {
-              setDraft(filters);
-              setFiltersOpen(true);
-            }}
-          />
-          <Chip label="الأرخص" active={cheapest} onPress={() => setCheapest((v) => !v)} />
-          <Chip
-            label={locating ? "جارٍ تحديد موقعك..." : "الأقرب لي"}
-            active={nearest}
-            onPress={onToggleNearest}
-          />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 18 }}>
+          <Chip label="كل السيارات" active={!filters.category} onPress={() => setFilters((current) => ({ ...current, category: null }))} />
+          {CAR_CATEGORY_OPTIONS.map((option) => (
+            <Chip
+              key={option.value}
+              label={option.label}
+              active={filters.category === option.value}
+              onPress={() => setFilters((current) => ({ ...current, category: current.category === option.value ? null : option.value }))}
+            />
+          ))}
+          <Chip label="الأرخص" active={cheapest} onPress={() => setCheapest((value) => !value)} />
+          <Chip label={locating ? "جارٍ تحديد الموقع..." : "الأقرب لي"} active={nearest} onPress={onToggleNearest} />
+        </ScrollView>
+
+        <View style={{ flexDirection: "row-reverse", alignItems: "flex-end", justifyContent: "space-between", paddingBottom: 12 }}>
+          <View>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: width >= 700 ? 23 : 19, color: t.text, textAlign: "right" }}>
+              سيارات تناسب وجهتك
+            </Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right", marginTop: 3 }}>
+              الأسعار المعروضة شاملة ضريبة القيمة المضافة
+            </Text>
+          </View>
         </View>
       </View>
 
       {loading ? (
-        <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }}>
+        <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding, gap: 16 }}>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} width="100%" height={260} radius={radius.xl} />
           ))}
@@ -266,11 +355,16 @@ export default function HomeScreen() {
         />
       ) : (
         <FlatList
+          key={`cars-${columns}`}
           data={cars ?? []}
+          numColumns={columns}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: tabSpacing }}
+          contentContainerStyle={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding, gap: 18, paddingBottom: tabSpacing }}
+          columnWrapperStyle={columns > 1 ? { gap: 18 } : undefined}
           renderItem={({ item, index }) => (
-            <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+            <View style={{ flex: 1, maxWidth: cardWidth }}>
+              <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+            </View>
           )}
           refreshControl={
             <RefreshControl

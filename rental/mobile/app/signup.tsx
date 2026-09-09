@@ -98,7 +98,7 @@ export default function SignUpScreen() {
             >
               <LogoMark size={44} />
             </View>
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 22, color: t.text }}>انضم إلى معيار</Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 22, color: t.text }}>انضم إلى سمو</Text>
           </FadeInView>
 
           <FadeInView delay={120} style={{ gap: 18, width: "100%", maxWidth: 400, alignSelf: "center" }}>

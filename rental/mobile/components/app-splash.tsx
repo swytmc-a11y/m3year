@@ -51,8 +51,8 @@ export function AppSplash({ onDone }: { onDone: () => void }) {
       <View style={styles.center}>
         <Animated.View style={[{ alignItems: "center", gap: 18 }, contentStyle]}>
           <LogoMark size={96} />
-          <Text style={[styles.wordmark, { color: t.text }]}>معيار</Text>
-          <Text style={[styles.tagline, { color: t.textMuted }]}>تأجير سيارات بسعر واضح</Text>
+          <Text style={[styles.wordmark, { color: t.text }]}>سمو</Text>
+          <Text style={[styles.tagline, { color: t.textMuted }]}>وجهتك تبدأ باختيارك</Text>
         </Animated.View>
       </View>
     </Animated.View>

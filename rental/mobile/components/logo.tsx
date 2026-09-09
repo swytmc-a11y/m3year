@@ -1,43 +1,48 @@
-import { View, Text, Image } from "react-native";
+import { View, Text } from "react-native";
 import { fonts } from "@/theme";
 import { useTheme } from "@/contexts/theme";
 
-const MARK_LIGHT = require("../assets/logo-mark.png");
-const MARK_DARK = require("../assets/logo-mark-dark.png");
-
-/**
- * The brand mark on its own (the measuring brackets), sourced from the real
- * logo. Two pre-tinted assets (not one dynamically-tinted image) because a
- * flat indigo #4338CA reads too muted against the near-black dark surface —
- * dark mode uses the lighter #7C74E8 that matches darkTokens.primary.
- */
-export function LogoMark({ size = 28 }: { size?: number }) {
-  const { isDark } = useTheme();
+/** The three rising bars are Smo's compact route/forward-motion mark. */
+export function LogoMark({ size = 28, inverted = false }: { size?: number; inverted?: boolean }) {
+  const { t } = useTheme();
+  const color = inverted ? t.primary : t.text;
   return (
-    <Image
-      source={isDark ? MARK_DARK : MARK_LIGHT}
-      style={{ width: size, height: size }}
-      resizeMode="contain"
-      accessibilityIgnoresInvertColors
-    />
+    <View
+      accessibilityLabel="شعار سمو"
+      style={{
+        width: size,
+        height: size,
+        flexDirection: "row",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        gap: Math.max(2, size * 0.1),
+        transform: [{ skewX: "-14deg" }],
+      }}
+    >
+      {[0.5, 0.76, 1].map((height, index) => (
+        <View
+          key={index}
+          style={{
+            width: size * 0.2,
+            height: size * height,
+            borderRadius: Math.max(1, size * 0.06),
+            backgroundColor: color,
+          }}
+        />
+      ))}
+    </View>
   );
 }
 
-/** Brand mark + "معيار" wordmark, laid out for RTL. */
-export function Logo({ size = 26 }: { size?: number }) {
+export function Logo({ size = 30, inverted = false }: { size?: number; inverted?: boolean }) {
   const { t } = useTheme();
+  const color = inverted ? t.white : t.text;
   return (
-    <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}>
-      <Text
-        style={{
-          fontFamily: fonts.displayBold,
-          fontSize: size,
-          color: t.text,
-        }}
-      >
-        معيار
+    <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 9 }}>
+      <Text style={{ fontFamily: fonts.displayBold, fontSize: size, color, letterSpacing: -1 }}>
+        سمو
       </Text>
-      <LogoMark size={size * 0.95} />
+      <LogoMark size={size * 0.82} inverted={inverted} />
     </View>
   );
 }

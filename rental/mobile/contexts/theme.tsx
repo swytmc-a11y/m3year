@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Appearance } from "react-native";
 import { darkTokens, lightTokens, type ThemeTokens } from "@/theme";
 
-const STORAGE_KEY = "miyar.themeMode";
+const STORAGE_KEY = "smo.themeMode";
 
 type ThemeMode = "light" | "dark" | "system";
 

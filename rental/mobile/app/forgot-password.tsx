@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: "miyarrental://reset-password",
+      redirectTo: "smorental://reset-password",
     });
     setLoading(false);
 
@@ -72,7 +72,7 @@ export default function ForgotPasswordScreen() {
             >
               <LogoMark size={52} />
             </View>
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>معيار</Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>سمو</Text>
           </FadeInView>
 
           <FadeInView delay={120} style={{ gap: 20, width: "100%", maxWidth: 400, alignSelf: "center" }}>

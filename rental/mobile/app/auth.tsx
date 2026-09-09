@@ -135,7 +135,7 @@ export default function AuthScreen() {
             >
               <LogoMark size={52} />
             </View>
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>معيار</Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>سمو</Text>
             <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>
               تأجير سيارات بسعر واضح
             </Text>
