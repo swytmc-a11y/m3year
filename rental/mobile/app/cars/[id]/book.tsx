@@ -49,7 +49,11 @@ export default function BookCarScreen() {
   const [loading, setLoading] = useState(true);
 
   const [startDate, setStartDate] = useState(isoDay(1));
-  const [endDate, setEndDate] = useState(isoDay(4));
+  // Genuinely nullable: "no return date chosen yet" and "return date equals
+  // pickup date" must stay distinguishable, or the calendar cannot tell a
+  // fresh pickup pick from a completed range and starts a new selection on
+  // every second tap instead of completing the one in progress.
+  const [endDate, setEndDate] = useState<string | null>(isoDay(4));
   const [pickupTime, setPickupTime] = useState("10:00");
   const [returnTime, setReturnTime] = useState("10:00");
   const [selected, setSelected] = useState<string[]>([]);
@@ -58,7 +62,7 @@ export default function BookCarScreen() {
   // Shown the moment the range is picked, without waiting for the server
   // quote — the customer should not have to scroll to the total to learn how
   // long they just selected.
-  const selectedDays = endDate > startDate ? daysBetween(startDate, endDate) : 0;
+  const selectedDays = endDate && endDate > startDate ? daysBetween(startDate, endDate) : 0;
 
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -88,6 +92,11 @@ export default function BookCarScreen() {
   // figure shown is the figure that will be charged.
   const reprice = useCallback(async () => {
     if (!car) return;
+    if (!endDate) {
+      setQuote(null);
+      setQuoteError(null);
+      return;
+    }
     if (endDate <= startDate) {
       setQuote(null);
       setQuoteError("اختر تاريخ تسليم بعد تاريخ الاستلام.");
@@ -126,7 +135,9 @@ export default function BookCarScreen() {
   }
 
   async function onSubmit() {
-    if (!car || !quote) return;
+    // A quote only ever exists for a complete, valid range, so endDate is
+    // guaranteed non-null here — but TypeScript can't see that correlation.
+    if (!car || !quote || !endDate) return;
     setSubmitting(true);
     const res = await createBooking({
       carId: car.id,
@@ -174,11 +185,13 @@ export default function BookCarScreen() {
             range={{ start: startDate, end: endDate }}
             onChange={(next) => {
               setStartDate(next.start);
-              // While only the pickup day is chosen there is no period to
-              // price yet, so the return date follows the pickup and the
-              // summary below asks for the second tap instead of quoting a
-              // number that is about to change.
-              setEndDate(next.end ?? next.start);
+              // Passed through as-is, null included: the calendar tells a
+              // fresh pickup pick (end: null) apart from a completed range
+              // only if that null survives the round trip. Coercing it to
+              // the pickup date here previously made every second tap look
+              // like a already-complete range and start over instead of
+              // completing it.
+              setEndDate(next.end);
             }}
             unavailable={unavailable}
           />
@@ -191,7 +204,7 @@ export default function BookCarScreen() {
               gap: 8,
             }}
           >
-            {selectedDays > 0 ? (
+            {endDate && selectedDays > 0 ? (
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
                 <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: t.text }}>
                   {startDate} ← {endDate}
@@ -202,7 +215,7 @@ export default function BookCarScreen() {
               </View>
             ) : (
               <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
-                اختر تاريخ الاستلام ثم تاريخ التسليم من التقويم.
+                {endDate ? "اختر تاريخ تسليم بعد تاريخ الاستلام." : "اختر تاريخ الاستلام ثم تاريخ التسليم من التقويم."}
               </Text>
             )}
             <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>
