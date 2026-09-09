@@ -170,3 +170,5 @@ export function tierSavingPercent(dailyPrice: number, tierRate: number): number 
 export function vatFromInclusive(total: number, vatRate: number): number {
   return Math.round((total - total / (1 + vatRate)) * 100) / 100;
 }
+
+export const SUPPORT_EMAIL = "support@miyear.site";

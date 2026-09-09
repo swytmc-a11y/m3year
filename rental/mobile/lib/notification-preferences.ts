@@ -1,62 +1,52 @@
 import { supabase } from "@/lib/supabase";
 
 /**
- * Which categories of notification the user wants.
+ * Which categories of notification the customer wants.
  *
- * Enforcement is server-side (a trigger on notifications — migration 0050),
- * not here: turning a category off has to hold for notifications produced by
- * database triggers and Edge Functions the app never runs.
- *
- * No row means "everything on", so a user who has never opened this screen
- * keeps the original behaviour and no backfill was needed.
+ * No row means "everything on", so someone who never opens this screen keeps
+ * the default behaviour and no backfill is needed.
  */
 
 export type NotificationPreferences = {
-  new_message: boolean;
-  listing_status: boolean;
-  verification: boolean;
-  promotion: boolean;
-  saved_search: boolean;
+  booking_updates: boolean;
+  reminders: boolean;
+  offers: boolean;
+  saved_search_alerts: boolean;
 };
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  new_message: true,
-  listing_status: true,
-  verification: true,
-  promotion: true,
-  saved_search: true,
+  booking_updates: true,
+  reminders: true,
+  offers: true,
+  saved_search_alerts: true,
 };
 
 export const NOTIFICATION_CATEGORY_LABELS: Record<
   keyof NotificationPreferences,
   { title: string; description: string }
 > = {
-  new_message: {
-    title: "الرسائل",
-    description: "عند وصول رسالة جديدة في محادثاتك.",
+  booking_updates: {
+    title: "حالة الحجز",
+    description: "عند تأكيد حجزك أو رفضه أو إلغائه.",
   },
-  listing_status: {
-    title: "حالة إعلاناتي",
-    description: "عند نشر إعلانك أو رفضه بعد المراجعة.",
+  reminders: {
+    title: "التذكيرات",
+    description: "تذكير قبل موعد الاستلام وقبل موعد التسليم.",
   },
-  verification: {
-    title: "التوثيق المالي",
-    description: "تحديثات طلبات التوثيق التي قدّمتها.",
+  offers: {
+    title: "العروض",
+    description: "عروض وخصومات على أسعار الإيجار.",
   },
-  promotion: {
-    title: "التمييز",
-    description: "عند تفعيل تمييز إعلانك أو انتهائه.",
-  },
-  saved_search: {
+  saved_search_alerts: {
     title: "تنبيهات البحث المحفوظ",
-    description: "عند ظهور فرصة أو امتياز يطابق بحثك المحفوظ.",
+    description: "عند توفّر سيارة تطابق بحثك المحفوظ.",
   },
 };
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
   const { data, error } = await supabase
     .from("notification_preferences")
-    .select("new_message, listing_status, verification, promotion, saved_search")
+    .select("booking_updates, reminders, offers, saved_search_alerts")
     .maybeSingle();
 
   if (error) {

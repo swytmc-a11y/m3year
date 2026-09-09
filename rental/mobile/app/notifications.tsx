@@ -7,7 +7,7 @@ import { BellIcon, ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import {
-  listMyNotifications,
+  listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   type AppNotification,
@@ -24,19 +24,14 @@ function formatWhen(iso: string): string {
   return `${d.getDate()} ${AR_MONTHS_SHORT[d.getMonth()]}`;
 }
 
-const TYPE_ROUTE: Record<string, (relatedId: string) => string> = {
-  new_message: (id) => `/messages/${id}`,
-  listing_published: (id) => `/listings/${id}`,
-  listing_rejected: () => "/my-ads",
-  franchise_published: (id) => `/franchises/${id}`,
-  franchise_rejected: () => "/my-ads",
-  verification_completed: (id) => `/listings/${id}`,
-  verification_rejected: () => "/my-ads",
-  promotion_activated: (id) => `/listings/${id}`,
-  // Listing and franchise alerts are separate types precisely so the bare
-  // related_id can be routed to the right table.
-  saved_search_match: (id) => `/listings/${id}`,
-  saved_search_match_franchise: (id) => `/franchises/${id}`,
+// Where each notification category leads. The payload carries the ids, so
+// a booking notification opens that booking and a saved-search match opens
+// the car it matched.
+const CATEGORY_ROUTE: Record<string, (data: Record<string, unknown>) => string | undefined> = {
+  booking_updates: (d) => (d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings"),
+  reminders: (d) => (d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings"),
+  saved_search_alerts: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),
+  offers: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),
 };
 
 export default function NotificationsScreen() {
@@ -53,7 +48,7 @@ export default function NotificationsScreen() {
 
   const load = useCallback(async () => {
     setError(false);
-    const { data, error: err, hasMore: more } = await listMyNotifications(0);
+    const { data, error: err, hasMore: more } = await listNotifications(0);
     if (err) setError(true);
     else {
       setItems(data ?? []);
@@ -72,7 +67,7 @@ export default function NotificationsScreen() {
     if (loadingMore || !hasMore || loading || error || !items) return;
     setLoadingMore(true);
     const page = Math.floor(items.length / 30);
-    const { data, error: err, hasMore: more } = await listMyNotifications(page);
+    const { data, error: err, hasMore: more } = await listNotifications(page);
     if (!err) {
       setItems((prev) => [...(prev ?? []), ...(data ?? [])]);
       setHasMore(Boolean(more));
@@ -100,7 +95,7 @@ export default function NotificationsScreen() {
         (prev ?? []).map((n) => (n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n)),
       );
     }
-    const route = item.related_id ? TYPE_ROUTE[item.type]?.(item.related_id) : undefined;
+    const route = CATEGORY_ROUTE[item.category]?.(item.data ?? {});
     if (route) router.push(route as never);
   }
 

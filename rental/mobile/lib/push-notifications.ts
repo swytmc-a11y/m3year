@@ -67,10 +67,10 @@ export async function registerForPushNotifications(): Promise<void> {
   const { error } = await supabase.from("push_tokens").upsert(
     {
       user_id: user.id,
-      expo_push_token: expoPushToken,
+      token: expoPushToken,
       platform: Platform.OS === "ios" ? "ios" : "android",
     },
-    { onConflict: "user_id,expo_push_token" },
+    { onConflict: "token" },
   );
   if (error) {
     console.error("[push] failed to save push token", error);
@@ -87,7 +87,7 @@ export async function unregisterPushToken(): Promise<void> {
     const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
       projectId,
     });
-    await supabase.from("push_tokens").delete().eq("expo_push_token", expoPushToken);
+    await supabase.from("push_tokens").delete().eq("token", expoPushToken);
   } catch {
     // Best-effort only — never block sign-out on this.
   }
