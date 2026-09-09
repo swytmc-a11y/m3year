@@ -109,7 +109,7 @@ export default function ResetPasswordScreen() {
             >
               <LogoMark size={52} />
             </View>
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>معيار</Text>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>سمو</Text>
           </FadeInView>
 
           <FadeInView delay={120} style={{ gap: 20, width: "100%", maxWidth: 400, alignSelf: "center" }}>

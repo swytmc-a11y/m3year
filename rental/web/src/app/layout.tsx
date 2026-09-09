@@ -36,7 +36,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = "https://miyear.site";
-const TITLE = "معيار — تأجير سيارات بسعر واضح شامل الضريبة";
+const TITLE = "سمو — تأجير سيارات بسعر واضح شامل الضريبة";
 const DESCRIPTION =
   "استأجر سيارتك من أقرب فرع بسعر شامل الضريبة وبلا رسوم مفاجئة عند الاستلام — وكلما طالت المدة انخفض سعر اليوم.";
 
@@ -45,13 +45,13 @@ export const metadata: Metadata = {
   title: {
     default: TITLE,
     // Sub-pages set their own title and inherit the brand suffix, so a shared
-    // link reads as "اسم الصفحة — معيار" instead of a bare page name.
-    template: "%s — معيار",
+    // link reads as "اسم الصفحة — سمو" instead of a bare page name.
+    template: "%s — سمو",
   },
   description: DESCRIPTION,
-  applicationName: "معيار",
+  applicationName: "سمو",
   keywords: [
-    "معيار",
+    "سمو",
     "تأجير سيارات",
     "إيجار سيارة",
     "تأجير سيارات يومي",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "معيار",
+    siteName: "سمو",
     locale: "ar_SA",
     url: SITE_URL,
     title: TITLE,

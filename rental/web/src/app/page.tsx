@@ -35,7 +35,7 @@ export default async function HomePage() {
       <SiteHeader />
 
       <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
-        <p className="mb-4 font-mono text-[13px] tracking-widest text-verify">استأجر بثقة</p>
+        <p className="mb-4 font-mono text-[13px] tracking-widest text-ink/45">استأجر بثقة</p>
         <h1 className="mb-6 font-heading text-3xl font-extrabold leading-tight text-ink sm:text-5xl">
           سيارتك جاهزة،
           <br />

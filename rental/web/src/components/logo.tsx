@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaliperMark } from "@/components/caliper-mark";
+import { RoadMark } from "@/components/road-mark";
 
 export function Logo() {
   return (
@@ -7,8 +7,8 @@ export function Logo() {
       href="/"
       className="flex items-center gap-2.5 font-heading text-2xl font-extrabold text-ink"
     >
-      <CaliperMark className="text-verify text-[22px]" />
-      معيار
+      <RoadMark className="text-[22px]" />
+      سمو
     </Link>
   );
 }

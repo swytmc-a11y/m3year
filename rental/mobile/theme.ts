@@ -1,4 +1,4 @@
-// Miyar (معيار) brand system.
+// سمو (Sumu) brand system — the car rental platform.
 //
 // `colors`/`fonts` below are the legacy static palette — kept unchanged so
 // screens not yet migrated to the new identity keep working. New screens
@@ -46,12 +46,21 @@ export const radius = {
 
 export const spacing = (n: number) => n * 4;
 
-// ---- New identity: light/dark design tokens ----
+// ---- Identity: light/dark design tokens ----
 //
-// One brand accent (indigo) used only for interactive/brand elements.
-// "success" is a dedicated, separate color for the "موثّق" (verified) trust
-// state — it must never double as the brand accent, so a verified badge and
-// a "tap here" button never compete for the same color meaning.
+// The brand accent is monochrome on purpose. A rental app is a wall of car
+// photographs, and a saturated brand colour ends up competing with every
+// one of them; near-black on light and near-white on dark stays out of the
+// way and reads as considered rather than loud.
+//
+// It inverts between modes — "primary" is the ink in light mode and the
+// paper in dark — so a filled button is always the highest-contrast thing
+// on screen.
+//
+// The semantic colours (success/warning/danger) deliberately keep their
+// hues: they carry meaning, not brand, and a monochrome warning is not a
+// warning. So a verified badge and a "tap here" button never compete for
+// the same colour meaning.
 export type ThemeTokens = {
   mode: "light" | "dark";
   bg: string;
@@ -92,14 +101,16 @@ const shadow = (
 
 export const lightTokens = {
   mode: "light" as const,
-  bg: "#F5F5F1",
+  // A hair warm rather than pure white: a page of white cards on a white
+  // page has no edges, and warmth keeps the greys from going blue.
+  bg: "#F6F6F4",
   surface: "#FFFFFF",
-  surface2: "#EDEDE8",
-  border: "#E7E6E1",
-  text: "#14161A",
-  textMuted: "#6B7075",
-  primary: "#4338CA",
-  primaryPressed: "#332CAA",
+  surface2: "#EFEFEC",
+  border: "#E3E3DF",
+  text: "#111113",
+  textMuted: "#6E6E73",
+  primary: "#18181B",
+  primaryPressed: "#35353A",
   onPrimary: "#FFFFFF",
   success: "#16803D",
   successTint: "#E6F4EA",
@@ -110,23 +121,24 @@ export const lightTokens = {
   danger: "#DC2626",
   dangerTint: "#FDE8E8",
   white: "#FFFFFF",
-  shadowSm: shadow("#14161A", 0.06, 3, 2),
-  shadowMd: shadow("#14161A", 0.08, 10, 5),
-  shadowLg: shadow("#14161A", 0.16, 20, 10),
-  shadowPrimary: shadow("#4338CA", 0.25, 14, 8),
+  shadowSm: shadow("#111113", 0.06, 3, 2),
+  shadowMd: shadow("#111113", 0.08, 10, 5),
+  shadowLg: shadow("#111113", 0.16, 20, 10),
+  shadowPrimary: shadow("#111113", 0.22, 14, 8),
 };
 
 export const darkTokens: ThemeTokens = {
   mode: "dark",
-  bg: "#101014",
-  surface: "#1B1C20",
-  surface2: "#232429",
-  border: "#2E2F34",
-  text: "#EDEDE8",
-  textMuted: "#9A9D9F",
-  primary: "#7C74E8",
-  primaryPressed: "#9A93EE",
-  onPrimary: "#101014",
+  bg: "#0B0B0C",
+  surface: "#161618",
+  surface2: "#1F1F22",
+  border: "#2B2B2F",
+  text: "#F1F1EF",
+  textMuted: "#9B9BA0",
+  // Inverted: on a near-black screen the brightest surface is the accent.
+  primary: "#F1F1EF",
+  primaryPressed: "#D2D2CE",
+  onPrimary: "#0B0B0C",
   success: "#34D399",
   successTint: "#123322",
   warning: "#F0B429",
@@ -137,7 +149,9 @@ export const darkTokens: ThemeTokens = {
   shadowSm: shadow("#000000", 0.3, 3, 2),
   shadowMd: shadow("#000000", 0.35, 10, 5),
   shadowLg: shadow("#000000", 0.45, 20, 10),
-  shadowPrimary: shadow("#7C74E8", 0.35, 14, 8),
+  // Near-white cannot cast a glow the way indigo did; a plain dark shadow
+  // keeps the button from looking like it is floating in fog.
+  shadowPrimary: shadow("#000000", 0.45, 14, 8),
 };
 
 // Documented motion constants (used by shared animated components) so every

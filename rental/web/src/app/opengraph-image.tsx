@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-// The link preview card. Without this, every share of a معيار link on
+// The link preview card. Without this, every share of a سمو link on
 // WhatsApp or X rendered as a bare URL with no image and no identity — the
 // worst possible first impression for a link someone is deciding to trust
 // with a booking.
@@ -8,7 +8,7 @@ import { ImageResponse } from "next/og";
 // Generated rather than shipped as a static PNG so it stays in sync with the
 // brand colours defined in globals.css.
 
-export const alt = "معيار — تأجير سيارات بسعر واضح شامل الضريبة";
+export const alt = "سمو — تأجير سيارات بسعر واضح شامل الضريبة";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -32,11 +32,12 @@ async function loadArabicFont(): Promise<ArrayBuffer | null> {
   }
 }
 
-const INK = "#171a1c";
-const VERIFY = "#0f6b66";
-const AMBER = "#d9762b";
-const PAPER = "#edeee9";
-const GRID = "#c7cbc6";
+// The سمو palette from globals.css. The card is deliberately the dark end
+// of it: a preview thumbnail competes with everything else in a chat, and
+// near-black is what stands out in a feed of white cards.
+const NIGHT = "#0b0b0c";
+const BONE = "#f1f1ef";
+const MUTED = "#9b9ba0";
 
 export default async function OpengraphImage() {
   const font = await loadArabicFont();
@@ -51,9 +52,7 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: PAPER,
-          backgroundImage: `linear-gradient(${GRID} 1px, transparent 1px), linear-gradient(90deg, ${GRID} 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
+          background: NIGHT,
           padding: 80,
         }}
       >
@@ -67,31 +66,59 @@ export default async function OpengraphImage() {
         >
           <div
             style={{
-              width: 18,
-              height: 72,
-              background: VERIFY,
-              borderRadius: 4,
               display: "flex",
+              position: "relative",
+              width: 88,
+              height: 88,
             }}
-          />
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 20,
+                top: 6,
+                width: 7,
+                height: 76,
+                background: BONE,
+                borderRadius: 4,
+                transform: "rotate(19deg)",
+                display: "flex",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: 20,
+                top: 6,
+                width: 7,
+                height: 76,
+                background: BONE,
+                borderRadius: 4,
+                transform: "rotate(-19deg)",
+                display: "flex",
+              }}
+            />
+            <div style={{ position: "absolute", left: 40.5, top: 62, width: 7, height: 20, background: BONE, borderRadius: 4, display: "flex" }} />
+            <div style={{ position: "absolute", left: 41.2, top: 36, width: 5.6, height: 15, background: BONE, borderRadius: 3, display: "flex" }} />
+            <div style={{ position: "absolute", left: 41.9, top: 17, width: 4.2, height: 9, background: BONE, borderRadius: 2, display: "flex" }} />
+          </div>
           <div
             style={{
               fontSize: 96,
               fontWeight: 800,
-              color: INK,
+              color: BONE,
               letterSpacing: -2,
               display: "flex",
             }}
           >
-            معيار
+            سمو
           </div>
         </div>
 
         <div
           style={{
             fontSize: 40,
-            color: INK,
-            opacity: 0.75,
+            color: MUTED,
             textAlign: "center",
             maxWidth: 900,
             lineHeight: 1.5,
@@ -108,11 +135,11 @@ export default async function OpengraphImage() {
             alignItems: "center",
             gap: 14,
             fontSize: 26,
-            color: VERIFY,
+            color: MUTED,
             letterSpacing: 6,
           }}
         >
-          <div style={{ width: 10, height: 10, borderRadius: 5, background: AMBER, display: "flex" }} />
+          <div style={{ width: 8, height: 8, borderRadius: 4, background: BONE, display: "flex" }} />
           MIYEAR.SITE
         </div>
       </div>
