@@ -22,7 +22,7 @@ import {
 import { fonts, radius } from "@/theme";
 
 export default function CarDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from, to } = useLocalSearchParams<{ id: string; from?: string; to?: string }>();
   const router = useRouter();
   const { t } = useTheme();
   const toast = useToast();
@@ -390,9 +390,16 @@ export default function CarDetailScreen() {
           <Button
             label="احجز الآن"
             fullWidth
-            onPress={() =>
-              session ? router.push(`/cars/${car.id}/book`) : router.push("/auth")
-            }
+            onPress={() => {
+              if (!session) {
+                router.push("/auth");
+                return;
+              }
+              // Dates chosen while browsing ride along, so the booking
+              // screen opens on the range the customer already picked.
+              const query = from && to ? `?from=${from}&to=${to}` : "";
+              router.push(`/cars/${car.id}/book${query}` as never);
+            }}
           />
         </View>
       </View>

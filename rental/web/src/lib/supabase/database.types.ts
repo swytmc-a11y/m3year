@@ -1191,6 +1191,10 @@ export type Database = {
           start_date: string
         }[]
       }
+      cars_unavailable_between: {
+        Args: { p_end: string; p_start: string }
+        Returns: string[]
+      }
       coupon_redemptions: {
         Args: { p_coupon_id: string; p_customer_id?: string }
         Returns: number

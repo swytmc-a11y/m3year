@@ -25,6 +25,13 @@ export const EMPTY_FILTERS: CarFilters = {
   seats: null,
 };
 
+/**
+ * The dates the customer needs the car for. Kept apart from CarFilters
+ * because it is not a filter in the same sense: it travels onward into the
+ * booking screen, whereas a filter only shapes the list.
+ */
+export type DateRange = { start: string; end: string } | null;
+
 export const PAGE_SIZE = 12;
 
 export type Coords = { latitude: number; longitude: number };
@@ -44,17 +51,35 @@ export async function fetchCars({
   cheapest,
   nearest,
   coords,
+  dates,
 }: {
   page: number;
   filters: CarFilters;
   cheapest: boolean;
   nearest: boolean;
   coords: Coords | null;
+  dates?: DateRange;
 }): Promise<{ rows: (CarCardData & { distance: number | null })[]; hasMore: boolean }> {
+  // Cars already spoken for during the requested dates are removed before
+  // anything else, so the customer never falls for a car they cannot have.
+  let takenIds: string[] = [];
+  if (dates) {
+    const { data, error } = await supabase.rpc("cars_unavailable_between", {
+      p_start: dates.start,
+      p_end: dates.end,
+    });
+    if (error) throw error;
+    takenIds = (data ?? []) as unknown as string[];
+  }
+
   let query = supabase
     .from("cars")
     .select(CAR_CARD_COLUMNS)
     .eq("status", "available");
+
+  if (takenIds.length > 0) {
+    query = query.not("id", "in", `(${takenIds.join(",")})`);
+  }
 
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.transmission) query = query.eq("transmission", filters.transmission);

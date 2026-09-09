@@ -19,12 +19,15 @@ import {
   IconButton,
   Sheet,
   Skeleton,
+  Tappable,
   useRefreshTint,
   useTabBarSpacing,
   useToast,
 } from "@/components/kit";
 import { BellIcon, SearchIcon } from "@/components/icons";
 import { CarCard, type CarCardData } from "@/components/cars";
+import { DateRangeCalendar } from "@/components/date-range-calendar";
+import { todayIso, daysBetween } from "@/lib/dates";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
 import {
@@ -33,6 +36,7 @@ import {
   EMPTY_FILTERS,
   type CarFilters,
   type Coords,
+  type DateRange,
 } from "@/lib/cars-data";
 import {
   CAR_CATEGORY_OPTIONS,
@@ -41,6 +45,7 @@ import {
   type CarCategory,
   type TransmissionType,
   type FuelType,
+  formatDateShort,
 } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
@@ -56,6 +61,15 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<CarFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState<CarFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // The committed range drives the feed; the draft is what the calendar is
+  // editing, so closing the sheet without a complete range changes nothing.
+  const [dates, setDates] = useState<DateRange>(null);
+  const [dateDraft, setDateDraft] = useState<{ start: string; end: string | null }>({
+    start: todayIso(),
+    end: null,
+  });
+  const [datesOpen, setDatesOpen] = useState(false);
 
   // The two quick chips sit beside the filter button and may both be on.
   const [cheapest, setCheapest] = useState(false);
@@ -89,6 +103,7 @@ export default function HomeScreen() {
           cheapest,
           nearest,
           coords,
+          dates,
         });
         if (token !== requestToken.current) return;
         setCars((prev) => (mode === "append" && prev ? [...prev, ...rows] : rows));
@@ -109,7 +124,7 @@ export default function HomeScreen() {
         }
       }
     },
-    [filters, cheapest, nearest, coords],
+    [filters, cheapest, nearest, coords, dates],
   );
 
   useEffect(() => {
@@ -224,6 +239,68 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* Dates come before every other control on purpose: a rental is a
+            question of "when", and answering it first removes cars the
+            customer could never have had. */}
+        <Tappable
+          onPress={() => {
+            setDateDraft(dates ?? { start: todayIso(), end: null });
+            setDatesOpen(true);
+          }}
+          haptic="light"
+          accessibilityRole="button"
+          accessibilityLabel="اختيار تواريخ الاستئجار"
+        >
+          <View
+            style={{
+              flexDirection: "row-reverse",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              backgroundColor: dates ? `${t.primary}14` : t.surface,
+              borderWidth: 1,
+              borderColor: dates ? t.primary : t.border,
+              borderRadius: radius.lg,
+              paddingHorizontal: 14,
+              height: 46,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: dates ? fonts.bodyMedium : fonts.body,
+                fontSize: 13.5,
+                color: dates ? t.text : t.textMuted,
+              }}
+            >
+              {dates
+                ? `${formatDateShort(dates.start)} — ${formatDateShort(dates.end)}`
+                : "متى تحتاج السيارة؟"}
+            </Text>
+
+            {dates ? (
+              <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}>
+                <Text style={{ fontFamily: fonts.numericBold, fontSize: 12, color: t.primary }}>
+                  {daysBetween(dates.start, dates.end)} أيام
+                </Text>
+                <Tappable
+                  onPress={() => setDates(null)}
+                  haptic="light"
+                  accessibilityRole="button"
+                  accessibilityLabel="مسح التواريخ"
+                >
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 16, color: t.textMuted }}>
+                    ×
+                  </Text>
+                </Tappable>
+              </View>
+            ) : (
+              <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted }}>
+                اختر التواريخ
+              </Text>
+            )}
+          </View>
+        </Tappable>
+
         <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
           <Chip
             label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "الفلاتر"}
@@ -270,7 +347,12 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: tabSpacing }}
           renderItem={({ item, index }) => (
-            <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+            <CarCard
+              car={item}
+              index={index}
+              distanceKm={nearest ? item.distance : null}
+              dates={dates}
+            />
           )}
           refreshControl={
             <RefreshControl
@@ -406,6 +488,63 @@ export default function HomeScreen() {
             />
           </View>
         </ScrollView>
+      </Sheet>
+
+      <Sheet
+        visible={datesOpen}
+        onClose={() => setDatesOpen(false)}
+        title="متى تحتاج السيارة؟"
+        footer={
+          <View style={{ gap: 10 }}>
+            <Button
+              label={
+                dateDraft.end
+                  ? `عرض المتاح · ${daysBetween(dateDraft.start, dateDraft.end)} أيام`
+                  : "اختر تاريخ التسليم"
+              }
+              // Without an end date there is no range to search, so the
+              // action stays disabled rather than committing half a choice.
+              disabled={!dateDraft.end}
+              fullWidth
+              onPress={() => {
+                if (!dateDraft.end) return;
+                setDates({ start: dateDraft.start, end: dateDraft.end });
+                setDatesOpen(false);
+              }}
+            />
+            {dates ? (
+              <Button
+                label="عرض كل السيارات"
+                variant="secondary"
+                fullWidth
+                onPress={() => {
+                  setDates(null);
+                  setDatesOpen(false);
+                }}
+              />
+            ) : null}
+          </View>
+        }
+      >
+        <View style={{ paddingBottom: 8 }}>
+          <DateRangeCalendar
+            range={dateDraft}
+            onChange={setDateDraft}
+            unavailable={[]}
+          />
+          <Text
+            style={{
+              fontFamily: fonts.body,
+              fontSize: 11.5,
+              color: t.textMuted,
+              textAlign: "center",
+              lineHeight: 19,
+              marginTop: 10,
+            }}
+          >
+            نعرض لك السيارات المتاحة فعليًا في هذه المدة فقط.
+          </Text>
+        </View>
       </Sheet>
     </SafeAreaView>
   );

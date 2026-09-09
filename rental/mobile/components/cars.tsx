@@ -47,17 +47,24 @@ export function CarCard({
   car,
   index = 0,
   distanceKm,
+  dates,
 }: {
   car: CarCardData;
   index?: number;
   distanceKm?: number | null;
+  /** Carried through so the dates chosen while browsing survive the tap. */
+  dates?: { start: string; end: string } | null;
 }) {
   const router = useRouter();
   const { t } = useTheme();
 
+  const href = dates
+    ? `/cars/${car.id}?from=${dates.start}&to=${dates.end}`
+    : `/cars/${car.id}`;
+
   return (
     <Animated.View entering={staggerEnter(Math.min(index, 8))}>
-      <Tappable onPress={() => router.push(`/cars/${car.id}`)} haptic="light">
+      <Tappable onPress={() => router.push(href as never)} haptic="light">
         <Card style={{ padding: 0, overflow: "hidden" }}>
           {car.cover_image ? (
             <Image
