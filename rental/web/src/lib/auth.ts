@@ -79,15 +79,22 @@ export async function requireAdmin(): Promise<User> {
     redirect("/");
   }
 
-  const { data: otp } = await supabase
-    .from("admin_otp_verifications")
-    .select("expires_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!otp || new Date(otp.expires_at) <= new Date()) {
-    redirect("/admin-verify");
-  }
+  // TEMPORARILY DISABLED: the email OTP step-up is sent through Supabase's
+  // built-in email service, which is rate-limited to a handful of sends per
+  // hour and not meant for real traffic — it was failing to send at all,
+  // locking the operator out of their own panel. Re-enable this block once a
+  // real SMTP provider is configured for the project (Settings → Auth → SMTP
+  // Settings in Supabase), which removes that rate limit.
+  //
+  // const { data: otp } = await supabase
+  //   .from("admin_otp_verifications")
+  //   .select("expires_at")
+  //   .eq("user_id", user.id)
+  //   .maybeSingle();
+  //
+  // if (!otp || new Date(otp.expires_at) <= new Date()) {
+  //   redirect("/admin-verify");
+  // }
 
   return user;
 }
