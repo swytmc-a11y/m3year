@@ -8,19 +8,19 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "backgroundColor": "#F5F5F1",
+    "backgroundColor": "#F6F6F4",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.miyar.rental",
+      "bundleIdentifier": "com.sumu.rental",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.miyar.rental",
+      "package": "com.sumu.rental",
       "adaptiveIcon": {
-        "backgroundColor": "#F5F5F1",
+        "backgroundColor": "#111113",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -37,11 +37,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F5F5F1",
+          "backgroundColor": "#F6F6F4",
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "dark": {
-            "backgroundColor": "#101014",
+            "backgroundColor": "#0B0B0C",
             "image": "./assets/splash-icon.png",
             "imageWidth": 160
           }
@@ -51,7 +51,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#4338CA"
+          "color": "#18181B"
         }
       ],
       [
