@@ -3,7 +3,7 @@ import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { colors } from "@/theme";
 
 /**
- * Miyar tab icons — a small, consistent line-icon set in the brand's
+ * Icon set — a small, consistent line-icon set in the brand's
  * "precision instrument" direction: 1.9px strokes, rounded joins, a soft
  * ink fill when active. All icons share the same 24×24 grid and optical
  * weight so the tab bar reads as one coherent set.
@@ -387,6 +387,29 @@ export function FlagIcon({ color, size = 16 }: { color: ColorValue; size?: numbe
         strokeWidth={1.6}
         strokeLinejoin="round"
       />
+    </Svg>
+  );
+}
+
+/** Car silhouette. Stands in for a photo the operator has not uploaded yet. */
+export function CarIcon({ color, size = 24 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3.5 14.5v3.2a.8.8 0 0 0 .8.8h1.6a.8.8 0 0 0 .8-.8v-1.2h10.6v1.2a.8.8 0 0 0 .8.8h1.6a.8.8 0 0 0 .8-.8v-3.2"
+        stroke={color}
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3.5 14.5 5 9.6a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 9.6l1.5 4.9H3.5Z"
+        stroke={color}
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+      />
+      <Circle cx={7.3} cy={12.4} r={0.9} fill={color} />
+      <Circle cx={16.7} cy={12.4} r={0.9} fill={color} />
     </Svg>
   );
 }

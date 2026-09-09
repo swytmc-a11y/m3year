@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Button, Card, IconButton, Skeleton, Tappable, useToast } from "@/components/kit";
-import { ChevronBackIcon, HeartIcon } from "@/components/icons";
+import { ChevronBackIcon, HeartIcon, CarIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import { fetchCarDetail, type CarDetail, type CarAddon } from "@/lib/car-detail";
@@ -121,7 +121,21 @@ export default function CarDetailScreen() {
               />
             ))}
           </ScrollView>
-        ) : null}
+        ) : (
+          // Matches the browse card: a car with no photo yet still opens onto
+          // something that reads as a car, not a page that starts mid-air.
+          <View
+            style={{
+              width,
+              aspectRatio: 16 / 9,
+              backgroundColor: t.surface2,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CarIcon color={t.textMuted} size={56} />
+          </View>
+        )}
 
         <View style={{ padding: 18, gap: 16 }}>
           <View>

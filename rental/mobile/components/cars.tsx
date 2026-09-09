@@ -3,6 +3,7 @@ import Animated from "react-native-reanimated";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Tappable, Card, staggerEnter } from "@/components/kit";
+import { CarIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
 import {
@@ -64,6 +65,9 @@ export function CarCard({
               cachePolicy="memory-disk"
             />
           ) : (
+            // A photo the operator hasn't uploaded yet is not an error, so the
+            // placeholder carries the car's own name rather than announcing an
+            // absence — the card still reads as a car, not a broken image.
             <View
               style={{
                 width: "100%",
@@ -71,10 +75,19 @@ export function CarCard({
                 backgroundColor: t.surface2,
                 alignItems: "center",
                 justifyContent: "center",
+                gap: 10,
               }}
             >
-              <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted }}>
-                بلا صورة
+              <CarIcon color={t.textMuted} size={44} />
+              <Text
+                style={{
+                  fontFamily: fonts.bodyMedium,
+                  fontSize: 12.5,
+                  color: t.textMuted,
+                  textAlign: "center",
+                }}
+              >
+                {carTitle(car)}
               </Text>
             </View>
           )}
