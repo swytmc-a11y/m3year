@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HomeIcon, ChatIcon, ProfileIcon } from "@/components/icons";
+import { HomeIcon, ListIcon, StorefrontIcon, ProfileIcon } from "@/components/icons";
 import { Tappable } from "@/components/kit";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
@@ -22,14 +22,16 @@ type MinimalTabBarProps = {
 
 const ICONS: Record<string, typeof HomeIcon> = {
   index: HomeIcon,
-  "messages/index": ChatIcon,
+  "bookings/index": ListIcon,
+  "branches/index": StorefrontIcon,
   "profile/index": ProfileIcon,
 };
 
 const LABELS: Record<string, string> = {
-  index: "الرئيسية",
-  "messages/index": "المحادثات",
-  "profile/index": "الملف الشخصي",
+  index: "السيارات",
+  "bookings/index": "حجوزاتي",
+  "branches/index": "الفروع",
+  "profile/index": "حسابي",
 };
 
 /**
