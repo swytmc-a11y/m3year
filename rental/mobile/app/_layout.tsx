@@ -75,18 +75,33 @@ export default function RootLayout() {
     hasSeenOnboarding().then((seen) => setShowIntro(!seen));
   }, []);
 
-  // Tapping a "new message" push notification opens that conversation
-  // directly, whether the app was backgrounded or launched cold by the tap.
+  // Tapping a push notification opens what it is about, whether the app was
+  // backgrounded or launched cold by the tap.
+  //
+  // The payload shape here mirrors what the server actually writes on a
+  // notification row (see the web project's booking actions): a booking id,
+  // plus an "action" when the booking wants something back from the
+  // customer. This previously looked for a "message" type with a
+  // conversation id — carried over from the real-estate app this one was
+  // scaffolded from — so no rental notification could ever match it, and
+  // every tap did nothing.
+  //
   // expo-notifications' response APIs are native-only (no web support).
   useEffect(() => {
     if (Platform.OS === "web") return;
 
     function handleResponse(response: Notifications.NotificationResponse) {
       const data = response.notification.request.content.data as
-        | { type?: string; conversationId?: string }
+        | { booking_id?: string; car_id?: string; action?: string }
         | undefined;
-      if (data?.type === "message" && data.conversationId) {
-        router.push(`/messages/${data.conversationId}`);
+      if (!data) return;
+
+      if (data.action === "review" && data.booking_id) {
+        router.push(`/review/${data.booking_id}`);
+      } else if (data.booking_id) {
+        router.push(`/bookings/${data.booking_id}`);
+      } else if (data.car_id) {
+        router.push(`/cars/${data.car_id}`);
       }
     }
 
