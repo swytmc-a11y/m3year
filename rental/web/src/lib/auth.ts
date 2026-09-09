@@ -28,7 +28,7 @@ export async function requireUser(): Promise<User> {
 // changes — ADMIN_ALLOWED_EMAILS in the deployment's env vars overrides the
 // fallback below.
 const ADMIN_ALLOWED_EMAILS = (
-  process.env.ADMIN_ALLOWED_EMAILS ?? "swytmc@gmail.com"
+  process.env.ADMIN_ALLOWED_EMAILS ?? "swytmc@gmail.com,swwe6m@gmail.com"
 )
   .split(",")
   .map((e) => e.trim().toLowerCase())
@@ -62,6 +62,15 @@ export async function requireAdmin(): Promise<User> {
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin || !isAllowedAdminEmail(user.email)) {
+    // The two gates disagreeing is the failure worth naming: the database
+    // says admin but this list does not, which looks identical to "not an
+    // admin" from the browser and is otherwise invisible.
+    if (isAdmin) {
+      console.error(
+        "[auth] admin rejected by the email allowlist — add the address to ADMIN_ALLOWED_EMAILS",
+        user.email,
+      );
+    }
     // This web project has no customer-facing area beyond the marketing
     // page — the app is where customers live. Anyone who authenticates here
     // without clearing the admin gate has nowhere else to land.
