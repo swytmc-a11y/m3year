@@ -61,19 +61,21 @@ export async function requireAdmin(): Promise<User> {
   }
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
-  if (!isAdmin || !isAllowedAdminEmail(user.email)) {
-    // The two gates disagreeing is the failure worth naming: the database
-    // says admin but this list does not, which looks identical to "not an
-    // admin" from the browser and is otherwise invisible.
-    if (isAdmin) {
-      console.error(
-        "[auth] admin rejected by the email allowlist — add the address to ADMIN_ALLOWED_EMAILS",
-        user.email,
-      );
-    }
+  if (isAdmin && !isAllowedAdminEmail(user.email)) {
+    // The two gates disagreeing is a configuration problem only the operator
+    // can fix, and it is indistinguishable from "not an admin" from the
+    // browser. Send them somewhere that says so instead of bouncing them to
+    // the marketing page with no explanation.
+    console.error(
+      "[auth] admin rejected by the email allowlist — add the address to ADMIN_ALLOWED_EMAILS",
+      user.email,
+    );
+    redirect("/admin-access");
+  }
+  if (!isAdmin) {
     // This web project has no customer-facing area beyond the marketing
     // page — the app is where customers live. Anyone who authenticates here
-    // without clearing the admin gate has nowhere else to land.
+    // without the admin role has nowhere else to land.
     redirect("/");
   }
 
@@ -107,10 +109,13 @@ export async function requireAdminPendingOtp(): Promise<User> {
   }
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
-  if (!isAdmin || !isAllowedAdminEmail(user.email)) {
+  if (isAdmin && !isAllowedAdminEmail(user.email)) {
+    redirect("/admin-access");
+  }
+  if (!isAdmin) {
     // This web project has no customer-facing area beyond the marketing
     // page — the app is where customers live. Anyone who authenticates here
-    // without clearing the admin gate has nowhere else to land.
+    // without the admin role has nowhere else to land.
     redirect("/");
   }
 

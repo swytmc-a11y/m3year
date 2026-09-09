@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, TextInput, Platform } from "react-native";
+import { View, Text, ScrollView, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, CheckRow, IconButton, Skeleton, useToast } from "@/components/kit";
@@ -16,6 +16,8 @@ import {
   type UnavailableRange,
 } from "@/lib/car-detail";
 import { createBooking } from "@/lib/booking-actions";
+import { DateRangeCalendar } from "@/components/date-range-calendar";
+import { daysBetween } from "@/lib/dates";
 import { formatSar, carTitle, RATE_TIER_LABELS } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
@@ -46,6 +48,11 @@ export default function BookCarScreen() {
   const [returnTime, setReturnTime] = useState("10:00");
   const [selected, setSelected] = useState<string[]>([]);
   const [note, setNote] = useState("");
+
+  // Shown the moment the range is picked, without waiting for the server
+  // quote — the customer should not have to scroll to the total to learn how
+  // long they just selected.
+  const selectedDays = endDate > startDate ? daysBetween(startDate, endDate) : 0;
 
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -150,14 +157,48 @@ export default function BookCarScreen() {
             مدة الإيجار
           </Text>
 
-          <DateField label="تاريخ الاستلام" value={startDate} onChange={setStartDate} />
-          <TimeRow label="وقت الاستلام" value={pickupTime} onChange={setPickupTime} />
-          <DateField label="تاريخ التسليم" value={endDate} onChange={setEndDate} />
-          <TimeRow label="وقت التسليم" value={returnTime} onChange={setReturnTime} />
+          <DateRangeCalendar
+            range={{ start: startDate, end: endDate }}
+            onChange={(next) => {
+              setStartDate(next.start);
+              // While only the pickup day is chosen there is no period to
+              // price yet, so the return date follows the pickup and the
+              // summary below asks for the second tap instead of quoting a
+              // number that is about to change.
+              setEndDate(next.end ?? next.start);
+            }}
+            unavailable={unavailable}
+          />
 
-          <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>
-            يوم التسليم غير محتسب — من ١ إلى ٣ يعني يومين.
-          </Text>
+          <View
+            style={{
+              borderTopWidth: 1,
+              borderTopColor: t.border,
+              paddingTop: 12,
+              gap: 8,
+            }}
+          >
+            {selectedDays > 0 ? (
+              <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: t.text }}>
+                  {startDate} ← {endDate}
+                </Text>
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.primary }}>
+                  {selectedDays} {selectedDays === 1 ? "يوم" : selectedDays === 2 ? "يومان" : "أيام"}
+                </Text>
+              </View>
+            ) : (
+              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                اختر تاريخ الاستلام ثم تاريخ التسليم من التقويم.
+              </Text>
+            )}
+            <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>
+              يوم التسليم غير محتسب — من ١ إلى ٣ يعني يومين. الأيام المشطوبة محجوزة.
+            </Text>
+          </View>
+
+          <TimeRow label="وقت الاستلام" value={pickupTime} onChange={setPickupTime} />
+          <TimeRow label="وقت التسليم" value={returnTime} onChange={setReturnTime} />
         </Card>
 
         {addons.length > 0 ? (
@@ -290,45 +331,6 @@ function Line({ label, value, muted }: { label: string; value: string; muted?: b
  * screen working identically on both platforms and in Expo Go, and the
  * server rejects anything malformed anyway.
  */
-function DateField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const { t } = useTheme();
-  return (
-    <View style={{ gap: 6 }}>
-      <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12.5, color: t.text, textAlign: "right" }}>
-        {label}
-      </Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder="2026-01-01"
-        placeholderTextColor={t.textMuted}
-        keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
-        maxLength={10}
-        style={{
-          height: 46,
-          borderWidth: 1,
-          borderColor: t.border,
-          borderRadius: radius.lg,
-          backgroundColor: t.surface,
-          paddingHorizontal: 14,
-          fontFamily: fonts.numeric,
-          fontSize: 14,
-          color: t.text,
-          textAlign: "left",
-        }}
-      />
-    </View>
-  );
-}
-
 function TimeRow({
   label,
   value,
