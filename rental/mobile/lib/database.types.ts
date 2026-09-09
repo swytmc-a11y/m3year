@@ -1,8 +1,3 @@
-// Verified against the live database: generated types were diffed against
-// this file after migrations 0001-0004 were applied, and the only real
-// difference (bookings.reference being required on insert, since a trigger
-// fills it) was folded in. Regeneration from the database is canonical.
-
 export type Json =
   | string
   | number
@@ -12,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       addons: {
@@ -47,10 +47,37 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_emails: {
+        Row: {
+          created_at: string
+          email: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       admin_otp_verifications: {
-        Row: { expires_at: string; user_id: string; verified_at: string }
-        Insert: { expires_at: string; user_id: string; verified_at?: string }
-        Update: { expires_at?: string; user_id?: string; verified_at?: string }
+        Row: {
+          expires_at: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          expires_at: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          expires_at?: string
+          user_id?: string
+          verified_at?: string
+        }
         Relationships: [
           {
             foreignKeyName: "admin_otp_verifications_user_id_fkey"
@@ -62,9 +89,21 @@ export type Database = {
         ]
       }
       app_settings: {
-        Row: { key: string; updated_at: string; value: Json }
-        Insert: { key: string; updated_at?: string; value: Json }
-        Update: { key?: string; updated_at?: string; value?: Json }
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
         Relationships: []
       }
       audit_log: {
@@ -83,7 +122,7 @@ export type Database = {
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
-          id?: never
+          id?: number
           metadata?: Json
         }
         Update: {
@@ -92,7 +131,7 @@ export type Database = {
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
-          id?: never
+          id?: number
           metadata?: Json
         }
         Relationships: [
@@ -156,11 +195,14 @@ export type Database = {
           cancelled_at: string | null
           car_id: string
           confirmed_at: string | null
+          coupon_code: string | null
+          coupon_id: string | null
           created_at: string
           customer_id: string
           customer_note: string | null
           daily_rate: number
           days: number
+          discount_amount: number
           end_date: string
           id: string
           paid_at: string | null
@@ -190,11 +232,14 @@ export type Database = {
           cancelled_at?: string | null
           car_id: string
           confirmed_at?: string | null
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id: string
           customer_note?: string | null
           daily_rate: number
           days: number
+          discount_amount?: number
           end_date: string
           id?: string
           paid_at?: string | null
@@ -207,6 +252,7 @@ export type Database = {
           refund_amount?: number | null
           refunded_at?: string | null
           rental_total: number
+          return_reminded_at?: string | null
           return_time?: string
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -223,11 +269,14 @@ export type Database = {
           cancelled_at?: string | null
           car_id?: string
           confirmed_at?: string | null
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           customer_id?: string
           customer_note?: string | null
           daily_rate?: number
           days?: number
+          discount_amount?: number
           end_date?: string
           id?: string
           paid_at?: string | null
@@ -265,6 +314,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -286,6 +342,8 @@ export type Database = {
           longitude: number | null
           name: string
           phone: string | null
+          rating_avg: number | null
+          rating_count: number
           sort_order: number
           updated_at: string
           whatsapp: string | null
@@ -303,6 +361,8 @@ export type Database = {
           longitude?: number | null
           name: string
           phone?: string | null
+          rating_avg?: number | null
+          rating_count?: number
           sort_order?: number
           updated_at?: string
           whatsapp?: string | null
@@ -320,6 +380,8 @@ export type Database = {
           longitude?: number | null
           name?: string
           phone?: string | null
+          rating_avg?: number | null
+          rating_count?: number
           sort_order?: number
           updated_at?: string
           whatsapp?: string | null
@@ -328,9 +390,24 @@ export type Database = {
         Relationships: []
       }
       car_addons: {
-        Row: { addon_id: string; car_id: string; is_available: boolean; price: number }
-        Insert: { addon_id: string; car_id: string; is_available?: boolean; price: number }
-        Update: { addon_id?: string; car_id?: string; is_available?: boolean; price?: number }
+        Row: {
+          addon_id: string
+          car_id: string
+          is_available: boolean
+          price: number
+        }
+        Insert: {
+          addon_id: string
+          car_id: string
+          is_available?: boolean
+          price: number
+        }
+        Update: {
+          addon_id?: string
+          car_id?: string
+          is_available?: boolean
+          price?: number
+        }
         Relationships: [
           {
             foreignKeyName: "car_addons_addon_id_fkey"
@@ -382,6 +459,13 @@ export type Database = {
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "car_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -455,6 +539,8 @@ export type Database = {
           min_rental_days: number
           model: string
           monthly_price: number | null
+          rating_avg: number | null
+          rating_count: number
           seats: number
           sort_order: number
           status: Database["public"]["Enums"]["car_status"]
@@ -485,6 +571,8 @@ export type Database = {
           min_rental_days?: number
           model: string
           monthly_price?: number | null
+          rating_avg?: number | null
+          rating_count?: number
           seats: number
           sort_order?: number
           status?: Database["public"]["Enums"]["car_status"]
@@ -515,6 +603,8 @@ export type Database = {
           min_rental_days?: number
           model?: string
           monthly_price?: number | null
+          rating_avg?: number | null
+          rating_count?: number
           seats?: number
           sort_order?: number
           status?: Database["public"]["Enums"]["car_status"]
@@ -575,16 +665,86 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          max_per_customer: number
+          max_redemptions: number | null
+          min_total: number | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          max_per_customer?: number
+          max_redemptions?: number | null
+          min_total?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"]
+          discount_value?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          max_per_customer?: number
+          max_redemptions?: number | null
+          min_total?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
-        Row: { car_id: string; created_at: string; user_id: string }
-        Insert: { car_id: string; created_at?: string; user_id: string }
-        Update: { car_id?: string; created_at?: string; user_id?: string }
+        Row: {
+          car_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          car_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          car_id?: string
+          created_at?: string
+          user_id?: string
+        }
         Relationships: [
           {
             foreignKeyName: "favorites_car_id_fkey"
             columns: ["car_id"]
             isOneToOne: false
             referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -614,7 +774,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -646,6 +814,59 @@ export type Database = {
           read_at?: string | null
           title?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_otp_throttle: {
+        Row: {
+          last_sent_at: string | null
+          phone: string
+          send_count: number
+          verify_count: number
+          verify_window_start: string | null
+          window_start: string
+        }
+        Insert: {
+          last_sent_at?: string | null
+          phone: string
+          send_count?: number
+          verify_count?: number
+          verify_window_start?: string | null
+          window_start?: string
+        }
+        Update: {
+          last_sent_at?: string | null
+          phone?: string
+          send_count?: number
+          verify_count?: number
+          verify_window_start?: string | null
+          window_start?: string
+        }
+        Relationships: []
+      }
+      phone_verifications: {
+        Row: {
+          otp: string
+          phone: string
+          verified_at: string
+        }
+        Insert: {
+          otp: string
+          phone: string
+          verified_at?: string
+        }
+        Update: {
+          otp?: string
+          phone?: string
+          verified_at?: string
         }
         Relationships: []
       }
@@ -712,55 +933,193 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_banners: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          target_branch_id: string | null
+          target_car_id: string | null
+          target_category: Database["public"]["Enums"]["car_category"] | null
+          target_coupon_code: string | null
+          target_kind: Database["public"]["Enums"]["banner_target"]
+          target_url: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          target_branch_id?: string | null
+          target_car_id?: string | null
+          target_category?: Database["public"]["Enums"]["car_category"] | null
+          target_coupon_code?: string | null
+          target_kind?: Database["public"]["Enums"]["banner_target"]
+          target_url?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          target_branch_id?: string | null
+          target_car_id?: string | null
+          target_category?: Database["public"]["Enums"]["car_category"] | null
+          target_coupon_code?: string | null
+          target_kind?: Database["public"]["Enums"]["banner_target"]
+          target_url?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_banners_target_branch_id_fkey"
+            columns: ["target_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_banners_target_car_id_fkey"
+            columns: ["target_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_tokens: {
-        Row: { created_at: string; platform: string | null; token: string; user_id: string }
-        Insert: { created_at?: string; platform?: string | null; token: string; user_id: string }
-        Update: { created_at?: string; platform?: string | null; token?: string; user_id?: string }
-        Relationships: []
+        Row: {
+          created_at: string
+          platform: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          platform?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          platform?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limits: {
-        Row: { action: string; created_at: string; id: number; user_id: string | null }
-        Insert: { action: string; created_at?: string; id?: never; user_id?: string | null }
-        Update: { action?: string; created_at?: string; id?: never; user_id?: string | null }
-        Relationships: []
+        Row: {
+          action: string
+          created_at: string
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
           author_id: string
+          author_name: string | null
           booking_id: string
           branch_id: string
           car_id: string
           comment: string | null
           created_at: string
           id: string
+          is_hidden: boolean
           rating: number
         }
         Insert: {
           author_id: string
+          author_name?: string | null
           booking_id: string
           branch_id: string
           car_id: string
           comment?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           rating: number
         }
         Update: {
           author_id?: string
+          author_name?: string | null
           booking_id?: string
           branch_id?: string
           car_id?: string
           comment?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           rating?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: true
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
@@ -800,41 +1159,75 @@ export type Database = {
           notify?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
-    Views: Record<never, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
+      audit_client_executable_functions: {
+        Args: never
+        Returns: {
+          anon_can_execute: boolean
+          authenticated_can_execute: boolean
+          needed_by: string
+          problem: string
+          routine: string
+        }[]
+      }
       car_unavailable_ranges: {
         Args: { p_car_id: string }
-        Returns: { start_date: string; end_date: string }[]
+        Returns: {
+          end_date: string
+          start_date: string
+        }[]
       }
-      expire_stale_bookings: { Args: Record<string, never>; Returns: number }
-      generate_booking_reference: { Args: Record<string, never>; Returns: string }
-      is_admin: { Args: Record<string, never>; Returns: boolean }
+      coupon_redemptions: {
+        Args: { p_coupon_id: string; p_customer_id?: string }
+        Returns: number
+      }
+      expire_stale_bookings: { Args: never; Returns: number }
+      generate_booking_reference: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: never; Returns: boolean }
       is_documents_ready: { Args: never; Returns: boolean }
       log_audit: {
         Args: {
           p_action: string
-          p_entity_type?: string
           p_entity_id?: string
+          p_entity_type?: string
           p_metadata?: Json
         }
         Returns: undefined
       }
       quote_booking: {
         Args: {
-          p_car_id: string
-          p_start_date: string
-          p_end_date: string
           p_addon_ids?: string[]
+          p_car_id: string
+          p_coupon_code?: string
+          p_end_date: string
+          p_start_date: string
         }
+        Returns: Json
+      }
+      send_booking_reminders: { Args: never; Returns: number }
+      validate_coupon: {
+        Args: { p_code: string; p_customer_id?: string; p_total: number }
         Returns: Json
       }
     }
     Enums: {
       addon_pricing: "per_day" | "one_time"
+      banner_target: "none" | "car" | "branch" | "category" | "coupon" | "url"
       booking_status:
         | "pending_payment"
         | "pending_confirmation"
@@ -847,22 +1240,171 @@ export type Database = {
       car_category: "economy" | "family" | "luxury" | "suv" | "commercial"
       car_status: "draft" | "available" | "maintenance" | "hidden"
       confirmation_mode: "instant" | "manual"
+      discount_type: "percent" | "fixed"
       document_check: "pending" | "accepted" | "rejected"
       fuel_type: "petrol" | "diesel" | "hybrid" | "electric"
-      payment_status: "unpaid" | "paid" | "refunded" | "partially_refunded" | "failed"
+      payment_status:
+        | "unpaid"
+        | "paid"
+        | "refunded"
+        | "partially_refunded"
+        | "failed"
       transmission_type: "automatic" | "manual"
       user_role: "customer" | "admin"
     }
-    CompositeTypes: Record<never, never>
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
 
-type PublicSchema = Database["public"]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type Tables<T extends keyof PublicSchema["Tables"]> =
-  PublicSchema["Tables"][T]["Row"]
-export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
-  PublicSchema["Tables"][T]["Insert"]
-export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
-  PublicSchema["Tables"][T]["Update"]
-export type Enums<T extends keyof PublicSchema["Enums"]> = PublicSchema["Enums"][T]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      addon_pricing: ["per_day", "one_time"],
+      banner_target: ["none", "car", "branch", "category", "coupon", "url"],
+      booking_status: [
+        "pending_payment",
+        "pending_confirmation",
+        "confirmed",
+        "active",
+        "completed",
+        "cancelled",
+        "rejected",
+        "expired",
+      ],
+      car_category: ["economy", "family", "luxury", "suv", "commercial"],
+      car_status: ["draft", "available", "maintenance", "hidden"],
+      confirmation_mode: ["instant", "manual"],
+      discount_type: ["percent", "fixed"],
+      document_check: ["pending", "accepted", "rejected"],
+      fuel_type: ["petrol", "diesel", "hybrid", "electric"],
+      payment_status: [
+        "unpaid",
+        "paid",
+        "refunded",
+        "partially_refunded",
+        "failed",
+      ],
+      transmission_type: ["automatic", "manual"],
+      user_role: ["customer", "admin"],
+    },
+  },
+} as const
