@@ -30,7 +30,7 @@ export async function signInWithEmail(
     return { error: "البريد الإلكتروني أو كلمة السر غير صحيحة." };
   }
 
-  redirect("/dashboard");
+  redirect("/admin");
 }
 
 // requestOtp/verifyOtp used to live here, driving Supabase's built-in SMS OTP

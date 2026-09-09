@@ -101,8 +101,8 @@ export function AdminOtpForm({ email }: { email: string }) {
         ) : null}
       </div>
 
-      <Link href="/dashboard" className="mt-8 text-sm text-admin-text-muted hover:text-admin-text">
-        العودة للوحتي كمستخدم
+      <Link href="/" className="mt-8 text-sm text-admin-text-muted hover:text-admin-text">
+        العودة للصفحة الرئيسية
       </Link>
     </>
   );

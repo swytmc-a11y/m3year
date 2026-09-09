@@ -62,7 +62,10 @@ export async function requireAdmin(): Promise<User> {
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin || !isAllowedAdminEmail(user.email)) {
-    redirect("/dashboard");
+    // This web project has no customer-facing area beyond the marketing
+    // page — the app is where customers live. Anyone who authenticates here
+    // without clearing the admin gate has nowhere else to land.
+    redirect("/");
   }
 
   const { data: otp } = await supabase
@@ -96,7 +99,10 @@ export async function requireAdminPendingOtp(): Promise<User> {
 
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin || !isAllowedAdminEmail(user.email)) {
-    redirect("/dashboard");
+    // This web project has no customer-facing area beyond the marketing
+    // page — the app is where customers live. Anyone who authenticates here
+    // without clearing the admin gate has nowhere else to land.
+    redirect("/");
   }
 
   return user;
