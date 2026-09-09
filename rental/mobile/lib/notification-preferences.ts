@@ -7,18 +7,18 @@ import { supabase } from "@/lib/supabase";
  * the default behaviour and no backfill is needed.
  */
 
+// Only the two categories something actually sends are offered. The table
+// still carries offers/saved_search_alerts columns from an earlier draft, but
+// nothing broadcasts an offer and nothing matches a saved search, so showing
+// those switches would promise a notification that never arrives.
 export type NotificationPreferences = {
   booking_updates: boolean;
   reminders: boolean;
-  offers: boolean;
-  saved_search_alerts: boolean;
 };
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   booking_updates: true,
   reminders: true,
-  offers: true,
-  saved_search_alerts: true,
 };
 
 export const NOTIFICATION_CATEGORY_LABELS: Record<
@@ -27,26 +27,18 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<
 > = {
   booking_updates: {
     title: "حالة الحجز",
-    description: "عند تأكيد حجزك أو رفضه أو إلغائه.",
+    description: "عند تأكيد حجزك أو رفضه أو إلغائه، وعند استلام دفعتك.",
   },
   reminders: {
     title: "التذكيرات",
-    description: "تذكير قبل موعد الاستلام وقبل موعد التسليم.",
-  },
-  offers: {
-    title: "العروض",
-    description: "عروض وخصومات على أسعار الإيجار.",
-  },
-  saved_search_alerts: {
-    title: "تنبيهات البحث المحفوظ",
-    description: "عند توفّر سيارة تطابق بحثك المحفوظ.",
+    description: "تذكير قبل موعد الاستلام وقبل موعد التسليم بيوم.",
   },
 };
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
   const { data, error } = await supabase
     .from("notification_preferences")
-    .select("booking_updates, reminders, offers, saved_search_alerts")
+    .select("booking_updates, reminders")
     .maybeSingle();
 
   if (error) {
