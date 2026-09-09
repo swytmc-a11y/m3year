@@ -19,24 +19,18 @@ export async function SiteHeader() {
     <nav className="flex items-center justify-between border-b border-grid bg-white px-6 py-4 sm:px-12">
       <div className="flex items-center gap-8">
         <Logo />
-        <div className="hidden gap-6 text-sm text-ink/60 sm:flex">
-          <Link href="/listings" className="hover:text-ink">
-            تصفح المشاريع
-          </Link>
-          <Link href="/franchises" className="hover:text-ink">
-            الامتيازات التجارية
-          </Link>
-          {isAdmin ? (
-            <Link href="/admin/listings" className="hover:text-ink">
+        {isAdmin ? (
+          <div className="hidden gap-6 text-sm text-ink/60 sm:flex">
+            <Link href="/admin" className="hover:text-ink">
               لوحة الإدارة
             </Link>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
 
-      {user ? (
+      {isAdmin ? (
         <Button asChild size="sm">
-          <Link href="/dashboard/listings">لوحتي</Link>
+          <Link href="/admin">لوحتي</Link>
         </Button>
       ) : (
         <Button asChild size="sm">
