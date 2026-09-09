@@ -9,6 +9,7 @@ export type CreateBookingInput = {
   pickupTime: string;
   returnTime: string;
   quote: Quote;
+  couponCode: string | null;
   note: string | null;
   confirmationMode: "instant" | "manual";
 };
@@ -16,9 +17,12 @@ export type CreateBookingInput = {
 /**
  * Creates the booking from a server-issued quote.
  *
- * The amounts written here come from quote_booking() rather than from
- * anything the client computed, and the row is inserted with the whole
- * pricing snapshot so a later price change cannot rewrite what was agreed.
+ * The amounts sent here are the ones already shown to the customer, but they
+ * are not what gets stored: a trigger reprices the row from quote_booking()
+ * on insert and overwrites them, so a request forged outside the app cannot
+ * name its own price. The coupon is sent as a code for the same reason —
+ * the server decides whether it applies and what it is worth.
+ *
  * If the dates were taken in the meantime the database refuses the insert
  * outright — the exclusion constraint, not a check this code performs.
  */
@@ -52,6 +56,7 @@ export async function createBooking(
       vat_rate: q.vat_rate,
       vat_amount: q.vat_amount,
       total: q.total,
+      coupon_code: input.couponCode ?? null,
       customer_note: input.note,
       // Payment comes next; until it lands the booking holds the dates only
       // for the configured window, after which the sweep releases them.

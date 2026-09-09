@@ -101,12 +101,19 @@ export async function fetchCarDetail(carId: string): Promise<{
   };
 }
 
+export type CouponVerdict =
+  | { valid: true; code: string; description: string | null; discount_amount: number }
+  | { valid: false; reason: string; message: string };
+
 export type Quote = {
   days: number;
   rate_tier: "daily" | "weekly" | "monthly";
   daily_rate: number;
   rental_total: number;
   addons_total: number;
+  subtotal: number;
+  coupon: CouponVerdict | null;
+  discount_amount: number;
   vat_rate: number;
   vat_amount: number;
   total: number;
@@ -123,12 +130,16 @@ export async function quoteBooking(
   startDate: string,
   endDate: string,
   addonIds: string[],
+  couponCode?: string | null,
 ): Promise<{ quote?: Quote; error?: string }> {
   const { data, error } = await supabase.rpc("quote_booking", {
     p_car_id: carId,
     p_start_date: startDate,
     p_end_date: endDate,
     p_addon_ids: addonIds,
+    // A rejected coupon is not an error: the quote comes back priced without
+    // it, carrying the reason so the screen can say why.
+    p_coupon_code: couponCode?.trim() || undefined,
   });
 
   if (error) {

@@ -68,6 +68,11 @@ export default function BookCarScreen() {
 
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  // couponInput is what is being typed; appliedCoupon is what the quote was
+  // priced with. Keeping them apart stops every keystroke from re-pricing.
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -110,11 +115,17 @@ export default function BookCarScreen() {
       return;
     }
     setQuoting(true);
-    const { quote: q, error } = await quoteBooking(car.id, startDate, endDate, selected);
+    const { quote: q, error } = await quoteBooking(
+      car.id,
+      startDate,
+      endDate,
+      selected,
+      appliedCoupon,
+    );
     setQuoting(false);
     setQuote(q ?? null);
     setQuoteError(error ?? null);
-  }, [car, startDate, endDate, selected, unavailable]);
+  }, [car, startDate, endDate, selected, unavailable, appliedCoupon]);
 
   useEffect(() => {
     reprice();
@@ -149,6 +160,9 @@ export default function BookCarScreen() {
       pickupTime,
       returnTime,
       quote,
+      // Only send a code the server already accepted while quoting; a
+      // rejected one would just be dropped again on insert.
+      couponCode: quote.coupon?.valid ? quote.coupon.code : null,
       note: note.trim() || null,
       confirmationMode: car.confirmation_mode,
     });
@@ -278,6 +292,60 @@ export default function BookCarScreen() {
           />
         </Card>
 
+        <Card style={{ padding: 18, gap: 10 }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+            رمز الخصم
+          </Text>
+
+          <View style={{ flexDirection: "row-reverse", gap: 8, alignItems: "center" }}>
+            <TextInput
+              value={couponInput}
+              onChangeText={(v) => setCouponInput(v.toUpperCase().replace(/\s/g, ""))}
+              placeholder="أدخل الرمز"
+              placeholderTextColor={t.textMuted}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!appliedCoupon}
+              style={{
+                flex: 1,
+                height: 44,
+                paddingHorizontal: 14,
+                backgroundColor: t.surface2,
+                borderRadius: radius.md,
+                fontFamily: fonts.numeric,
+                fontSize: 14,
+                color: appliedCoupon ? t.textMuted : t.text,
+                textAlign: "right",
+              }}
+            />
+            <Button
+              label={appliedCoupon ? "إزالة" : "تطبيق"}
+              variant="secondary"
+              onPress={() => {
+                if (appliedCoupon) {
+                  setAppliedCoupon(null);
+                  setCouponInput("");
+                  return;
+                }
+                if (couponInput.trim()) setAppliedCoupon(couponInput.trim());
+              }}
+              disabled={!appliedCoupon && !couponInput.trim()}
+            />
+          </View>
+
+          {/* The verdict comes back attached to the quote, so an invalid
+              code is explained rather than silently ignored. */}
+          {quote?.coupon && !quote.coupon.valid ? (
+            <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.danger, textAlign: "right" }}>
+              {quote.coupon.message}
+            </Text>
+          ) : quote?.coupon?.valid ? (
+            <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: t.success, textAlign: "right" }}>
+              {quote.coupon.description ?? `طُبّق الرمز ${quote.coupon.code}`}
+            </Text>
+          ) : null}
+        </Card>
+
         {/* The quote comes from the server on every change, so what is shown
             here is exactly what gets charged. */}
         <Card style={{ padding: 18, gap: 12 }}>
@@ -300,6 +368,22 @@ export default function BookCarScreen() {
               {quote.addons.map((a) => (
                 <Line key={a.addon_id} label={a.name} value={formatSar(a.total)} muted />
               ))}
+              {quote.discount_amount > 0 ? (
+                <View
+                  style={{
+                    flexDirection: "row-reverse",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.success }}>
+                    خصم {quote.coupon?.valid ? quote.coupon.code : ""}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.numericBold, fontSize: 14, color: t.success }}>
+                    −{formatSar(quote.discount_amount)}
+                  </Text>
+                </View>
+              ) : null}
               <Line label="منها ضريبة القيمة المضافة" value={formatSar(quote.vat_amount)} muted />
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
