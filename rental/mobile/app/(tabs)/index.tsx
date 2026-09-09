@@ -300,7 +300,7 @@ export default function HomeScreen() {
                 title: "اختيارات تستاهل المشوار",
                 subtitle: "سيارات مختارة لرحلتك القادمة",
               })}
-              cars={feed.sections.picks ?? []}
+              cars={feed.sections?.picks ?? []}
               cardWidth={cardWidth}
               dates={dates}
               favorites={favorites}
@@ -314,7 +314,7 @@ export default function HomeScreen() {
                 title: "الأكثر حجزًا",
                 subtitle: "ما يختاره عملاؤنا أكثر من غيره",
               })}
-              cars={feed.sections.popular ?? []}
+              cars={feed.sections?.popular ?? []}
               cardWidth={cardWidth}
               dates={dates}
               favorites={favorites}
@@ -322,7 +322,7 @@ export default function HomeScreen() {
               onSeeAll={() => openSearch()}
             />
 
-            {feed.banners.length > 0 ? (
+            {(feed.banners?.length ?? 0) > 0 ? (
               <Animated.View entering={staggerEnter(2)} style={{ gap: 12 }}>
                 <View style={{ paddingHorizontal: 18 }}>
                   <SectionHeader
@@ -333,7 +333,7 @@ export default function HomeScreen() {
                   />
                 </View>
                 <Rail>
-                  {feed.banners.map((b) => (
+                  {(feed.banners ?? []).map((b) => (
                     <PromoCard
                       key={b.id}
                       banner={b}
@@ -351,7 +351,7 @@ export default function HomeScreen() {
                 title: "اقتصادية وتكفي",
                 subtitle: "أقل سعر لليوم، بلا مفاجآت",
               })}
-              cars={feed.sections.economy ?? []}
+              cars={feed.sections?.economy ?? []}
               cardWidth={cardWidth}
               dates={dates}
               favorites={favorites}
@@ -368,7 +368,7 @@ export default function HomeScreen() {
                   textAlign: "center",
                 }}
               >
-                {feed.total_available} سيارة متاحة
+                {feed.total_available ?? 0} سيارة متاحة
                 {dates ? " في التواريخ المختارة" : ""} · كل الأسعار شاملة الضريبة
               </Text>
             </View>
