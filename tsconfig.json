@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "mobile",
-    "supabase/functions"
+    "supabase/functions",
+    "rental"
   ]
 }
