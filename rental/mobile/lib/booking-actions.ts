@@ -105,3 +105,28 @@ export async function cancelMyBooking(bookingId: string): Promise<{ error?: stri
   }
   return {};
 }
+
+/**
+ * Opens payment for a booking.
+ *
+ * The amount is never sent from here — the edge function reads it from the
+ * booking's own frozen pricing snapshot. This returns the hosted page URL;
+ * the booking is only marked paid once Moyasar confirms it to the webhook,
+ * never from the customer's return to the app.
+ */
+export async function startBookingPayment(
+  bookingId: string,
+): Promise<{ paymentUrl?: string; error?: string }> {
+  const { data, error } = await supabase.functions.invoke("create-booking-payment", {
+    body: { bookingId },
+  });
+
+  if (error) {
+    console.error("[booking] payment start failed", error);
+    return { error: "تعذّر فتح صفحة الدفع الآن. حاول مرة أخرى." };
+  }
+  const res = data as { paymentUrl?: string; error?: string } | null;
+  if (res?.error) return { error: res.error };
+  if (!res?.paymentUrl) return { error: "تعذّر فتح صفحة الدفع الآن." };
+  return { paymentUrl: res.paymentUrl };
+}

@@ -15,7 +15,7 @@ import {
   type MyBooking,
   type BookingAddonLine,
 } from "@/lib/bookings-data";
-import { cancelMyBooking } from "@/lib/booking-actions";
+import { cancelMyBooking, startBookingPayment } from "@/lib/booking-actions";
 import {
   formatSar,
   formatDate,
@@ -36,6 +36,7 @@ export default function BookingDetailScreen() {
   const [addons, setAddons] = useState<BookingAddonLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const reload = useCallback(async () => {
     const [b, a] = await Promise.all([fetchBooking(id), fetchBookingAddons(id)]);
@@ -88,6 +89,20 @@ export default function BookingDetailScreen() {
   }
 
   const canCancel = OPEN_STATUSES.includes(booking.status);
+  const needsPayment =
+    booking.status === "pending_payment" && booking.payment_status === "unpaid";
+
+  async function onPay() {
+    setPaying(true);
+    const res = await startBookingPayment(booking!.id);
+    setPaying(false);
+    if (res.error) {
+      toast(res.error, "error");
+      return;
+    }
+    // Moyasar hosts the card form, so nothing sensitive ever enters the app.
+    await Linking.openURL(res.paymentUrl!);
+  }
 
   function onCancel() {
     Alert.alert(
@@ -226,6 +241,20 @@ export default function BookingDetailScreen() {
               ) : null}
             </View>
           </Card>
+        ) : null}
+
+        {needsPayment ? (
+          <View style={{ gap: 8 }}>
+            <Button
+              label={`ادفع ${formatSar(Number(booking.total))}`}
+              fullWidth
+              loading={paying}
+              onPress={onPay}
+            />
+            <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "center", lineHeight: 19 }}>
+              الدفع عبر صفحة آمنة من مزوّد الدفع. بعد إتمامه ارجع للتطبيق وستجد الحالة محدّثة.
+            </Text>
+          </View>
         ) : null}
 
         {canCancel ? (
