@@ -46,44 +46,155 @@ export function BannerForm({
   const [state, formAction, pending] = useActionState(action, initial);
   const errors = state.fieldErrors ?? {};
   const [kind, setKind] = useState<TargetKind>(banner?.target_kind ?? "none");
+  const [render, setRender] = useState<Banner["render"]>(banner?.render ?? "template");
+  const [template, setTemplate] = useState<NonNullable<Banner["template"]>>(
+    banner?.template ?? "discount",
+  );
+  const [tone, setTone] = useState(banner?.tone ?? "lime");
+  const [figure, setFigure] = useState(banner?.figure ?? "");
+  const [title, setTitle] = useState(banner?.title ?? "");
+  const [subtitle, setSubtitle] = useState(banner?.subtitle ?? "");
+
+  const templated = render === "template";
+  const needsFigure = template === "giant_number" || template === "discount";
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
       {banner ? <input type="hidden" name="id" value={banner.id} /> : null}
 
       <Card className="border-admin-border bg-admin-surface flex flex-col gap-5 p-5 sm:p-6">
-        <h2 className="font-heading text-base font-extrabold text-admin-text">الصورة والنص</h2>
+        <h2 className="font-heading text-base font-extrabold text-admin-text">نوع البنر</h2>
 
         <div className="flex flex-col gap-2">
-          <Label>صورة البنر</Label>
-          <ImageUploader
-            name="image_url"
-            defaultValue={banner?.image_url ? [banner.image_url] : []}
-          />
+          <Label htmlFor="render">كيف يُبنى البنر</Label>
+          <select
+            id="render"
+            name="render"
+            value={render}
+            onChange={(e) => setRender(e.target.value as Banner["render"])}
+            className="h-11 rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text"
+          >
+            <option value="template">قالب جاهز — تكتب النص ونرسمه</option>
+            <option value="image">صورة مصمّمة — ترفعها بنفسك</option>
+          </select>
           <p className="text-[12px] text-admin-text-muted">
-            الأفضل بنسبة عرض إلى ارتفاع ٢١:٩ (مثلًا ١٢٦٠×٥٤٠ بكسل). تُقصّ الصورة لتملأ المساحة.
+            القالب يُرسم داخل التطبيق فيظهر حادًا على كل الشاشات، ولا يحتاج مصممًا.
           </p>
-          {errors.image_url?.[0] ? (
-            <p className="text-[12px] text-admin-danger">{errors.image_url[0]}</p>
-          ) : null}
         </div>
+      </Card>
+
+      <Card className="border-admin-border bg-admin-surface flex flex-col gap-5 p-5 sm:p-6">
+        <h2 className="font-heading text-base font-extrabold text-admin-text">المحتوى</h2>
+
+        {templated ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="template">القالب</Label>
+                <select
+                  id="template"
+                  name="template"
+                  value={template}
+                  onChange={(e) => setTemplate(e.target.value as typeof template)}
+                  className="h-11 rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text"
+                >
+                  <option value="discount">خصم — رقم كبير بعلامة ٪</option>
+                  <option value="giant_number">رقم عملاق — مدة أو كمية</option>
+                  <option value="category">فئة — بلا رقم</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tone">اللون</Label>
+                <select
+                  id="tone"
+                  name="tone"
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  className="h-11 rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text"
+                >
+                  <option value="lime">ليموني فاتح</option>
+                  <option value="ink">أسود</option>
+                </select>
+              </div>
+            </div>
+
+            {needsFigure ? (
+              <Field
+                label="الرقم الكبير"
+                name="figure"
+                value={figure}
+                onChange={(e) => setFigure(e.target.value)}
+                dir="ltr"
+                placeholder={template === "discount" ? "15%" : "30"}
+                hint="يظهر ضخمًا خلف النص. أبقه قصيرًا — حرفان أو ثلاثة."
+                error={errors.figure?.[0]}
+              />
+            ) : (
+              <input type="hidden" name="figure" value="" />
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label>صورة البنر</Label>
+            <ImageUploader
+              name="image_url"
+              defaultValue={banner?.image_url ? [banner.image_url] : []}
+            />
+            <p className="text-[12px] text-admin-text-muted">
+              الأفضل بنسبة عرض إلى ارتفاع ٢١:٩ (مثلًا ١٢٦٠×٥٤٠ بكسل). تُقصّ الصورة لتملأ المساحة.
+            </p>
+            {errors.image_url?.[0] ? (
+              <p className="text-[12px] text-admin-danger">{errors.image_url[0]}</p>
+            ) : null}
+          </div>
+        )}
 
         <Field
           label="العنوان"
           name="title"
-          defaultValue={banner?.title ?? ""}
-          placeholder="عرض الصيف"
-          hint="اتركه فارغًا إذا كان النص مكتوبًا داخل الصورة نفسها."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="بدايتك معنا.. أوفر"
+          hint={templated ? undefined : "اتركه فارغًا إذا كان النص مكتوبًا داخل الصورة نفسها."}
           error={errors.title?.[0]}
         />
         <Field
           label="السطر الثاني"
           name="subtitle"
-          defaultValue={banner?.subtitle ?? ""}
-          placeholder="خصم حتى ٢٠٪ على السيارات العائلية"
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
+          placeholder="خصم ١٥٪ على حجزك الأول."
           error={errors.subtitle?.[0]}
         />
+        {templated ? (
+          <Field
+            label="نص الزر"
+            name="cta_label"
+            defaultValue={banner?.cta_label ?? ""}
+            placeholder="اكتشف العرض"
+            hint="اتركه فارغًا لإخفاء الزر."
+            error={errors.cta_label?.[0]}
+          />
+        ) : (
+          <input type="hidden" name="cta_label" value={banner?.cta_label ?? ""} />
+        )}
       </Card>
+
+      {templated ? (
+        <Card className="border-admin-border bg-admin-surface flex flex-col gap-3 p-5 sm:p-6">
+          <h2 className="font-heading text-base font-extrabold text-admin-text">المعاينة</h2>
+          <BannerPreview
+            tone={tone}
+            figure={needsFigure ? figure : ""}
+            title={title}
+            subtitle={subtitle}
+          />
+          <p className="text-[12px] text-admin-text-muted">
+            هكذا سيظهر تقريبًا في مقدمة التطبيق.
+          </p>
+        </Card>
+      ) : null}
 
       <Card className="border-admin-border bg-admin-surface flex flex-col gap-5 p-5 sm:p-6">
         <h2 className="font-heading text-base font-extrabold text-admin-text">عند الضغط</h2>
@@ -257,6 +368,59 @@ export function BannerForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Draws the banner as the app will. Writing a campaign blind and finding
+ * out how it looks only after publishing is how banners end up with
+ * headlines that overrun the artwork.
+ */
+function BannerPreview({
+  tone,
+  figure,
+  title,
+  subtitle,
+}: {
+  tone: string;
+  figure: string;
+  title: string;
+  subtitle: string;
+}) {
+  const lime = tone === "lime";
+  return (
+    <div
+      dir="rtl"
+      className={`relative aspect-[21/9] w-full max-w-md overflow-hidden rounded-2xl p-5 ${
+        lime ? "bg-[#EDF7D4]" : "bg-[#111113]"
+      }`}
+    >
+      {figure ? (
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute -bottom-6 left-3 select-none text-[110px] font-extrabold leading-none ${
+            lime ? "text-[#C8F250]" : "text-white/10"
+          }`}
+        >
+          {figure}
+        </span>
+      ) : null}
+
+      <div className="relative flex h-full flex-col justify-center gap-1 text-right">
+        <span
+          className={`text-[19px] font-extrabold leading-snug ${
+            lime ? "text-[#111113]" : "text-white"
+          }`}
+        >
+          {title || "عنوان العرض"}
+        </span>
+        {subtitle ? (
+          <span className={`text-[12.5px] ${lime ? "text-[#111113]/70" : "text-white/70"}`}>
+            {subtitle}
+          </span>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

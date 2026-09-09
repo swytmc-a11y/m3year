@@ -10,6 +10,11 @@ import type { TablesInsert } from "@/lib/supabase/database.types";
 
 function parseBannerForm(formData: FormData) {
   return bannerFormSchema.safeParse({
+    render: formData.get("render"),
+    template: formData.get("template") ?? "",
+    tone: formData.get("tone") ?? "",
+    figure: formData.get("figure"),
+    cta_label: formData.get("cta_label"),
     title: formData.get("title"),
     subtitle: formData.get("subtitle"),
     image_url: formData.get("image_url") ?? "",
@@ -32,10 +37,21 @@ function parseBannerForm(formData: FormData) {
  * banner from "car" to "url" briefly carries both. Cleared here too.
  */
 function forKind(values: ReturnType<typeof bannerFormSchema.parse>): TablesInsert<"promo_banners"> {
+  const templated = values.render === "template";
   return {
+    render: values.render,
+    // The database trigger clears the irrelevant side too, but sending a
+    // stale template on an image banner (or the reverse) would briefly make
+    // the row describe two different banners at once.
+    template: templated
+      ? (values.template as TablesInsert<"promo_banners">["template"])
+      : null,
+    tone: values.tone,
+    figure: templated ? values.figure : null,
+    cta_label: templated ? values.cta_label : null,
     title: values.title,
     subtitle: values.subtitle,
-    image_url: values.image_url,
+    image_url: templated ? null : values.image_url,
     target_kind: values.target_kind,
     target_car_id: values.target_kind === "car" ? values.target_car_id : null,
     target_branch_id: values.target_kind === "branch" ? values.target_branch_id : null,

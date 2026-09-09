@@ -26,6 +26,48 @@ function describeTarget(b: Banner): string {
   }
 }
 
+/**
+ * A true-to-life miniature of the banner. A templated banner has no image
+ * to show, and a grey rectangle in its place would tell the operator
+ * nothing about what they just wrote — so the template is drawn here the
+ * same way the app draws it.
+ */
+function BannerThumb({ banner }: { banner: Banner }) {
+  if (banner.render === "image" && banner.image_url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={banner.image_url} alt="" className="h-24 w-full rounded-lg object-cover sm:w-56" />
+    );
+  }
+
+  const lime = banner.tone === "lime";
+  return (
+    <div
+      className={`relative h-24 w-full overflow-hidden rounded-lg sm:w-56 ${
+        lime ? "bg-[#EDF7D4]" : "bg-[#111113]"
+      }`}
+    >
+      {banner.figure ? (
+        <span
+          aria-hidden="true"
+          className={`absolute -bottom-3 left-2 select-none text-[64px] font-extrabold leading-none ${
+            lime ? "text-[#C8F250]" : "text-white/10"
+          }`}
+        >
+          {banner.figure}
+        </span>
+      ) : null}
+      <span
+        className={`absolute inset-x-3 top-3 text-right text-[12px] font-bold ${
+          lime ? "text-[#111113]" : "text-white"
+        }`}
+      >
+        {banner.title}
+      </span>
+    </div>
+  );
+}
+
 function statusOf(b: Banner): { label: string; variant: "verify" | "muted" | "danger" } {
   const now = Date.now();
   if (!b.is_active) return { label: "موقوف", variant: "muted" };
@@ -76,12 +118,7 @@ export default async function AdminBannersPage() {
             return (
               <Card key={b.id} className="border-admin-border bg-admin-surface">
                 <div className="flex flex-col gap-3 sm:flex-row-reverse sm:items-start">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={b.image_url}
-                    alt=""
-                    className="h-24 w-full rounded-lg object-cover sm:w-56"
-                  />
+                  <BannerThumb banner={b} />
 
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-2">

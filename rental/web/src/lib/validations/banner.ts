@@ -16,14 +16,34 @@ const optionalTimestamp = z
 
 export const bannerFormSchema = z
   .object({
+    render: z.enum(["image", "template"], { error: "اختر نوع البنر." }),
+    template: z
+      .string()
+      .trim()
+      .transform((v) => (v === "" ? null : v))
+      .nullable()
+      .refine((v) => v === null || ["giant_number", "discount", "category"].includes(v), {
+        error: "قالب غير معروف.",
+      }),
+    tone: z
+      .string()
+      .trim()
+      .transform((v) => (v === "" ? "lime" : v))
+      .refine((v) => ["lime", "ink"].includes(v), { error: "لون غير معروف." }),
+    figure: optionalText,
+    cta_label: optionalText,
+
     title: optionalText,
     subtitle: optionalText,
     // The uploader writes a comma-separated list; a banner uses the first.
     image_url: z
       .string()
       .trim()
-      .transform((v) => v.split(",")[0]?.trim() ?? "")
-      .refine((v) => v.length > 0, { error: "ارفع صورة البنر." }),
+      .transform((v) => {
+        const first = v.split(",")[0]?.trim() ?? "";
+        return first === "" ? null : first;
+      })
+      .nullable(),
 
     target_kind: z.enum(["none", "car", "branch", "category", "coupon", "url"], {
       error: "اختر وجهة البنر.",
@@ -43,12 +63,22 @@ export const bannerFormSchema = z
       .refine((v) => Number.isInteger(v), { error: "الترتيب يجب أن يكون رقمًا صحيحًا." }),
     is_active: z.union([z.string(), z.null()]).transform((v) => v === "on" || v === "true"),
   })
-  // Mirrors the database trigger so the operator gets a field error instead
+  // Mirrors the database triggers so the operator gets a field error instead
   // of a raw Postgres exception.
   .superRefine((v, ctx) => {
     const need = (field: string, value: unknown, message: string) => {
       if (!value) ctx.addIssue({ code: "custom", path: [field], message });
     };
+
+    if (v.render === "image") {
+      need("image_url", v.image_url, "ارفع صورة البنر.");
+    } else {
+      need("template", v.template, "اختر القالب.");
+      need("title", v.title, "اكتب عنوان البنر.");
+      if (v.template === "giant_number" || v.template === "discount") {
+        need("figure", v.figure, "اكتب الرقم الكبير.");
+      }
+    }
 
     if (v.target_kind === "car") need("target_car_id", v.target_car_id, "اختر السيارة.");
     if (v.target_kind === "branch") need("target_branch_id", v.target_branch_id, "اختر الفرع.");

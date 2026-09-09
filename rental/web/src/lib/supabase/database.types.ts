@@ -535,6 +535,7 @@ export type Database = {
           id: string
           images: string[]
           make: string
+          make_latin: string | null
           max_rental_days: number | null
           min_rental_days: number
           model: string
@@ -567,6 +568,7 @@ export type Database = {
           id?: string
           images?: string[]
           make: string
+          make_latin?: string | null
           max_rental_days?: number | null
           min_rental_days?: number
           model: string
@@ -599,6 +601,7 @@ export type Database = {
           id?: string
           images?: string[]
           make?: string
+          make_latin?: string | null
           max_rental_days?: number | null
           min_rental_days?: number
           model?: string
@@ -664,6 +667,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_blocks: {
+        Row: {
+          slug: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          slug?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       coupons: {
         Row: {
@@ -936,10 +960,13 @@ export type Database = {
       promo_banners: {
         Row: {
           created_at: string
+          cta_label: string | null
           ends_at: string | null
+          figure: string | null
           id: string
-          image_url: string
+          image_url: string | null
           is_active: boolean
+          render: Database["public"]["Enums"]["banner_render"]
           sort_order: number
           starts_at: string | null
           subtitle: string | null
@@ -949,15 +976,20 @@ export type Database = {
           target_coupon_code: string | null
           target_kind: Database["public"]["Enums"]["banner_target"]
           target_url: string | null
+          template: Database["public"]["Enums"]["banner_template"] | null
           title: string | null
+          tone: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          cta_label?: string | null
           ends_at?: string | null
+          figure?: string | null
           id?: string
-          image_url: string
+          image_url?: string | null
           is_active?: boolean
+          render?: Database["public"]["Enums"]["banner_render"]
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -967,15 +999,20 @@ export type Database = {
           target_coupon_code?: string | null
           target_kind?: Database["public"]["Enums"]["banner_target"]
           target_url?: string | null
+          template?: Database["public"]["Enums"]["banner_template"] | null
           title?: string | null
+          tone?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          cta_label?: string | null
           ends_at?: string | null
+          figure?: string | null
           id?: string
-          image_url?: string
+          image_url?: string | null
           is_active?: boolean
+          render?: Database["public"]["Enums"]["banner_render"]
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -985,7 +1022,9 @@ export type Database = {
           target_coupon_code?: string | null
           target_kind?: Database["public"]["Enums"]["banner_target"]
           target_url?: string | null
+          template?: Database["public"]["Enums"]["banner_template"] | null
           title?: string | null
+          tone?: string
           updated_at?: string
         }
         Relationships: [
@@ -1195,11 +1234,22 @@ export type Database = {
         Args: { p_end: string; p_start: string }
         Returns: string[]
       }
+      car_badges: {
+        Args: never
+        Returns: {
+          badge: string
+          car_id: string
+        }[]
+      }
       coupon_redemptions: {
         Args: { p_coupon_id: string; p_customer_id?: string }
         Returns: number
       }
       expire_stale_bookings: { Args: never; Returns: number }
+      home_feed: {
+        Args: { p_end?: string; p_start?: string }
+        Returns: Json
+      }
       generate_booking_reference: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: never; Returns: boolean }
@@ -1231,7 +1281,9 @@ export type Database = {
     }
     Enums: {
       addon_pricing: "per_day" | "one_time"
+      banner_render: "image" | "template"
       banner_target: "none" | "car" | "branch" | "category" | "coupon" | "url"
+      banner_template: "giant_number" | "discount" | "category"
       booking_status:
         | "pending_payment"
         | "pending_confirmation"
@@ -1383,7 +1435,9 @@ export const Constants = {
   public: {
     Enums: {
       addon_pricing: ["per_day", "one_time"],
+      banner_render: ["image", "template"],
       banner_target: ["none", "car", "branch", "category", "coupon", "url"],
+      banner_template: ["giant_number", "discount", "category"],
       booking_status: [
         "pending_payment",
         "pending_confirmation",

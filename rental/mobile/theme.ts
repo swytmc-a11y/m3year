@@ -72,6 +72,32 @@ export type ThemeTokens = {
   primary: string;
   primaryPressed: string;
   onPrimary: string;
+  /**
+   * The lime call-to-action colour.
+   *
+   * Only ever a BACKGROUND, never text or an icon: against white it sits at
+   * about 1.3:1, so lime lettering is effectively invisible, while lime
+   * behind near-black text is around 14:1. Encoding that as "accent +
+   * onAccent" keeps the pairing from being used the wrong way round.
+   *
+   * It is the only saturated colour in the brand, which is what makes a
+   * lime button impossible to miss on a page of black, white and grey.
+   */
+  accent: string;
+  accentPressed: string;
+  onAccent: string;
+  /** Pale wash of the accent, for offer cards that should feel adjacent to
+   *  a CTA without shouting like one. */
+  accentTint: string;
+  /** The dark canvas the hero and the darker promo cards sit on. Separate
+   *  from `bg` because in dark mode it has to stay distinguishable from the
+   *  page behind it. */
+  canvas: string;
+  onCanvas: string;
+  onCanvasMuted: string;
+  /** The neutral bed a car photo sits on, so a studio cut-out and an
+   *  ordinary photograph read as the same kind of object on the card. */
+  well: string;
   success: string;
   successTint: string;
   warning: string;
@@ -112,6 +138,14 @@ export const lightTokens = {
   primary: "#18181B",
   primaryPressed: "#35353A",
   onPrimary: "#FFFFFF",
+  accent: "#C8F250",
+  accentPressed: "#B4DE3C",
+  onAccent: "#111113",
+  accentTint: "#EDF7D4",
+  canvas: "#111113",
+  onCanvas: "#F1F1EF",
+  onCanvasMuted: "#A0A09F",
+  well: "#F2F2EF",
   success: "#16803D",
   successTint: "#E6F4EA",
   // Rating gold. Darker than a pure amber so five filled stars still meet
@@ -139,6 +173,20 @@ export const darkTokens: ThemeTokens = {
   primary: "#F1F1EF",
   primaryPressed: "#D2D2CE",
   onPrimary: "#0B0B0C",
+  // Unchanged from light mode: the lime already reads as "press me" against
+  // near-black, and shifting it per mode would make the brand's one
+  // saturated colour inconsistent between them.
+  accent: "#C8F250",
+  accentPressed: "#B4DE3C",
+  onAccent: "#111113",
+  // Deep olive rather than a lightened lime — a pale tint on a dark page
+  // glows like a lamp and pulls the eye off the cars.
+  accentTint: "#242D10",
+  // Lifted off `bg` so the hero still reads as a card in dark mode.
+  canvas: "#17171A",
+  onCanvas: "#F1F1EF",
+  onCanvasMuted: "#9B9BA0",
+  well: "#1A1A1D",
   success: "#34D399",
   successTint: "#123322",
   warning: "#F0B429",
