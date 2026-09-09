@@ -166,12 +166,14 @@ export type Database = {
           paid_at: string | null
           payment_ref: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
+          pickup_reminded_at: string | null
           pickup_time: string
           rate_tier: string
           reference: string
           refund_amount: number | null
           refunded_at: string | null
           rental_total: number
+          return_reminded_at: string | null
           return_time: string
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -198,6 +200,7 @@ export type Database = {
           paid_at?: string | null
           payment_ref?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          pickup_reminded_at?: string | null
           pickup_time?: string
           rate_tier: string
           reference: string
@@ -230,12 +233,14 @@ export type Database = {
           paid_at?: string | null
           payment_ref?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          pickup_reminded_at?: string | null
           pickup_time?: string
           rate_tier?: string
           reference?: string
           refund_amount?: number | null
           refunded_at?: string | null
           rental_total?: number
+          return_reminded_at?: string | null
           return_time?: string
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -648,10 +653,19 @@ export type Database = {
         Row: {
           city: string | null
           created_at: string
+          documents_approved_at: string | null
+          documents_approved_by: string | null
+          documents_check: Database["public"]["Enums"]["document_check"] | null
+          documents_check_note: string | null
+          documents_checked_at: string | null
           email: string | null
           full_name: string | null
           id: string
+          id_document_path: string | null
           is_blocked: boolean
+          license_document_path: string | null
+          license_number: string | null
+          national_id: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -659,10 +673,19 @@ export type Database = {
         Insert: {
           city?: string | null
           created_at?: string
+          documents_approved_at?: string | null
+          documents_approved_by?: string | null
+          documents_check?: Database["public"]["Enums"]["document_check"] | null
+          documents_check_note?: string | null
+          documents_checked_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          id_document_path?: string | null
           is_blocked?: boolean
+          license_document_path?: string | null
+          license_number?: string | null
+          national_id?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -670,10 +693,19 @@ export type Database = {
         Update: {
           city?: string | null
           created_at?: string
+          documents_approved_at?: string | null
+          documents_approved_by?: string | null
+          documents_check?: Database["public"]["Enums"]["document_check"] | null
+          documents_check_note?: string | null
+          documents_checked_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          id_document_path?: string | null
           is_blocked?: boolean
+          license_document_path?: string | null
+          license_number?: string | null
+          national_id?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -780,7 +812,8 @@ export type Database = {
       expire_stale_bookings: { Args: Record<string, never>; Returns: number }
       generate_booking_reference: { Args: Record<string, never>; Returns: string }
       is_admin: { Args: Record<string, never>; Returns: boolean }
-      is_blocked: { Args: { uid: string }; Returns: boolean }
+      is_blocked: { Args: never; Returns: boolean }
+      is_documents_ready: { Args: never; Returns: boolean }
       log_audit: {
         Args: {
           p_action: string
@@ -814,6 +847,7 @@ export type Database = {
       car_category: "economy" | "family" | "luxury" | "suv" | "commercial"
       car_status: "draft" | "available" | "maintenance" | "hidden"
       confirmation_mode: "instant" | "manual"
+      document_check: "pending" | "accepted" | "rejected"
       fuel_type: "petrol" | "diesel" | "hybrid" | "electric"
       payment_status: "unpaid" | "paid" | "refunded" | "partially_refunded" | "failed"
       transmission_type: "automatic" | "manual"

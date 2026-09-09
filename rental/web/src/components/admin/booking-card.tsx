@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingStatusBadge } from "@/components/cars/booking-status-badge";
+import { CustomerDocuments } from "@/components/admin/customer-documents";
 import {
   formatSar,
   formatDate,
@@ -42,7 +43,21 @@ export type BookingWithRelations = {
   refund_amount: number | null;
   car: { id: string; make: string; model: string; year: number } | null;
   branch: { name: string; city: string } | null;
-  customer: { full_name: string | null; phone: string | null; email: string | null } | null;
+  customer:
+    | {
+        id: string;
+        full_name: string | null;
+        phone: string | null;
+        email: string | null;
+        national_id: string | null;
+        license_number: string | null;
+        id_document_path: string | null;
+        license_document_path: string | null;
+        documents_check: "pending" | "accepted" | "rejected" | null;
+        documents_check_note: string | null;
+        documents_approved_at: string | null;
+      }
+    | null;
 };
 
 export function BookingCard({ booking }: { booking: BookingWithRelations }) {
@@ -111,6 +126,8 @@ export function BookingCard({ booking }: { booking: BookingWithRelations }) {
           </>
         ) : null}
       </div>
+
+      {b.customer ? <CustomerDocuments customer={b.customer} /> : null}
 
       {b.customer_note ? (
         <p className="mb-3 rounded-lg bg-admin-bg px-3 py-2 text-[13px] text-admin-text">

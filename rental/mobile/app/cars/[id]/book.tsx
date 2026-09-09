@@ -18,6 +18,11 @@ import {
 import { createBooking } from "@/lib/booking-actions";
 import { DateRangeCalendar } from "@/components/date-range-calendar";
 import { daysBetween } from "@/lib/dates";
+import {
+  fetchMyDocuments,
+  isDocumentsReady,
+  type CustomerDocuments,
+} from "@/lib/customer-documents";
 import { formatSar, carTitle, RATE_TIER_LABELS } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
@@ -40,6 +45,7 @@ export default function BookCarScreen() {
   const [car, setCar] = useState<CarDetail | null>(null);
   const [addons, setAddons] = useState<CarAddon[]>([]);
   const [unavailable, setUnavailable] = useState<UnavailableRange[]>([]);
+  const [docs, setDocs] = useState<CustomerDocuments | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [startDate, setStartDate] = useState(isoDay(1));
@@ -62,11 +68,15 @@ export default function BookCarScreen() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const res = await fetchCarDetail(id);
+      // The same details the database requires to accept a booking are
+      // fetched alongside the car, so an incomplete customer is sent to fill
+      // them in rather than getting a rejection at the end of the flow.
+      const [res, mine] = await Promise.all([fetchCarDetail(id), fetchMyDocuments()]);
       if (!active) return;
       setCar(res.car);
       setAddons(res.addons);
       setUnavailable(res.unavailable);
+      setDocs(mine);
       setLoading(false);
     })();
     return () => {
@@ -111,6 +121,9 @@ export default function BookCarScreen() {
   }
   if (!session) return <Redirect href="/auth" />;
   if (!car) return <Redirect href="/" />;
+  if (!isDocumentsReady(docs)) {
+    return <Redirect href={`/my-details?next=/cars/${id}/book`} />;
+  }
 
   async function onSubmit() {
     if (!car || !quote) return;
