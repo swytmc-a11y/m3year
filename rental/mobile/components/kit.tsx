@@ -255,8 +255,9 @@ export function Chip({ label, active, onPress }: { label: string; active: boolea
           minHeight: 36,
           borderRadius: radius.pill,
           borderWidth: 1,
-          // Selection reads as the brand accent everywhere — the same signal the
-          // SegmentedControl uses — rather than a second near-black "on" colour.
+          // Selection reads as the brand accent everywhere — the same signal
+          // the SegmentedControl uses, so "on" looks the same wherever it
+          // appears.
           borderColor: active ? t.primary : t.border,
           backgroundColor: active ? t.primary : t.surface,
           alignItems: "center",

@@ -67,13 +67,43 @@ export function CarCard({
       <Tappable onPress={() => router.push(href as never)} haptic="light">
         <Card style={{ padding: 0, overflow: "hidden" }}>
           {car.cover_image ? (
-            <Image
-              source={{ uri: car.cover_image }}
-              style={{ width: "100%", aspectRatio: 16 / 9, backgroundColor: t.surface2 }}
-              contentFit="cover"
-              transition={200}
-              cachePolicy="memory-disk"
-            />
+            <View>
+              <Image
+                source={{ uri: car.cover_image }}
+                style={{ width: "100%", aspectRatio: 16 / 9, backgroundColor: t.surface2 }}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+              {/* Only shown when dates are in play. Every car in the list is
+                  available by then, so this confirms the search rather than
+                  labelling cars at random. */}
+              {dates ? (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    flexDirection: "row-reverse",
+                    alignItems: "center",
+                    gap: 5,
+                    paddingHorizontal: 9,
+                    paddingVertical: 4,
+                    borderRadius: radius.pill,
+                    backgroundColor: "rgba(0,0,0,0.6)",
+                  }}
+                >
+                  <View
+                    style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: "#4ADE80" }}
+                  />
+                  <Text
+                    style={{ fontFamily: fonts.bodySemiBold, fontSize: 10.5, color: "#FFFFFF" }}
+                  >
+                    متاحة في تواريخك
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           ) : (
             // A photo the operator hasn't uploaded yet is not an error, so the
             // placeholder carries the car's own name rather than announcing an

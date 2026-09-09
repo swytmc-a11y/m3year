@@ -336,6 +336,34 @@ export default function HomeScreen() {
           </View>
         </Tappable>
 
+        {/* The one filter worth reaching without opening a sheet. Everything
+            else is a refinement; the kind of car is how people actually
+            start looking. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8, paddingVertical: 1 }}
+        >
+          <Chip
+            label="الكل"
+            active={filters.category === null}
+            onPress={() => setFilters((f) => ({ ...f, category: null }))}
+          />
+          {CAR_CATEGORY_OPTIONS.map((o) => (
+            <Chip
+              key={o.value}
+              label={o.label}
+              active={filters.category === o.value}
+              onPress={() =>
+                setFilters((f) => ({
+                  ...f,
+                  category: f.category === o.value ? null : (o.value as CarCategory),
+                }))
+              }
+            />
+          ))}
+        </ScrollView>
+
         <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
           <Chip
             label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "الفلاتر"}
@@ -367,11 +395,26 @@ export default function HomeScreen() {
           action={<Button label="إعادة المحاولة" onPress={() => load(0, "replace")} />}
         />
       ) : (cars ?? []).length === 0 ? (
+        // With dates chosen, "no results" usually means the fleet is booked
+        // for that week rather than that the filters are too narrow — so it
+        // says so, and offers the dates as the thing to change.
         <EmptyState
-          title="لا توجد سيارات مطابقة"
-          description="جرّب توسيع الفلاتر أو البحث بكلمة أخرى."
+          title={dates ? "لا توجد سيارات متاحة في هذه التواريخ" : "لا توجد سيارات مطابقة"}
+          description={
+            dates
+              ? "كل السيارات المطابقة محجوزة في هذه الفترة. جرّب تواريخ أخرى أو وسّع بحثك."
+              : "جرّب توسيع الفلاتر أو البحث بكلمة أخرى."
+          }
           action={
-            activeFilterCount > 0 ? (
+            dates ? (
+              <Button
+                label="تغيير التواريخ"
+                onPress={() => {
+                  setDateDraft(dates ?? { start: todayIso(), end: null });
+                  setDatesOpen(true);
+                }}
+              />
+            ) : activeFilterCount > 0 ? (
               <Button label="مسح الفلاتر" onPress={() => setFilters(EMPTY_FILTERS)} />
             ) : undefined
           }
