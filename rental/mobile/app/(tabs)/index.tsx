@@ -8,7 +8,7 @@ import {
   ScrollView,
   RefreshControl,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Logo } from "@/components/logo";
 import {
@@ -27,6 +27,8 @@ import {
 import { BellIcon, SearchIcon } from "@/components/icons";
 import { CarCard, type CarCardData } from "@/components/cars";
 import { DateRangeCalendar } from "@/components/date-range-calendar";
+import { PromoBanners } from "@/components/promo-banners";
+import { fetchBanners, type Banner } from "@/lib/banners";
 import { todayIso, daysBetween } from "@/lib/dates";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
@@ -53,6 +55,12 @@ type Branch = { id: string; name: string; city: string };
 
 export default function HomeScreen() {
   const router = useRouter();
+  // A banner can land here already filtered to a category, or carrying a
+  // coupon code to show off.
+  const { category: categoryParam, coupon: couponParam } = useLocalSearchParams<{
+    category?: string;
+    coupon?: string;
+  }>();
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
   const refreshTint = useRefreshTint();
@@ -85,6 +93,7 @@ export default function HomeScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   // Bumped whenever the query changes. A response carrying a stale token
   // belongs to a superseded query and is dropped, so a slow early request
@@ -132,6 +141,23 @@ export default function HomeScreen() {
     load(0, "replace");
   }, [load]);
 
+  // Applied once, when arriving from a banner, rather than on every render —
+  // otherwise clearing the filter by hand would immediately undo itself.
+  const appliedCategoryParam = useRef<string | null>(null);
+  useEffect(() => {
+    if (!categoryParam || appliedCategoryParam.current === categoryParam) return;
+    if (!CAR_CATEGORY_OPTIONS.some((o) => o.value === categoryParam)) return;
+    appliedCategoryParam.current = categoryParam;
+    setFilters((f) => ({ ...f, category: categoryParam as CarCategory }));
+  }, [categoryParam]);
+
+  const announcedCoupon = useRef<string | null>(null);
+  useEffect(() => {
+    if (!couponParam || announcedCoupon.current === couponParam) return;
+    announcedCoupon.current = couponParam;
+    toast(`رمز الخصم ${couponParam} — أدخله عند تأكيد الحجز.`);
+  }, [couponParam, toast]);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -141,6 +167,15 @@ export default function HomeScreen() {
       ]);
       if (!active) return;
       setBranches((branchRows ?? []) as Branch[]);
+
+      // A failed banner fetch leaves the strip empty rather than breaking
+      // the feed — merchandising is never worth a blank screen.
+      try {
+        const rows = await fetchBanners();
+        if (active) setBanners(rows);
+      } catch (err) {
+        console.error("[banners] load failed", err);
+      }
 
       if (session.session) {
         const { count } = await supabase
@@ -345,14 +380,27 @@ export default function HomeScreen() {
         <FlatList
           data={cars ?? []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: tabSpacing }}
+          contentContainerStyle={{ paddingVertical: 18, gap: 16, paddingBottom: tabSpacing }}
+          // Banners scroll away with the feed rather than pinning above it:
+          // they are an offer, not a permanent fixture of the screen. The
+          // horizontal padding moves onto the rows so the strip can run
+          // edge to edge.
+          ListHeaderComponent={
+            banners.length > 0 ? (
+              <View style={{ marginBottom: 2 }}>
+                <PromoBanners banners={banners} />
+              </View>
+            ) : null
+          }
           renderItem={({ item, index }) => (
-            <CarCard
-              car={item}
-              index={index}
-              distanceKm={nearest ? item.distance : null}
-              dates={dates}
-            />
+            <View style={{ paddingHorizontal: 18 }}>
+              <CarCard
+                car={item}
+                index={index}
+                distanceKm={nearest ? item.distance : null}
+                dates={dates}
+              />
+            </View>
           )}
           refreshControl={
             <RefreshControl
