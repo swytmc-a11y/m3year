@@ -1,0 +1,11 @@
+-- is_admin() is referenced inside public read policies as
+-- "... or public.is_admin()" so anonymous browsing (the common case for a
+-- customer who hasn't logged in yet) needs EXECUTE on it too, or Postgres
+-- refuses to plan the query at all with "permission denied for function
+-- is_admin" -- before it ever gets to evaluate is_admin() and see it
+-- returns false for anon. The earlier hardening pass revoked EXECUTE from
+-- PUBLIC (correctly, to stop anyone probing admin-only RPCs) but missed
+-- that is_admin() itself is not admin-only: it is safe to expose to anon
+-- since it only ever returns a boolean derived from auth.uid(), never any
+-- row data.
+grant execute on function public.is_admin() to anon;
