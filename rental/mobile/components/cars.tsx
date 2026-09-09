@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Tappable, Card, staggerEnter } from "@/components/kit";
 import { CarIcon } from "@/components/icons";
+import { RatingStars } from "@/components/rating";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
 import {
@@ -34,11 +35,13 @@ export type CarCardData = {
   daily_price: number;
   monthly_price: number | null;
   cover_image: string | null;
+  rating_avg: number | null;
+  rating_count: number;
   branch: { id: string; name: string; city: string; latitude: number | null; longitude: number | null } | null;
 };
 
 export const CAR_CARD_COLUMNS =
-  "id, make, model, year, category, transmission, fuel, seats, daily_price, monthly_price, cover_image, branch:branches(id, name, city, latitude, longitude)";
+  "id, make, model, year, category, transmission, fuel, seats, daily_price, monthly_price, cover_image, rating_avg, rating_count, branch:branches(id, name, city, latitude, longitude)";
 
 export function CarCard({
   car,
@@ -120,6 +123,11 @@ export function CarCard({
                   {car.branch ? ` · ${car.branch.name}` : ""}
                   {distanceKm != null ? ` · ${formatDistance(distanceKm)}` : ""}
                 </Text>
+                {/* Renders nothing until the car has been reviewed — an
+                    empty rating row on a new fleet reads as zero stars. */}
+                <View style={{ marginTop: 6, alignItems: "flex-end" }}>
+                  <RatingStars value={car.rating_avg} count={car.rating_count} />
+                </View>
               </View>
 
               {/* The price is the thing people compare, so it gets the

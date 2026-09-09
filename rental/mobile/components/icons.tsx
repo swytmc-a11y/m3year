@@ -141,10 +141,24 @@ export function HeartIcon({ color, size = 16, filled = false }: { color: ColorVa
   );
 }
 
-export function StarIcon({ color, size = 10 }: { color: ColorValue; size?: number }) {
+export function StarIcon({
+  color,
+  size = 10,
+  filled = true,
+}: {
+  color: ColorValue;
+  size?: number;
+  filled?: boolean;
+}) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.7 6.2 20.8l1.1-6.4-4.7-4.6 6.5-.9Z" fill={color} />
+      <Path
+        d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.7 6.2 20.8l1.1-6.4-4.7-4.6 6.5-.9Z"
+        fill={filled ? color : "none"}
+        stroke={filled ? "none" : color}
+        strokeWidth={filled ? 0 : 1.6}
+        strokeLinejoin="round"
+      />
     </Svg>
   );
 }

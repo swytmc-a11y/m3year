@@ -4,10 +4,11 @@ import { useFocusEffect, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Button, Card, EmptyState, IconButton, Skeleton, Tappable, useTabBarSpacing } from "@/components/kit";
-import { ChevronBackIcon } from "@/components/icons";
+import { ChevronBackIcon, StarIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { listMyBookings, OPEN_STATUSES, type MyBooking } from "@/lib/bookings-data";
+import { fetchReviewableBookings } from "@/lib/reviews";
 import { BOOKING_STATUS_LABELS, formatSar, formatDateShort, carTitle } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
@@ -17,6 +18,8 @@ export default function MyBookingsScreen() {
   const tabSpacing = useTabBarSpacing();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<MyBooking[] | null>(null);
+  // Which finished rentals still owe a review — drives the prompt below.
+  const [awaitingReview, setAwaitingReview] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     useCallback(() => {
@@ -24,6 +27,13 @@ export default function MyBookingsScreen() {
       (async () => {
         const next = await listMyBookings();
         if (active) setRows(next);
+
+        try {
+          const pending = await fetchReviewableBookings();
+          if (active) setAwaitingReview(new Set(pending.map((b) => b.id)));
+        } catch (err) {
+          console.error("[bookings] reviewable lookup failed", err);
+        }
       })();
       return () => {
         active = false;
@@ -61,6 +71,7 @@ export default function MyBookingsScreen() {
           keyExtractor={(b) => b.id}
           contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: tabSpacing }}
           renderItem={({ item }) => (
+            <View style={{ gap: 8 }}>
             <Tappable onPress={() => router.push(`/bookings/${item.id}`)} haptic="light">
               <Card style={{ padding: 14, flexDirection: "row-reverse", gap: 14, alignItems: "center" }}>
                 {item.car?.cover_image ? (
@@ -91,6 +102,40 @@ export default function MyBookingsScreen() {
                 </View>
               </Card>
             </Tappable>
+
+            {/* Asked once the rental is over and only until it is answered —
+                the review row disappears for good after submitting. */}
+            {awaitingReview.has(item.id) ? (
+              <Tappable
+                onPress={() => router.push(`/review/${item.id}`)}
+                haptic="light"
+                accessibilityRole="button"
+              >
+                <View
+                  style={{
+                    flexDirection: "row-reverse",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    backgroundColor: t.warningTint,
+                    borderRadius: radius.lg,
+                    paddingHorizontal: 14,
+                    paddingVertical: 11,
+                  }}
+                >
+                  <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
+                    <StarIcon color={t.warning} size={14} />
+                    <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.text }}>
+                      كيف كانت تجربتك؟
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 12, color: t.warning }}>
+                    قيّم الآن
+                  </Text>
+                </View>
+              </Tappable>
+            ) : null}
+            </View>
           )}
         />
       )}

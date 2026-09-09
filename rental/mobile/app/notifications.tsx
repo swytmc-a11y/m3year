@@ -28,7 +28,12 @@ function formatWhen(iso: string): string {
 // a booking notification opens that booking and a saved-search match opens
 // the car it matched.
 const CATEGORY_ROUTE: Record<string, (data: Record<string, unknown>) => string | undefined> = {
-  booking_updates: (d) => (d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings"),
+  booking_updates: (d) => {
+    // A finished rental asks for a rating, so its notification opens the
+    // review form rather than the booking the customer has already lived.
+    if (d.action === "review" && d.booking_id) return `/review/${d.booking_id}`;
+    return d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings";
+  },
   reminders: (d) => (d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings"),
   saved_search_alerts: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),
   offers: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),

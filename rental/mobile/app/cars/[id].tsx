@@ -9,6 +9,8 @@ import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import { fetchCarDetail, type CarDetail, type CarAddon } from "@/lib/car-detail";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
+import { RatingStars } from "@/components/rating";
+import { fetchCarReviews, formatReviewDate, type Review } from "@/lib/reviews";
 import {
   CAR_CATEGORY_LABELS,
   TRANSMISSION_LABELS,
@@ -31,6 +33,7 @@ export default function CarDetailScreen() {
   const [addons, setAddons] = useState<CarAddon[]>([]);
   const [loading, setLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -42,6 +45,15 @@ export default function CarDetailScreen() {
         setAddons(rows);
         setLoading(false);
         if (session) setFavorited(await isFavorite(id));
+
+        // Deliberately after the car is on screen: reviews are supporting
+        // detail, and waiting on them would delay the whole page.
+        try {
+          const list = await fetchCarReviews(id);
+          if (active) setReviews(list);
+        } catch (err) {
+          console.error("[car] reviews load failed", err);
+        }
       })();
       return () => {
         active = false;
@@ -146,6 +158,11 @@ export default function CarDetailScreen() {
               {CAR_CATEGORY_LABELS[car.category]}
               {branch ? ` · ${branch.name} — ${branch.city}` : ""}
             </Text>
+            {car.rating_count > 0 ? (
+              <View style={{ marginTop: 8, alignItems: "flex-end" }}>
+                <RatingStars value={car.rating_avg} count={car.rating_count} size={14} />
+              </View>
+            ) : null}
           </View>
 
           {/* Pricing tiers: the longer the rental, the lower the day rate. */}
@@ -228,6 +245,67 @@ export default function CarDetailScreen() {
                       {a.pricing_type === "per_day" ? " / يوم" : ""}
                     </Text>
                   </Text>
+                </View>
+              ))}
+            </Card>
+          ) : null}
+
+          {reviews.length > 0 ? (
+            <Card style={{ padding: 18, gap: 14 }}>
+              <View
+                style={{
+                  flexDirection: "row-reverse",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+                  آراء العملاء
+                </Text>
+                <RatingStars value={car.rating_avg} count={car.rating_count} size={12} />
+              </View>
+
+              {reviews.map((r, i) => (
+                <View
+                  key={r.id}
+                  style={{
+                    gap: 6,
+                    paddingTop: i === 0 ? 0 : 12,
+                    borderTopWidth: i === 0 ? 0 : 1,
+                    borderTopColor: t.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row-reverse",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                    }}
+                  >
+                    <RatingStars value={r.rating} count={1} size={11} showCount={false} />
+                    <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted }}>
+                      {formatReviewDate(r.created_at)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.text, textAlign: "right" }}
+                  >
+                    {r.author_name ?? "عميل"}
+                  </Text>
+                  {r.comment ? (
+                    <Text
+                      style={{
+                        fontFamily: fonts.body,
+                        fontSize: 12.5,
+                        color: t.textMuted,
+                        textAlign: "right",
+                        lineHeight: 21,
+                      }}
+                    >
+                      {r.comment}
+                    </Text>
+                  ) : null}
                 </View>
               ))}
             </Card>

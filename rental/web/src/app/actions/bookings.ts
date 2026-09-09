@@ -17,6 +17,7 @@ async function notify(
   title: string,
   body: string,
   bookingId: string,
+  action?: "review",
 ) {
   // Best-effort: a booking transition must not fail because a notification
   // row could not be written.
@@ -25,7 +26,7 @@ async function notify(
     category: "booking_updates",
     title,
     body,
-    data: { booking_id: bookingId },
+    data: { booking_id: bookingId, ...(action ? { action } : {}) },
   });
   if (error) console.error("[bookings] notify failed", error);
 }
@@ -70,7 +71,14 @@ async function transition(
     cancelled: ["أُلغي الحجز", `تم إلغاء الحجز ${booking.reference}.`],
   };
   const [title, body] = messages[next];
-  await notify(supabase, booking.customer_id, title, body, bookingId);
+  await notify(
+    supabase,
+    booking.customer_id,
+    title,
+    body,
+    bookingId,
+    next === "completed" ? "review" : undefined,
+  );
 
   await supabase.rpc("log_audit", {
     p_action: `booking.${next}`,

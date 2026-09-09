@@ -65,6 +65,8 @@ export type ThemeTokens = {
   onPrimary: string;
   success: string;
   successTint: string;
+  warning: string;
+  warningTint: string;
   danger: string;
   dangerTint: string;
   white: string;
@@ -101,6 +103,10 @@ export const lightTokens = {
   onPrimary: "#FFFFFF",
   success: "#16803D",
   successTint: "#E6F4EA",
+  // Rating gold. Darker than a pure amber so five filled stars still meet
+  // contrast against the light surface they sit on.
+  warning: "#B7791F",
+  warningTint: "#FDF3E0",
   danger: "#DC2626",
   dangerTint: "#FDE8E8",
   white: "#FFFFFF",
@@ -123,6 +129,8 @@ export const darkTokens: ThemeTokens = {
   onPrimary: "#101014",
   success: "#34D399",
   successTint: "#123322",
+  warning: "#F0B429",
+  warningTint: "#33260D",
   danger: "#F87171",
   dangerTint: "#3A1B1B",
   white: "#FFFFFF",
