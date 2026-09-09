@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Linking, useWindowDimensions } from "react-nati
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { Button, Card, IconButton, Skeleton, Tappable, useToast } from "@/components/kit";
 import { ChevronBackIcon, HeartIcon, CarIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
@@ -121,18 +122,23 @@ export default function CarDetailScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {images.length > 0 ? (
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-            {images.map((uri) => (
-              <Image
-                key={uri}
-                source={{ uri }}
-                style={{ width, aspectRatio: 16 / 9, backgroundColor: t.surface2 }}
-                contentFit="cover"
-                transition={200}
-                cachePolicy="memory-disk"
-              />
-            ))}
-          </ScrollView>
+          // Fades up as the screen settles. Without native shared-element
+          // support the continuity from the card comes from matching the
+          // well colour and easing in rather than snapping.
+          <Animated.View entering={FadeIn.duration(220)}>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+              {images.map((uri) => (
+                <Image
+                  key={uri}
+                  source={{ uri }}
+                  style={{ width, aspectRatio: 16 / 9, backgroundColor: t.well }}
+                  contentFit="contain"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+              ))}
+            </ScrollView>
+          </Animated.View>
         ) : (
           // Matches the browse card: a car with no photo yet still opens onto
           // something that reads as a car, not a page that starts mid-air.
@@ -389,6 +395,7 @@ export default function CarDetailScreen() {
         <View style={{ flex: 1 }}>
           <Button
             label="احجز الآن"
+            variant="accent"
             fullWidth
             onPress={() => {
               if (!session) {

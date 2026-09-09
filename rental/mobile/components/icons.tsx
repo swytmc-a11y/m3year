@@ -427,3 +427,119 @@ export function CarIcon({ color, size = 24 }: { color: ColorValue; size?: number
     </Svg>
   );
 }
+
+// ---- Spec icons ----
+// Small, single-weight glyphs for the spec row on a car card. Deliberately
+// simpler than the navigation icons above: at 13px a detailed drawing turns
+// into a smudge, so each of these reads from two or three strokes.
+
+/** Gear lever in its gate — automatic vs manual transmission. */
+export function TransmissionIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 4.5v15M18 4.5v15M6 12h12" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Circle cx={6} cy={4.5} r={1.6} fill={color} />
+      <Circle cx={18} cy={4.5} r={1.6} fill={color} />
+      <Circle cx={6} cy={19.5} r={1.6} fill={color} />
+    </Svg>
+  );
+}
+
+/** Head and shoulders — seat count. */
+export function SeatsIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={8} r={3.4} stroke={color} strokeWidth={1.8} />
+      <Path
+        d="M4.8 19.5a7.2 7.2 0 0 1 14.4 0"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+/** Fuel pump. */
+export function FuelIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 20.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14.5M3.8 20.5h10.4"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M6.8 9.5h4.4" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path
+        d="M13 8.5h2.6a1.4 1.4 0 0 1 1.4 1.4v5.7a1.6 1.6 0 0 0 3.2 0V11l-2-2.4"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/** Speedometer — the daily kilometre allowance. */
+export function GaugeIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 17a9 9 0 1 1 16 0"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <Path d="M12 16.5 15.5 10" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Circle cx={12} cy={17} r={1.4} fill={color} />
+    </Svg>
+  );
+}
+
+/** Map pin — the pickup branch. */
+export function PinIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <Circle cx={12} cy={10} r={2.6} stroke={color} strokeWidth={1.8} />
+    </Svg>
+  );
+}
+
+/** Calendar — the date fields in the search widget. */
+export function CalendarIcon({ color, size = 14 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={3.5} y={5.5} width={17} height={15} rx={2.5} stroke={color} strokeWidth={1.8} />
+      <Path
+        d="M3.5 10.5h17M8.5 3.5v4M15.5 3.5v4"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+/** Arrow pointing along the reading direction (leftwards in RTL). */
+export function ArrowLeftIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M19 12H5m0 0 6-6m-6 6 6 6"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

@@ -1,11 +1,11 @@
 import { supabase } from "@/lib/supabase";
-import type { CarFilters } from "@/lib/cars-data";
+import type { SearchFilters } from "@/lib/search-cars";
 import type { Json } from "@/lib/database.types";
 
 export type SavedSearch = {
   id: string;
   name: string;
-  filters: CarFilters;
+  filters: SearchFilters;
   notify: boolean;
   created_at: string;
 };
@@ -25,7 +25,7 @@ export async function listSavedSearches(): Promise<SavedSearch[]> {
 
 export async function createSavedSearch(
   name: string,
-  filters: CarFilters,
+  filters: SearchFilters,
 ): Promise<{ error?: string }> {
   const {
     data: { user },

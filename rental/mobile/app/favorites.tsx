@@ -4,8 +4,8 @@ import { useFocusEffect, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, EmptyState, IconButton, Skeleton, useTabBarSpacing } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
-import { CarCard, type CarCardData } from "@/components/cars";
-import { listFavoriteCars } from "@/lib/favorites";
+import { CarCard, type FeedCar } from "@/components/car-card";
+import { listFavoriteCars, toggleFavorite } from "@/lib/favorites";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
@@ -15,7 +15,7 @@ export default function FavoritesScreen() {
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
   const { session, loading: authLoading } = useAuth();
-  const [cars, setCars] = useState<CarCardData[] | null>(null);
+  const [cars, setCars] = useState<FeedCar[] | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -59,7 +59,22 @@ export default function FavoritesScreen() {
           data={cars}
           keyExtractor={(c) => c.id}
           contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: tabSpacing }}
-          renderItem={({ item, index }) => <CarCard car={item} index={index} />}
+          renderItem={({ item }) => (
+            <CarCard
+              car={item}
+              favorited
+              // Unfavouriting here removes the card from the list it is in,
+              // which is the only sensible outcome on this screen.
+              onToggleFavorite={async (id) => {
+                setCars((prev) => (prev ?? []).filter((c) => c.id !== id));
+                try {
+                  await toggleFavorite(id);
+                } catch (err) {
+                  console.error("[favorites] toggle failed", err);
+                }
+              }}
+            />
+          )}
         />
       )}
     </SafeAreaView>

@@ -96,7 +96,10 @@ export function Tappable({ children, onPressIn, onPressOut, onPress, haptic = "l
 }
 
 // ---- Button ----
-type ButtonVariant = "primary" | "secondary" | "danger";
+// "accent" is the lime, reserved for the one action a screen exists to get:
+// book, search, view details. Everything else that is merely primary stays
+// ink, so the lime never becomes just another button colour.
+type ButtonVariant = "primary" | "secondary" | "danger" | "accent";
 
 export function Button({
   label,
@@ -119,9 +122,21 @@ export function Button({
   const isDisabled = disabled || loading;
 
   const bg =
-    variant === "primary" ? t.primary : variant === "danger" ? "transparent" : "transparent";
-  const fg = variant === "primary" ? t.onPrimary : variant === "danger" ? t.danger : t.text;
-  const borderColor = variant === "secondary" ? t.border : variant === "danger" ? `${t.danger}40` : "transparent";
+    variant === "primary"
+      ? t.primary
+      : variant === "accent"
+        ? t.accent
+        : "transparent";
+  const fg =
+    variant === "primary"
+      ? t.onPrimary
+      : variant === "accent"
+        ? t.onAccent
+        : variant === "danger"
+          ? t.danger
+          : t.text;
+  const borderColor =
+    variant === "secondary" ? t.border : variant === "danger" ? `${t.danger}40` : "transparent";
 
   return (
     <Tappable
@@ -141,7 +156,7 @@ export function Button({
           flexDirection: "row",
           gap: 8,
           backgroundColor: bg,
-          borderWidth: variant === "primary" ? 0 : 1,
+          borderWidth: variant === "primary" || variant === "accent" ? 0 : 1,
           borderColor,
           opacity: isDisabled ? 0.5 : 1,
           ...(variant === "primary" ? t.shadowPrimary : {}),

@@ -1,14 +1,17 @@
 import { supabase } from "@/lib/supabase";
-import { CAR_CARD_COLUMNS, type CarCardData } from "@/components/cars";
+import type { FeedCar } from "@/components/car-card";
+
+const FAVORITE_COLUMNS =
+  "id, make, make_latin, model, year, category, transmission, fuel, seats, daily_price, monthly_price, cover_image, rating_avg, rating_count, branch:branches(id, name, city)";
 
 /**
  * Favourites are a per-user list, guarded by RLS to the owning user, so no
  * ownership check is needed here.
  */
-export async function listFavoriteCars(): Promise<CarCardData[]> {
+export async function listFavoriteCars(): Promise<FeedCar[]> {
   const { data, error } = await supabase
     .from("favorites")
-    .select(`car:cars(${CAR_CARD_COLUMNS})`)
+    .select(`car:cars(${FAVORITE_COLUMNS})`)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -17,8 +20,25 @@ export async function listFavoriteCars(): Promise<CarCardData[]> {
   }
 
   return (data ?? [])
-    .map((row) => (row as unknown as { car: CarCardData | null }).car)
-    .filter((c): c is CarCardData => c != null);
+    .map((row) => (row as unknown as { car: FeedCar | null }).car)
+    .filter((c): c is FeedCar => c != null)
+    // The feed supplies badges; a favourites list does not need them and
+    // fetching them here would cost a second round trip for decoration.
+    .map((c) => ({ ...c, badge: null }));
+}
+
+/**
+ * Just the ids. The home screen renders cars it already has from the feed
+ * and only needs to know which hearts are filled — fetching the whole
+ * favourite car rows to answer that would duplicate the feed.
+ */
+export async function listFavoriteIds(): Promise<string[]> {
+  const { data, error } = await supabase.from("favorites").select("car_id");
+  if (error) {
+    console.error("[favorites] id load failed", error);
+    return [];
+  }
+  return (data ?? []).map((r) => r.car_id);
 }
 
 export async function isFavorite(carId: string): Promise<boolean> {

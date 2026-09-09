@@ -6,8 +6,7 @@ import { Button, Card, EmptyState, IconButton, Skeleton, useTabBarSpacing } from
 import { ChevronBackIcon } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
-import { requestCoords, type Coords } from "@/lib/cars-data";
-import { distanceKm, formatDistance } from "@/components/cars";
+import { requestCoords, distanceKm, formatDistance, type Coords } from "@/lib/geo";
 import { fonts, radius } from "@/theme";
 
 type Branch = {

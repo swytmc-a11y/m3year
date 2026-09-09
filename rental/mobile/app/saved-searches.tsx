@@ -30,9 +30,8 @@ function describe(s: SavedSearch): string {
   if (f.transmission) parts.push(TRANSMISSION_LABELS[f.transmission as TransmissionType]);
   if (f.fuel) parts.push(FUEL_LABELS[f.fuel as FuelType]);
   if (f.seats) parts.push(`${f.seats}+ مقاعد`);
-  if (f.minPrice) parts.push(`من ${f.minPrice} ر.س`);
-  if (f.maxPrice) parts.push(`إلى ${f.maxPrice} ر.س`);
-  if (f.search) parts.push(`"${f.search}"`);
+  if (f.maxPrice) parts.push(`حتى ${f.maxPrice} ر.س`);
+  if (f.text) parts.push(`"${f.text}"`);
   return parts.length > 0 ? parts.join(" · ") : "كل السيارات";
 }
 
