@@ -44,7 +44,10 @@ const CATEGORY_ROUTE: Record<string, (data: Record<string, unknown>) => string |
   },
   reminders: (d) => (d.booking_id ? `/bookings/${d.booking_id}` : "/my-bookings"),
   saved_search_alerts: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),
-  offers: (d) => (d.car_id ? `/cars/${d.car_id}` : undefined),
+  offers: (d) => {
+    if (d.action === "verify_phone") return "/verify-phone";
+    return d.car_id ? `/cars/${d.car_id}` : undefined;
+  },
 };
 
 export default function NotificationsScreen() {

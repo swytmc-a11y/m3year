@@ -7,18 +7,21 @@ import { supabase } from "@/lib/supabase";
  * the default behaviour and no backfill is needed.
  */
 
-// Only the two categories something actually sends are offered. The table
-// still carries offers/saved_search_alerts columns from an earlier draft, but
-// nothing broadcasts an offer and nothing matches a saved search, so showing
-// those switches would promise a notification that never arrives.
+// saved_search_alerts is the one column still unused — nothing matches a
+// saved search yet, so it stays off the settings screen rather than promise
+// a notification that never arrives. offers now does send something (the
+// one-time "verify your phone, earn the wallet credit" nudge), so it has a
+// real switch below.
 export type NotificationPreferences = {
   booking_updates: boolean;
   reminders: boolean;
+  offers: boolean;
 };
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   booking_updates: true,
   reminders: true,
+  offers: true,
 };
 
 export const NOTIFICATION_CATEGORY_LABELS: Record<
@@ -33,12 +36,16 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<
     title: "التذكيرات",
     description: "تذكير قبل موعد الاستلام وقبل موعد التسليم بيوم.",
   },
+  offers: {
+    title: "العروض والمكافآت",
+    description: "فرص كسب رصيد في محفظتك، مثل توثيق رقم جوالك.",
+  },
 };
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
   const { data, error } = await supabase
     .from("notification_preferences")
-    .select("booking_updates, reminders")
+    .select("booking_updates, reminders, offers")
     .maybeSingle();
 
   if (error) {

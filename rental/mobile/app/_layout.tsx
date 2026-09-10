@@ -11,9 +11,11 @@ import { AppSplash } from "@/components/app-splash";
 import { Onboarding } from "@/components/onboarding";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ToastProvider } from "@/components/kit";
+import { WalletBonusModal } from "@/components/wallet-bonus-modal";
 import { hasSeenOnboarding, markOnboardingSeen } from "@/lib/onboarding";
 import { activateSignupCredit } from "@/lib/referrals";
 import { takeReferralCode } from "@/lib/referral-link";
+import { supabase } from "@/lib/supabase";
 import {
   Almarai_700Bold,
   Almarai_800ExtraBold,
@@ -159,7 +161,7 @@ function RootChrome({
   onIntroDone: () => void;
 }) {
   const { isDark, t } = useTheme();
-  useSignupCredit();
+  const { bonusAmount, clearBonus } = useSignupCredit();
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
@@ -175,6 +177,15 @@ function RootChrome({
             single fade rather than two overlays fighting. */}
         {showIntro ? <Onboarding onDone={onIntroDone} /> : null}
         {!splashDone ? <AppSplash onDone={onSplashDone} /> : null}
+        {/* Catches the passive case: an account whose phone was already
+            verified (a returning WhatsApp login, or one linked from
+            /verify-phone in an earlier session) but never actually claimed
+            its welcome credit — the explicit screens show their own copy of
+            this modal the instant they grant it, so this one only fires
+            when nothing else already did. */}
+        {bonusAmount != null ? (
+          <WalletBonusModal visible amount={bonusAmount} onClose={clearBonus} />
+        ) : null}
       </View>
     </>
   );
@@ -189,17 +200,37 @@ function RootChrome({
  * once per referred user, so this is a cheap no-op afterwards — and it also
  * means customers who already had an account get their credit without a
  * migration.
+ *
+ * Two follow-ups depending on what the server reports:
+ *   - welcome > 0: the account just genuinely earned the credit right now
+ *     (e.g. a returning WhatsApp login whose phone was verified before this
+ *     feature existed). /auth and /verify-phone already show their own copy
+ *     of this modal the instant THEY grant it, so this only actually fires
+ *     for whatever neither of those caught.
+ *   - reason "phone_required": eligible but missing a phone. Seeds the
+ *     one-time in-app nudge — a silent no-op on every call after the first.
  */
 function useSignupCredit() {
   const { session } = useAuth();
   const claimed = useRef(false);
+  const [bonusAmount, setBonusAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!session || claimed.current) return;
     claimed.current = true;
     (async () => {
       const code = await takeReferralCode();
-      await activateSignupCredit(code);
+      const credit = await activateSignupCredit(code);
+      if (!credit) return;
+
+      if (credit.welcome > 0) {
+        setBonusAmount(credit.welcome);
+      } else if (credit.reason === "phone_required") {
+        const { error } = await supabase.rpc("maybe_nudge_phone_verification", {});
+        if (error) console.error("[wallet] nudge seed failed", error);
+      }
     })();
   }, [session]);
+
+  return { bonusAmount, clearBonus: () => setBonusAmount(null) };
 }

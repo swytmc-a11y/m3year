@@ -3,6 +3,7 @@ import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from "react-na
 import { useRouter, useLocalSearchParams, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Field, IconButton, Tappable, useToast } from "@/components/kit";
+import { WalletBonusModal } from "@/components/wallet-bonus-modal";
 import { ChevronBackIcon } from "@/components/icons";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -41,6 +42,7 @@ export default function VerifyPhoneScreen() {
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(false);
+  const [bonusAmount, setBonusAmount] = useState<number | null>(null);
 
   if (authLoading) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
   if (!session) return <Redirect href="/auth" />;
@@ -97,11 +99,11 @@ export default function VerifyPhoneScreen() {
     // wallet" for a customer who already had an account.
     const credit = await activateSignupCredit(null);
     if (credit && credit.welcome > 0) {
-      toast(`تم التوثيق، وأُضيف رصيد ترحيبي ${credit.welcome} ر.س.`, "success");
-    } else {
-      toast("تم توثيق رقم جوالك.", "success");
+      setBonusAmount(credit.welcome);
+      return; // Navigates once the modal below is dismissed.
     }
 
+    toast("تم توثيق رقم جوالك.", "success");
     router.replace((next as never) ?? "/wallet");
   }
 
@@ -184,6 +186,12 @@ export default function VerifyPhoneScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <WalletBonusModal
+        visible={bonusAmount != null}
+        amount={bonusAmount ?? 0}
+        onClose={() => router.replace((next as never) ?? "/wallet")}
+      />
     </SafeAreaView>
   );
 }

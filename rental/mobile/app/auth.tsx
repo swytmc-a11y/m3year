@@ -11,9 +11,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field, Tappable } from "@/components/kit";
+import { WalletBonusModal } from "@/components/wallet-bonus-modal";
 import { useTheme } from "@/contexts/theme";
 import { completeWhatsAppSignupSchema, phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
 import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsapp-auth";
+import { activateSignupCredit } from "@/lib/referrals";
+import { takeReferralCode } from "@/lib/referral-link";
 import { fonts, radius } from "@/theme";
 
 type Step = "phone" | "code" | "name";
@@ -30,6 +33,7 @@ export default function AuthScreen() {
   const [signupPassword, setSignupPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
+  const [bonusAmount, setBonusAmount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(false);
 
@@ -109,6 +113,17 @@ export default function AuthScreen() {
     if (result.error) {
       setError(result.error);
       return;
+    }
+
+    // The phone Authentica just verified is exactly what the wallet's
+    // welcome credit requires, so this brand-new account already qualifies
+    // — grant it immediately rather than waiting for the next launch's
+    // silent background check, and show it, since this is the one moment a
+    // reward actually lands as news rather than as background housekeeping.
+    const credit = await activateSignupCredit(await takeReferralCode());
+    if (credit && credit.welcome > 0) {
+      setBonusAmount(credit.welcome);
+      return; // Navigates once the modal below is dismissed.
     }
     router.replace("/");
   }
@@ -288,6 +303,12 @@ export default function AuthScreen() {
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <WalletBonusModal
+        visible={bonusAmount != null}
+        amount={bonusAmount ?? 0}
+        onClose={() => router.replace("/")}
+      />
     </SafeAreaView>
   );
 }

@@ -1596,6 +1596,10 @@ export type Database = {
         Args: { p_user?: string | null }
         Returns: number
       }
+      maybe_nudge_phone_verification: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       wallet_entry_kind:
