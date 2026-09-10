@@ -113,18 +113,53 @@ export function formatSar(amount: number | null | undefined): string {
   return `${text} ر.س`;
 }
 
+/**
+ * Gregorian month names in Arabic.
+ *
+ * `toLocaleDateString("ar-SA", ...)` does not mean "Arabic month names": the
+ * ar-SA locale selects the Umm al-Qura calendar, so every date in the panel
+ * came out as "٢٨ ربيع الأول ١٤٤٨ هـ" — including the pickup dates branch
+ * staff work from and the dates on a tax invoice whose QR carries a
+ * Gregorian timestamp. The mobile app carries the same table.
+ */
+export const AR_MONTHS = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+] as const;
+
+/**
+ * Splits a value into calendar parts without moving the day.
+ *
+ * A bare "2026-09-10" is parsed by Date as UTC midnight, which renders as the
+ * 9th anywhere west of Greenwich. Booking dates are calendar days, not
+ * instants, so they are read literally; full timestamps keep local time.
+ */
+function dateParts(value: string): { day: number; month: number; year: number } | null {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnly) {
+    return {
+      year: Number(dateOnly[1]),
+      month: Number(dateOnly[2]) - 1,
+      day: Number(dateOnly[3]),
+    };
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return { year: d.getFullYear(), month: d.getMonth(), day: d.getDate() };
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("ar-SA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const p = dateParts(value);
+  if (!p) return "—";
+  return `${p.day} ${AR_MONTHS[p.month]} ${p.year}`;
 }
 
 export function formatDateShort(value: string | null | undefined): string {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("ar-SA", { month: "short", day: "numeric" });
+  const p = dateParts(value);
+  if (!p) return "—";
+  return `${p.day} ${AR_MONTHS[p.month]}`;
 }
 
 export function carTitle(car: { make: string; model: string; year: number }): string {

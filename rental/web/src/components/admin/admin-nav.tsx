@@ -41,6 +41,7 @@ const GROUPS: NavGroup[] = [
       { href: "/admin/cars", label: "السيارات" },
       { href: "/admin/branches", label: "الفروع" },
       { href: "/admin/addons", label: "الخدمات الإضافية" },
+      { href: "/admin/delivery-zones", label: "مناطق التوصيل" },
     ],
   },
   {
@@ -61,6 +62,7 @@ const GROUPS: NavGroup[] = [
     label: "النظام",
     links: [
       { href: "/admin/settings", label: "الإعدادات" },
+      { href: "/admin/billing", label: "الفوترة والمحفظة" },
       { href: "/admin/audit-log", label: "سجل العمليات" },
       { href: "/admin/errors", label: "سجل الأخطاء" },
     ],

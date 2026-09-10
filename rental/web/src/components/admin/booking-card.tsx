@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingStatusBadge } from "@/components/cars/booking-status-badge";
 import { CustomerDocuments } from "@/components/admin/customer-documents";
+import { ContractUpload, type ExistingContract } from "@/components/admin/contract-upload";
 import {
   formatSar,
   formatDate,
@@ -34,6 +35,12 @@ export type BookingWithRelations = {
   rental_total: number;
   addons_total: number;
   vat_amount: number;
+  wallet_amount: number;
+  delivery_fee: number;
+  delivery_mode: "branch" | "delivery";
+  return_mode: "branch" | "pickup";
+  delivery_address: string | null;
+  extensions_total: number;
   total: number;
   status: "pending_payment" | "pending_confirmation" | "confirmed" | "active" | "completed" | "cancelled" | "rejected" | "expired";
   payment_status: "unpaid" | "paid" | "refunded" | "partially_refunded" | "failed";
@@ -43,6 +50,8 @@ export type BookingWithRelations = {
   refund_amount: number | null;
   car: { id: string; make: string; model: string; year: number } | null;
   branch: { name: string; city: string } | null;
+  // Supabase returns an embedded one-to-one as an object or null.
+  contract: ExistingContract;
   customer:
     | {
         id: string;
@@ -105,12 +114,30 @@ export function BookingCard({ booking }: { booking: BookingWithRelations }) {
         </div>
       </div>
 
+      {b.delivery_mode === "delivery" || b.return_mode === "pickup" ? (
+        <div className="mb-3 rounded-xl border border-admin-primary/30 bg-admin-primary/5 p-3">
+          <div className="text-[12px] font-bold text-admin-primary">
+            {b.delivery_mode === "delivery" && b.return_mode === "pickup"
+              ? "توصيل واستلام من موقع العميل"
+              : b.delivery_mode === "delivery"
+                ? "توصيل السيارة لموقع العميل"
+                : "استلام السيارة من موقع العميل"}
+          </div>
+          <div className="mt-1 text-[13px] text-admin-text">{b.delivery_address || "بلا عنوان"}</div>
+        </div>
+      ) : null}
+
       <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-admin-text-muted">
         <span>
           {b.days} يوم · {RATE_TIER_LABELS[b.rate_tier as RateTier] ?? b.rate_tier} ·{" "}
           {formatSar(Number(b.daily_rate))}/يوم
         </span>
         {Number(b.addons_total) > 0 ? <span>إضافات {formatSar(Number(b.addons_total))}</span> : null}
+        {Number(b.delivery_fee) > 0 ? <span>توصيل {formatSar(Number(b.delivery_fee))}</span> : null}
+        {Number(b.wallet_amount) > 0 ? <span>من المحفظة {formatSar(Number(b.wallet_amount))}</span> : null}
+        {Number(b.extensions_total) > 0 ? (
+          <span>تمديدات {formatSar(Number(b.extensions_total))}</span>
+        ) : null}
         <span>ضريبة {formatSar(Number(b.vat_amount))}</span>
       </div>
 
@@ -128,6 +155,15 @@ export function BookingCard({ booking }: { booking: BookingWithRelations }) {
       </div>
 
       {b.customer ? <CustomerDocuments customer={b.customer} /> : null}
+
+      {/* Offered once the car is out: before handover there is no signed
+          contract to file, and filing one early would show the customer a
+          document neither side has signed. */}
+      {b.status === "active" || b.status === "completed" ? (
+        <div className="mb-4">
+          <ContractUpload bookingId={b.id} contract={b.contract} />
+        </div>
+      ) : null}
 
       {b.customer_note ? (
         <p className="mb-3 rounded-lg bg-admin-bg px-3 py-2 text-[13px] text-admin-text">

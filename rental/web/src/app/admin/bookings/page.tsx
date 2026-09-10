@@ -16,7 +16,7 @@ const FILTERS: { value: BookingStatus | "all"; label: string }[] = [
 ];
 
 const SELECT =
-  "id, reference, start_date, end_date, pickup_time, return_time, days, rate_tier, daily_rate, rental_total, addons_total, vat_amount, total, status, payment_status, customer_note, admin_note, cancellation_reason, refund_amount, car:cars(id, make, model, year), branch:branches(name, city), customer:profiles(id, full_name, phone, email, national_id, license_number, id_document_path, license_document_path, documents_check, documents_check_note, documents_approved_at)";
+  "id, reference, start_date, end_date, pickup_time, return_time, days, rate_tier, daily_rate, rental_total, addons_total, vat_amount, wallet_amount, delivery_fee, delivery_mode, return_mode, delivery_address, extensions_total, total, status, payment_status, customer_note, admin_note, cancellation_reason, refund_amount, car:cars(id, make, model, year), branch:branches(name, city), customer:profiles(id, full_name, phone, email, national_id, license_number, id_document_path, license_document_path, documents_check, documents_check_note, documents_approved_at), contract:booking_contracts(file_name, storage_path, uploaded_at)";
 
 export default async function AdminBookingsPage({
   searchParams,

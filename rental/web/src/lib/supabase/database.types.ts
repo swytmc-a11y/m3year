@@ -202,6 +202,12 @@ export type Database = {
           customer_note: string | null
           daily_rate: number
           days: number
+          delivery_address: string | null
+          delivery_fee: number
+          delivery_latitude: number | null
+          delivery_longitude: number | null
+          delivery_mode: string
+          delivery_zone_id: string | null
           discount_amount: number
           end_date: string
           id: string
@@ -215,14 +221,18 @@ export type Database = {
           refund_amount: number | null
           refunded_at: string | null
           rental_total: number
+          return_mode: string
           return_reminded_at: string | null
           return_time: string
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total: number
+          extensions_total: number
           updated_at: string
           vat_amount: number
           vat_rate: number
+          wallet_amount: number
+          wallet_requested: boolean
         }
         Insert: {
           addons_total?: number
@@ -239,6 +249,12 @@ export type Database = {
           customer_note?: string | null
           daily_rate: number
           days: number
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          delivery_mode?: string
+          delivery_zone_id?: string | null
           discount_amount?: number
           end_date: string
           id?: string
@@ -252,14 +268,18 @@ export type Database = {
           refund_amount?: number | null
           refunded_at?: string | null
           rental_total: number
+          return_mode?: string
           return_reminded_at?: string | null
           return_time?: string
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           total: number
+          extensions_total?: number
           updated_at?: string
           vat_amount: number
           vat_rate: number
+          wallet_amount?: number
+          wallet_requested?: boolean
         }
         Update: {
           addons_total?: number
@@ -276,6 +296,12 @@ export type Database = {
           customer_note?: string | null
           daily_rate?: number
           days?: number
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          delivery_mode?: string
+          delivery_zone_id?: string | null
           discount_amount?: number
           end_date?: string
           id?: string
@@ -289,14 +315,18 @@ export type Database = {
           refund_amount?: number | null
           refunded_at?: string | null
           rental_total?: number
+          return_mode?: string
           return_reminded_at?: string | null
           return_time?: string
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total?: number
+          extensions_total?: number
           updated_at?: string
           vat_amount?: number
           vat_rate?: number
+          wallet_amount?: number
+          wallet_requested?: boolean
         }
         Relationships: [
           {
@@ -912,6 +942,7 @@ export type Database = {
           license_number: string | null
           national_id: string | null
           phone: string | null
+          referral_code: string
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -932,6 +963,7 @@ export type Database = {
           license_number?: string | null
           national_id?: string | null
           phone?: string | null
+          referral_code?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -952,6 +984,7 @@ export type Database = {
           license_number?: string | null
           national_id?: string | null
           phone?: string | null
+          referral_code?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1208,6 +1241,271 @@ export type Database = {
           },
         ]
       }
+      booking_contracts: {
+        Row: {
+          booking_id: string
+          content_type: string | null
+          file_name: string
+          id: string
+          note: string | null
+          size_bytes: number | null
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          booking_id: string
+          content_type?: string | null
+          file_name: string
+          id?: string
+          note?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          booking_id?: string
+          content_type?: string | null
+          file_name?: string
+          id?: string
+          note?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      booking_extensions: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          daily_rate: number
+          days_added: number
+          id: string
+          new_end_date: string
+          paid_at: string | null
+          payment_ref: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          previous_end_date: string
+          rate_tier: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          daily_rate: number
+          days_added: number
+          id?: string
+          new_end_date: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          previous_end_date: string
+          rate_tier: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          daily_rate?: number
+          days_added?: number
+          id?: string
+          new_end_date?: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          previous_end_date?: string
+          rate_tier?: string
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      delivery_zones: {
+        Row: {
+          branch_id: string | null
+          city: string
+          created_at: string
+          fee: number
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          sort_order: number
+        }
+        Insert: {
+          branch_id?: string | null
+          city: string
+          created_at?: string
+          fee: number
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          sort_order?: number
+        }
+        Update: {
+          branch_id?: string | null
+          city?: string
+          created_at?: string
+          fee?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          addons_total: number
+          booking_id: string
+          buyer_name: string | null
+          buyer_phone: string | null
+          created_at: string
+          delivery_fee: number
+          discount_amount: number
+          extension_id: string | null
+          id: string
+          issued_at: string
+          lines: Json
+          number: string
+          qr_base64: string
+          rental_total: number
+          seller_address: string
+          seller_cr_number: string
+          seller_name: string
+          seller_vat_number: string
+          total: number
+          vat_amount: number
+          vat_rate: number
+          wallet_amount: number
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      org_settings: {
+        Row: {
+          address: string
+          city: string
+          cr_number: string
+          email: string
+          id: boolean
+          phone: string
+          postal_code: string
+          seller_name: string
+          updated_at: string
+          vat_number: string
+        }
+        Insert: {
+          address?: string
+          city?: string
+          cr_number?: string
+          email?: string
+          id?: boolean
+          phone?: string
+          postal_code?: string
+          seller_name?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          cr_number?: string
+          email?: string
+          id?: boolean
+          phone?: string
+          postal_code?: string
+          seller_name?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          referred_bonus: number
+          referred_id: string
+          referrer_bonus: number
+          referrer_id: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      wallet_settings: {
+        Row: {
+          id: boolean
+          max_redeem_percent: number
+          min_booking_total_to_redeem: number
+          referral_bonus: number
+          referral_enabled: boolean
+          require_phone_for_welcome: boolean
+          updated_at: string
+          welcome_bonus: number
+          welcome_enabled: boolean
+        }
+        Insert: {
+          id?: boolean
+          max_redeem_percent?: number
+          min_booking_total_to_redeem?: number
+          referral_bonus?: number
+          referral_enabled?: boolean
+          require_phone_for_welcome?: boolean
+          updated_at?: string
+          welcome_bonus?: number
+          welcome_enabled?: boolean
+        }
+        Update: {
+          id?: boolean
+          max_redeem_percent?: number
+          min_booking_total_to_redeem?: number
+          referral_bonus?: number
+          referral_enabled?: boolean
+          require_phone_for_welcome?: boolean
+          updated_at?: string
+          welcome_bonus?: number
+          welcome_enabled?: boolean
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: Database["public"]["Enums"]["wallet_entry_kind"]
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["wallet_entry_kind"]
+          note?: string | null
+          user_id: string
+        }
+        Update: never
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1278,8 +1576,36 @@ export type Database = {
         Args: { p_code: string; p_customer_id?: string; p_total: number }
         Returns: Json
       }
+      activate_signup_credit: {
+        Args: { p_code?: string | null }
+        Returns: Json
+      }
+      my_referral_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      quote_extension: {
+        Args: { p_booking: string; p_new_end: string }
+        Returns: Json
+      }
+      request_extension: {
+        Args: { p_booking: string; p_new_end: string }
+        Returns: Json
+      }
+      wallet_balance: {
+        Args: { p_user?: string | null }
+        Returns: number
+      }
     }
     Enums: {
+      wallet_entry_kind:
+        | "welcome_bonus"
+        | "referral_bonus"
+        | "booking_redeem"
+        | "booking_refund"
+        | "admin_credit"
+        | "admin_debit"
+        | "expiry"
       addon_pricing: "per_day" | "one_time"
       banner_render: "image" | "template"
       banner_target: "none" | "car" | "branch" | "category" | "coupon" | "url"
