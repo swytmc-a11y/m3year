@@ -57,6 +57,32 @@ export async function verifyWhatsAppOtp(
   return { error: "استجابة غير متوقعة من خادم التحقق." };
 }
 
+/**
+ * Attaches a verified phone to the ALREADY signed-in account — upgrading it,
+ * never logging into or creating a different one. This is what an
+ * email-registered customer uses to earn the wallet's welcome credit, which
+ * checks profiles.phone before granting anything.
+ *
+ * Distinct from verifyWhatsAppOtp: that one establishes a session from an
+ * OTP with no caller identity yet; this one requires an existing session
+ * (the edge function reads it from the Authorization header, attached
+ * automatically by supabase.functions.invoke for a signed-in client).
+ */
+export async function verifyAccountPhone(
+  phone: string,
+  otp: string,
+): Promise<{ error?: string; alreadyVerified?: boolean }> {
+  const { data, error } = await supabase.functions.invoke("verify-account-phone", {
+    body: { phone, otp },
+  });
+  if (error) {
+    console.error("[whatsapp-auth] account phone verify failed", error);
+    return { error: (await extractServerMessage(error)) ?? "تعذّر التحقق من الرمز الآن." };
+  }
+  if (data?.error) return { error: data.error };
+  return { alreadyVerified: Boolean(data?.alreadyVerified) };
+}
+
 // supabase-js's FunctionsHttpError.message is a generic, unhelpful string
 // ("Edge Function returned a non-2xx status code") — it does NOT surface the
 // JSON body our functions actually return (e.g. rate-limit or invalid-code

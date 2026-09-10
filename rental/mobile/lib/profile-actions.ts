@@ -1,5 +1,26 @@
 import { supabase } from "@/lib/supabase";
 
+/**
+ * Null means the account has no verified phone — either it signed up by
+ * email and never went through phone verification, or (before the fix that
+ * closed it) it typed one in at signup that was never actually proven and
+ * so was dropped rather than trusted.
+ */
+export async function fetchMyPhone(): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return data?.phone ?? null;
+}
+
 export async function updateMyProfile(params: {
   fullName: string;
   city: string;

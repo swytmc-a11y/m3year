@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Linking } from "react-native";
 import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, Chip, IconButton, Skeleton, useToast } from "@/components/kit";
@@ -10,6 +10,7 @@ import { fetchBooking, type MyBooking } from "@/lib/bookings-data";
 import {
   quoteExtension,
   requestExtension,
+  startExtensionPayment,
   extensionMessage,
   type ExtensionQuote,
 } from "@/lib/extensions";
@@ -83,7 +84,21 @@ export default function ExtendBookingScreen() {
       runQuote();
       return;
     }
-    toast("تم تمديد الحجز.", "success");
+
+    // The extension is committed the moment the server says ok — the dates
+    // already moved and the car is already held for them, independent of
+    // whatever happens next with payment. So a failure here must not read
+    // as "the extension failed"; it lands the customer on the booking
+    // screen, which lists any unpaid extension with its own "ادفع" button.
+    if (res.extension_id) {
+      const pay = await startExtensionPayment(res.extension_id);
+      if (pay.paymentUrl) {
+        await Linking.openURL(pay.paymentUrl);
+      } else {
+        toast("تم تمديد الحجز. أكمل الدفع من صفحة الحجز.", "success");
+      }
+    }
+
     router.replace(`/bookings/${id}`);
   }
 

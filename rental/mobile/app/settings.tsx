@@ -24,6 +24,7 @@ export default function SettingsScreen() {
   const { session, user, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [city, setCity] = useState("");
+  const [phone, setPhone] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -36,12 +37,13 @@ export default function SettingsScreen() {
     let active = true;
     (async () => {
       const [{ data }, prefs] = await Promise.all([
-        supabase.from("profiles").select("full_name, city").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("full_name, city, phone").eq("id", user.id).maybeSingle(),
         getNotificationPreferences(),
       ]);
       if (active && data) {
         setFullName(data.full_name ?? "");
         setCity(data.city ?? "");
+        setPhone(data.phone ?? null);
       }
       if (active) setNotifPrefs(prefs);
       if (active) setLoading(false);
@@ -113,6 +115,20 @@ export default function SettingsScreen() {
                 <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right" }}>{user.email}</Text>
               </View>
             ) : null}
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.text, textAlign: "right" }}>رقم الجوال</Text>
+              {phone ? (
+                <Text style={{ fontFamily: fonts.numeric, fontSize: 13, color: t.textMuted, textAlign: "left" }}>
+                  {phone}
+                </Text>
+              ) : (
+                <Tappable onPress={() => router.push("/verify-phone")} haptic="light">
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.primary, textAlign: "right" }}>
+                    غير موثّق — وثّقه الآن
+                  </Text>
+                </Tappable>
+              )}
+            </View>
             {error ? (
               <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.danger, textAlign: "right" }}>{error}</Text>
             ) : null}

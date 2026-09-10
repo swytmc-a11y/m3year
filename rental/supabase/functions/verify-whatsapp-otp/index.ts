@@ -15,8 +15,12 @@
 //
 // 2) The phone is new: the app collects a real name + email + password (a
 //    normal signup, not a synthetic account) and resubmits with those fields.
-//    The proven phone rides along in signUp metadata, which handle_new_user
-//    copies onto the profile.
+//    handle_new_user() does NOT copy the phone from signUp metadata — that
+//    field is client-set and unrelated to whether Authentica actually
+//    verified anything, which was a real bug (any email signup could claim
+//    any number). So this function writes profiles.phone itself, with the
+//    service-role client, immediately after creating the account — the one
+//    place phone possession was just proven in this very request.
 //
 // Two-step for brand-new numbers: the first call without `fullName` returns
 // { needsName: true } once Authentica confirms the code but no account exists.
@@ -246,9 +250,9 @@ async function handleRequest(req: Request): Promise<Response> {
   const { data: signUpData, error: signUpError } = await asAnon.auth.signUp({
     email,
     password,
-    // The phone is trustworthy here — Authentica proved possession earlier in
-    // this same request chain — so handle_new_user can store it directly.
-    options: { data: { full_name: fullName, phone } },
+    // full_name only — phone is written below via the admin client, not
+    // trusted from metadata (see the header comment).
+    options: { data: { full_name: fullName } },
   });
 
   if (signUpError || !signUpData.user) {
@@ -257,6 +261,20 @@ async function handleRequest(req: Request): Promise<Response> {
       ? "هذا البريد الإلكتروني مسجّل مسبقًا."
       : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.";
     return json({ error: message }, 500);
+  }
+
+  // The phone is trustworthy here — Authentica proved possession earlier in
+  // this same request — so it is written directly with the service role,
+  // the same way an operator's own edit would be. profiles_phone_key (a
+  // unique index) still protects against a race with another signup for the
+  // same number landing between the OTP check above and this write.
+  const { error: phoneError } = await asAdmin
+    .from("profiles")
+    .update({ phone })
+    .eq("id", signUpData.user.id);
+  if (phoneError) {
+    console.error("[verify-whatsapp-otp] could not attach phone to new account", phoneError);
+    return json({ error: "تعذّر إتمام إنشاء الحساب. حاول مرة أخرى." }, 500);
   }
 
   // signUp() already queued the real confirmation email. Making the customer

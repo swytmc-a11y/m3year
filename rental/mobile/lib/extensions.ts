@@ -82,6 +82,32 @@ export async function requestExtension(
   return hydrate(data);
 }
 
+/**
+ * Starts payment for an already-requested extension.
+ *
+ * Mirrors startBookingPayment: the amount is never sent from here — the
+ * edge function reads it from booking_extensions, which request_extension()
+ * priced server-side. The extension is committed (dates already moved, the
+ * car already held) the moment request_extension() returns ok, independent
+ * of payment; this only settles the charge for it.
+ */
+export async function startExtensionPayment(
+  extensionId: string,
+): Promise<{ paymentUrl?: string; error?: string }> {
+  const { data, error } = await supabase.functions.invoke("create-extension-payment", {
+    body: { extensionId },
+  });
+
+  if (error) {
+    console.error("[extensions] payment start failed", error);
+    return { error: "تعذّر فتح صفحة الدفع الآن. حاول مرة أخرى." };
+  }
+  const res = data as { paymentUrl?: string; error?: string } | null;
+  if (res?.error) return { error: res.error };
+  if (!res?.paymentUrl) return { error: "تعذّر فتح صفحة الدفع الآن." };
+  return { paymentUrl: res.paymentUrl };
+}
+
 export type BookingExtension = {
   id: string;
   previous_end_date: string;

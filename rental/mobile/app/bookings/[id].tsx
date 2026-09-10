@@ -16,6 +16,11 @@ import {
   type BookingAddonLine,
 } from "@/lib/bookings-data";
 import { cancelMyBooking, startBookingPayment } from "@/lib/booking-actions";
+import {
+  listBookingExtensions,
+  startExtensionPayment,
+  type BookingExtension,
+} from "@/lib/extensions";
 import { listBookingInvoices, type Invoice } from "@/lib/invoices";
 import { fetchBookingContract, contractUrl, type BookingContract } from "@/lib/contracts";
 import {
@@ -39,21 +44,25 @@ export default function BookingDetailScreen() {
   const [addons, setAddons] = useState<BookingAddonLine[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [contract, setContract] = useState<BookingContract | null>(null);
+  const [extensions, setExtensions] = useState<BookingExtension[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [payingExtension, setPayingExtension] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const [b, a, inv, c] = await Promise.all([
+    const [b, a, inv, c, ext] = await Promise.all([
       fetchBooking(id),
       fetchBookingAddons(id),
       listBookingInvoices(id),
       fetchBookingContract(id),
+      listBookingExtensions(id),
     ]);
     setBooking(b);
     setAddons(a);
     setInvoices(inv);
     setContract(c);
+    setExtensions(ext);
     setLoading(false);
   }, [id]);
 
@@ -73,17 +82,19 @@ export default function BookingDetailScreen() {
     useCallback(() => {
       let active = true;
       (async () => {
-        const [b, a, inv, c] = await Promise.all([
+        const [b, a, inv, c, ext] = await Promise.all([
           fetchBooking(id),
           fetchBookingAddons(id),
           listBookingInvoices(id),
           fetchBookingContract(id),
+          listBookingExtensions(id),
         ]);
         if (!active) return;
         setBooking(b);
         setAddons(a);
         setInvoices(inv);
         setContract(c);
+        setExtensions(ext);
         setLoading(false);
       })();
       return () => {
@@ -133,6 +144,17 @@ export default function BookingDetailScreen() {
       return;
     }
     // Moyasar hosts the card form, so nothing sensitive ever enters the app.
+    await Linking.openURL(res.paymentUrl!);
+  }
+
+  async function onPayExtension(extensionId: string) {
+    setPayingExtension(extensionId);
+    const res = await startExtensionPayment(extensionId);
+    setPayingExtension(null);
+    if (res.error) {
+      toast(res.error, "error");
+      return;
+    }
     await Linking.openURL(res.paymentUrl!);
   }
 
@@ -288,6 +310,32 @@ export default function BookingDetailScreen() {
             </Text>
           </View>
         ) : null}
+
+        {/* A committed-but-unpaid extension is real: the dates already moved
+            and the car is already held for them, independent of payment. If
+            the customer closes the payment page mid-flow this is the only
+            place they can come back and finish it — the extend screen opens
+            the same payment page once and does not remember it afterward. */}
+        {extensions
+          .filter((e) => e.payment_status === "unpaid")
+          .map((ext) => (
+            <View key={ext.id} style={{ gap: 8 }}>
+              <Card style={{ padding: 16, gap: 4 }}>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.text, textAlign: "right" }}>
+                  تمديد حتى {formatDate(ext.new_end_date)}
+                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right" }}>
+                  {countAr(ext.days_added, DAYS_NOUN)} إضافية — بانتظار الدفع
+                </Text>
+              </Card>
+              <Button
+                label={`ادفع تمديد الحجز ${formatSar(ext.amount)}`}
+                fullWidth
+                loading={payingExtension === ext.id}
+                onPress={() => onPayExtension(ext.id)}
+              />
+            </View>
+          ))}
 
         {/* Everything the rental produced as paper: the tax invoice for the
             booking, one more for each paid extension, and the signed

@@ -19,6 +19,7 @@ export type WalletSettings = {
   referral_bonus: number;
   min_booking_total_to_redeem: number;
   max_redeem_percent: number;
+  require_phone_for_welcome: boolean;
 };
 
 /** What each ledger line is called on the customer's own statement. */
@@ -66,7 +67,7 @@ export async function fetchWalletSettings(): Promise<WalletSettings | null> {
   const { data, error } = await supabase
     .from("wallet_settings")
     .select(
-      "welcome_enabled, welcome_bonus, referral_enabled, referral_bonus, min_booking_total_to_redeem, max_redeem_percent",
+      "welcome_enabled, welcome_bonus, referral_enabled, referral_bonus, min_booking_total_to_redeem, max_redeem_percent, require_phone_for_welcome",
     )
     .maybeSingle();
 
@@ -78,5 +79,6 @@ export async function fetchWalletSettings(): Promise<WalletSettings | null> {
     referral_bonus: Number(data.referral_bonus),
     min_booking_total_to_redeem: Number(data.min_booking_total_to_redeem),
     max_redeem_percent: Number(data.max_redeem_percent),
+    require_phone_for_welcome: data.require_phone_for_welcome,
   };
 }

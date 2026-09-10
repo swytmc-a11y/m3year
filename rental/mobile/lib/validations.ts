@@ -45,6 +45,10 @@ export const signInSchema = z.object({
 
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
+// No phone: an email/password signup has no verified number to offer, and a
+// text field never proved possession of one anyway — handle_new_user() on
+// the server ignores it now for exactly that reason. A verified phone is
+// earned afterward through /verify-phone.
 export const signUpSchema = z.object({
   fullName: z
     .string()
@@ -52,7 +56,6 @@ export const signUpSchema = z.object({
     .min(2, { error: "الاسم يجب أن يكون حرفين على الأقل" })
     .max(80, { error: "الاسم طويل جدًا" }),
   email: emailSchema,
-  phone: phoneSchema,
   password: passwordSchema,
 });
 

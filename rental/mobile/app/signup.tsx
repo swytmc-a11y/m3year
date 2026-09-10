@@ -21,7 +21,6 @@ export default function SignUpScreen() {
   const { t } = useTheme();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | undefined>();
@@ -31,7 +30,7 @@ export default function SignUpScreen() {
   async function onSubmit() {
     setError(undefined);
     setFieldErrors({});
-    const parsed = signUpSchema.safeParse({ fullName, email, phone, password });
+    const parsed = signUpSchema.safeParse({ fullName, email, password });
     if (!parsed.success) {
       const errors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -46,10 +45,14 @@ export default function SignUpScreen() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
+      // No phone here: an email signup has none to offer, and typing a
+      // number into a text field is not proof of possessing it — the
+      // account is created with phone left unset and earns it later by
+      // actually verifying one (see /verify-phone), which is also what the
+      // wallet's welcome credit requires.
       options: {
         data: {
           full_name: parsed.data.fullName,
-          phone: parsed.data.phone,
         },
       },
     });
@@ -125,7 +128,8 @@ export default function SignUpScreen() {
                     إنشاء حساب جديد
                   </Text>
                   <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "right", lineHeight: 21 }}>
-                    أنشئ حسابك لتحجز سيارتك في دقيقة.
+                    أنشئ حسابك لتحجز سيارتك في دقيقة. تقدر توثّق رقم جوالك لاحقًا من
+                    الإعدادات وتحصل على رصيد ترحيبي في محفظتك.
                   </Text>
                 </View>
 
@@ -149,17 +153,6 @@ export default function SignUpScreen() {
                   autoComplete="email"
                   error={fieldErrors.email}
                   style={{ textAlign: "left" }}
-                />
-
-                <Field
-                  label="رقم الجوال"
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="05xxxxxxxx"
-                  keyboardType="phone-pad"
-                  autoComplete="tel"
-                  error={fieldErrors.phone}
-                  style={{ fontFamily: fonts.numeric, textAlign: "left" }}
                 />
 
                 <Field

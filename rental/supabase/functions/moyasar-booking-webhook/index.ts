@@ -1,7 +1,9 @@
-// Receives Moyasar payment notifications and confirms the booking that was
-// paid for.
+// Receives Moyasar payment notifications and confirms whatever was paid for:
+// a booking, or a booking extension. Both share this one endpoint (Moyasar
+// is configured with a single callback URL), and the metadata on the
+// invoice — set when the payment was started — says which it is.
 //
-// This is the only place in the system that can mark a booking paid, so it
+// This is the only place in the system that can mark either one paid, so it
 // is written defensively:
 //
 //   1. verify_jwt MUST be disabled for this function (Moyasar is not a
@@ -11,17 +13,19 @@
 //
 //   2. The webhook body is NOT trusted for the amount or the status. After
 //      the secret checks out, the payment is re-fetched from Moyasar's API
-//      with our secret key, and the booking advances only if Moyasar itself
-//      reports it paid, for the amount the booking actually says. A forged
-//      body that guessed the secret still cannot confirm a booking.
+//      with our secret key, and whichever row advances only if Moyasar
+//      itself reports it paid, for the amount that row actually says. A
+//      forged body that guessed the secret still cannot confirm anything.
 //
 //   3. Advancing is idempotent. Webhooks retry, and a retry must not
-//      double-apply — the UPDATE is conditional on the booking still being
-//      in pending_payment.
+//      double-apply — each UPDATE is conditional on the row still being
+//      unpaid.
 //
-// Where the booking lands after payment depends on the car: one set to
+// Where a BOOKING lands after payment depends on the car: one set to
 // instant confirmation is confirmed outright, one left on manual goes to
-// the branch for a human decision.
+// the branch for a human decision. An EXTENSION has no such branch — the
+// booking it belongs to already exists and is already confirmed; paying an
+// extension only marks it paid and issues its own invoice.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -75,13 +79,16 @@ async function handleRequest(req: Request): Promise<Response> {
     metadata?: Record<string, unknown>;
   };
   const paymentId = typeof payment.id === "string" ? payment.id : null;
+  const extensionId = typeof payment.metadata?.extension_id === "string"
+    ? (payment.metadata.extension_id as string)
+    : null;
   const bookingId = typeof payment.metadata?.booking_id === "string"
     ? (payment.metadata.booking_id as string)
     : null;
 
-  if (!paymentId || !bookingId) {
+  if (!paymentId || (!bookingId && !extensionId)) {
     // Nothing actionable, but it authenticated — don't ask for a retry.
-    console.warn("[moyasar-booking-webhook] missing payment id or booking_id", body.type);
+    console.warn("[moyasar-booking-webhook] missing payment id or target", body.type);
     return json({ ok: true });
   }
 
@@ -104,6 +111,21 @@ async function handleRequest(req: Request): Promise<Response> {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const asAdmin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
+  // An extension invoice always carries booking_id alongside extension_id
+  // (create-extension-payment sets both), so the extension branch is checked
+  // first — it is the more specific of the two.
+  if (extensionId) {
+    return await confirmExtensionPayment(asAdmin, extensionId, paymentId, Number(verified.amount));
+  }
+  return await confirmBookingPayment(asAdmin, bookingId!, paymentId, Number(verified.amount));
+}
+
+async function confirmBookingPayment(
+  asAdmin: ReturnType<typeof createClient>,
+  bookingId: string,
+  paymentId: string,
+  paidHalalas: number,
+): Promise<Response> {
   const { data: booking, error: bookingError } = await asAdmin
     .from("bookings")
     .select("id, reference, total, status, customer_id, car:cars(confirmation_mode)")
@@ -117,11 +139,11 @@ async function handleRequest(req: Request): Promise<Response> {
 
   // Paying less than the booking costs must never confirm it.
   const expectedHalalas = Math.round(Number(booking.total) * 100);
-  if (Number(verified.amount) < expectedHalalas) {
+  if (paidHalalas < expectedHalalas) {
     console.error(
       "[moyasar-booking-webhook] amount mismatch",
       bookingId,
-      verified.amount,
+      paidHalalas,
       expectedHalalas,
     );
     return json({ ok: true });
@@ -161,6 +183,71 @@ async function handleRequest(req: Request): Promise<Response> {
       nextStatus === "confirmed"
         ? `حجزك ${booking.reference} مؤكد. نراك في الفرع.`
         : `استلمنا دفعة حجزك ${booking.reference}، وهو الآن بانتظار تأكيد الفرع.`,
+    data: { booking_id: booking.id },
+  });
+
+  return json({ ok: true });
+}
+
+async function confirmExtensionPayment(
+  asAdmin: ReturnType<typeof createClient>,
+  extensionId: string,
+  paymentId: string,
+  paidHalalas: number,
+): Promise<Response> {
+  const { data: extension, error: extensionError } = await asAdmin
+    .from("booking_extensions")
+    .select("id, amount, payment_status, booking:bookings(id, reference, customer_id)")
+    .eq("id", extensionId)
+    .maybeSingle();
+
+  if (extensionError || !extension) {
+    console.error("[moyasar-booking-webhook] extension not found", extensionId, extensionError);
+    return json({ ok: true });
+  }
+
+  const booking = extension.booking as unknown as
+    | { id: string; reference: string; customer_id: string }
+    | null;
+  if (!booking) {
+    console.error("[moyasar-booking-webhook] extension has no booking", extensionId);
+    return json({ ok: true });
+  }
+
+  const expectedHalalas = Math.round(Number(extension.amount) * 100);
+  if (paidHalalas < expectedHalalas) {
+    console.error(
+      "[moyasar-booking-webhook] extension amount mismatch",
+      extensionId,
+      paidHalalas,
+      expectedHalalas,
+    );
+    return json({ ok: true });
+  }
+
+  // Conditional on unpaid: a retried webhook finds nothing to do. The
+  // update trigger issue_extension_invoice_on_payment() fires from this
+  // same statement and raises the extension's own tax invoice.
+  const { data: updated, error: updateError } = await asAdmin
+    .from("booking_extensions")
+    .update({ payment_status: "paid", paid_at: new Date().toISOString(), payment_ref: paymentId })
+    .eq("id", extensionId)
+    .eq("payment_status", "unpaid")
+    .select("id");
+
+  if (updateError) {
+    console.error("[moyasar-booking-webhook] extension update failed", updateError);
+    return json({ error: "update failed" }, 500);
+  }
+  if (!updated || updated.length === 0) {
+    return json({ ok: true, alreadyApplied: true });
+  }
+
+  await asAdmin.from("notifications").insert({
+    user_id: booking.customer_id,
+    category: "booking_updates",
+    title: "تم دفع تمديد الحجز",
+    body: `استلمنا دفعة تمديد حجزك ${booking.reference}.`,
     data: { booking_id: booking.id },
   });
 

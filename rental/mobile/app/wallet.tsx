@@ -22,6 +22,7 @@ import {
   type WalletEntry,
   type WalletSettings,
 } from "@/lib/wallet";
+import { fetchMyPhone } from "@/lib/profile-actions";
 import { formatSar, formatDate } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
 
@@ -34,32 +35,37 @@ export default function WalletScreen() {
   const [balance, setBalance] = useState<number | null>(null);
   const [entries, setEntries] = useState<WalletEntry[] | null>(null);
   const [settings, setSettings] = useState<WalletSettings | null>(null);
+  const [phone, setPhone] = useState<string | null | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const [b, rows, s] = await Promise.all([
+    const [b, rows, s, p] = await Promise.all([
       fetchWalletBalance(),
       listWalletEntries(),
       fetchWalletSettings(),
+      fetchMyPhone(),
     ]);
     setBalance(b);
     setEntries(rows);
     setSettings(s);
+    setPhone(p);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       (async () => {
-        const [b, rows, s] = await Promise.all([
+        const [b, rows, s, p] = await Promise.all([
           fetchWalletBalance(),
           listWalletEntries(),
           fetchWalletSettings(),
+          fetchMyPhone(),
         ]);
         if (!active) return;
         setBalance(b);
         setEntries(rows);
         setSettings(s);
+        setPhone(p);
       })();
       return () => {
         active = false;
@@ -123,6 +129,33 @@ export default function WalletScreen() {
                   : ""}
               </Text>
             </View>
+
+            {/* Only shown when a verified phone is actually what stands
+                between this account and its welcome credit — not when the
+                operator has turned that requirement off, and not before the
+                phone lookup has actually come back. */}
+            {phone === null && settings?.welcome_enabled && settings?.require_phone_for_welcome ? (
+              <Tappable onPress={() => router.push("/verify-phone")} haptic="light">
+                <View
+                  style={{
+                    backgroundColor: t.accentTint,
+                    borderRadius: radius.xl,
+                    padding: 18,
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+                    وثّق جوالك واحصل على {formatSar(settings.welcome_bonus)}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "right", lineHeight: 19 }}>
+                    الرصيد الترحيبي يُصرف بعد توثيق رقم جوالك عبر واتساب.
+                  </Text>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: t.primary, textAlign: "right" }}>
+                    وثّق الآن
+                  </Text>
+                </View>
+              </Tappable>
+            ) : null}
 
             {settings?.referral_enabled ? (
               <Tappable onPress={() => router.push("/invite")} haptic="light">
