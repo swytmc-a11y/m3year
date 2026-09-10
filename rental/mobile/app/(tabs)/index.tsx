@@ -27,6 +27,7 @@ import {
 } from "@/components/kit";
 import { BellIcon, SearchIcon } from "@/components/icons";
 import { CarCard, type CarCardData } from "@/components/cars";
+import { DateRangeCalendar, type DayRange } from "@/components/date-range-calendar";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
 import {
@@ -43,8 +44,10 @@ import {
   type CarCategory,
   type TransmissionType,
   type FuelType,
+  formatDate,
 } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
+import { addDays, todayIso } from "@/lib/dates";
 
 type Branch = { id: string; name: string; city: string };
 
@@ -59,6 +62,13 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<CarFilters>(EMPTY_FILTERS);
   const [draft, setDraft] = useState<CarFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [range, setRange] = useState<DayRange>(() => ({
+    start: addDays(todayIso(), 1),
+    end: addDays(todayIso(), 4),
+  }));
+  const [draftRange, setDraftRange] = useState<DayRange>(range);
+  const [appliedRange, setAppliedRange] = useState<DayRange>(range);
 
   // The two quick chips sit beside the filter button and may both be on.
   const [cheapest, setCheapest] = useState(false);
@@ -92,6 +102,8 @@ export default function HomeScreen() {
           cheapest,
           nearest,
           coords,
+          startDate: appliedRange.start,
+          endDate: appliedRange.end,
         });
         if (token !== requestToken.current) return;
         setCars((prev) => (mode === "append" && prev ? [...prev, ...rows] : rows));
@@ -112,7 +124,7 @@ export default function HomeScreen() {
         }
       }
     },
-    [filters, cheapest, nearest, coords],
+    [filters, cheapest, nearest, coords, appliedRange],
   );
 
   useEffect(() => {
@@ -173,7 +185,16 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding }}>
+      <FlatList
+        key={`cars-${columns}`}
+        data={!loading && !error ? (cars ?? []) : []}
+        numColumns={columns}
+        keyExtractor={(item) => item.id}
+        style={{ width: "100%", maxWidth: 1260, alignSelf: "center" }}
+        contentContainerStyle={{ paddingHorizontal: contentPadding, gap: 18, paddingBottom: tabSpacing }}
+        columnWrapperStyle={columns > 1 ? { gap: 18 } : undefined}
+        ListHeaderComponent={
+      <View>
         <View
           style={{
             flexDirection: "row-reverse",
@@ -249,10 +270,49 @@ export default function HomeScreen() {
             gap: 10,
           }}
         >
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+            حدّد تفاصيل رحلتك
+          </Text>
+          <View style={{ flexDirection: width >= 700 ? "row-reverse" : "column", gap: 10 }}>
+            <Tappable
+              onPress={() => { setDraft(filters); setDraftRange(range); setBookingOpen(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="اختيار فرع الاستلام"
+              style={{ flex: 1.2 }}
+            >
+              <View
+                style={{
+                  minHeight: 48,
+                  borderWidth: 1,
+                  borderColor: t.border,
+                  borderRadius: radius.lg,
+                  paddingHorizontal: 14,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.textMuted, textAlign: "right" }}>فرع الاستلام</Text>
+                <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: t.text, textAlign: "right", marginTop: 1 }}>
+                  {selectedBranch ? `${selectedBranch.name} — ${selectedBranch.city}` : "جميع الفروع"}
+                </Text>
+              </View>
+            </Tappable>
+            <View style={{ flex: 2, flexDirection: "row-reverse", gap: 10 }}>
+              <BookingField
+                label="تاريخ الاستلام"
+                value={formatDate(range.start)}
+                onPress={() => { setDraft(filters); setDraftRange(range); setBookingOpen(true); }}
+              />
+              <BookingField
+                label="تاريخ التسليم"
+                value={range.end ? formatDate(range.end) : "حدّد التاريخ"}
+                onPress={() => { setDraft(filters); setDraftRange(range); setBookingOpen(true); }}
+              />
+            </View>
+          </View>
           <View style={{ flexDirection: width >= 700 ? "row-reverse" : "column", gap: 10 }}>
             <View
               style={{
-                flex: 1.4,
+                flex: 1,
                 flexDirection: "row-reverse",
                 alignItems: "center",
                 gap: 10,
@@ -267,45 +327,28 @@ export default function HomeScreen() {
               <TextInput
                 value={filters.search}
                 onChangeText={(value) => setFilters((current) => ({ ...current, search: value }))}
-                placeholder="ابحث بالماركة أو الموديل"
+                placeholder="بحث اختياري بالماركة أو الموديل"
                 placeholderTextColor={t.textMuted}
                 accessibilityLabel="البحث عن سيارة"
-                style={{ flex: 1, fontFamily: fonts.body, fontSize: 13.5, color: t.text, textAlign: "right" }}
+                style={{ flex: 1, fontFamily: fonts.body, fontSize: 13, color: t.text, textAlign: "right" }}
               />
             </View>
-            <Tappable
-              onPress={() => { setDraft(filters); setFiltersOpen(true); }}
-              accessibilityRole="button"
-              accessibilityLabel="اختيار الفرع والفلاتر"
-              style={{ flex: 1 }}
-            >
-              <View
-                style={{
-                  minHeight: 48,
-                  borderWidth: 1,
-                  borderColor: t.border,
-                  borderRadius: radius.lg,
-                  paddingHorizontal: 14,
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.textMuted, textAlign: "right" }}>موقع الاستلام</Text>
-                <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 13, color: t.text, textAlign: "right", marginTop: 1 }}>
-                  {selectedBranch ? `${selectedBranch.name} — ${selectedBranch.city}` : "جميع الفروع"}
-                </Text>
-              </View>
-            </Tappable>
-            <View style={{ minWidth: width >= 700 ? 150 : undefined }}>
+            <View style={{ minWidth: width >= 700 ? 190 : undefined }}>
               <Button
-                label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "عرض الفلاتر"}
+                label="عرض السيارات المتاحة"
                 fullWidth
-                onPress={() => { setDraft(filters); setFiltersOpen(true); }}
+                onPress={() => setAppliedRange({ ...range })}
               />
             </View>
           </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 18 }}>
+          <Chip
+            label={activeFilterCount > 0 ? `الفلاتر (${activeFilterCount})` : "كل الفلاتر"}
+            active={activeFilterCount > 0}
+            onPress={() => { setDraft(filters); setFiltersOpen(true); }}
+          />
           <Chip label="كل السيارات" active={!filters.category} onPress={() => setFilters((current) => ({ ...current, category: null }))} />
           {CAR_CATEGORY_OPTIONS.map((option) => (
             <Chip
@@ -329,14 +372,12 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
-      </View>
-
-      {loading ? (
-        <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding, gap: 16 }}>
+        {loading ? (
+        <View style={{ gap: 16 }}>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} width="100%" height={260} radius={radius.xl} />
           ))}
-        </ScrollView>
+        </View>
       ) : error ? (
         <EmptyState
           title="تعذّر تحميل السيارات"
@@ -353,43 +394,78 @@ export default function HomeScreen() {
             ) : undefined
           }
         />
-      ) : (
-        <FlatList
-          key={`cars-${columns}`}
-          data={cars ?? []}
-          numColumns={columns}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ width: "100%", maxWidth: 1260, alignSelf: "center", paddingHorizontal: contentPadding, gap: 18, paddingBottom: tabSpacing }}
-          columnWrapperStyle={columns > 1 ? { gap: 18 } : undefined}
-          renderItem={({ item, index }) => (
-            <View style={{ flex: 1, maxWidth: cardWidth }}>
-              <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+      ) : null}
+      </View>
+        }
+        renderItem={({ item, index }) => (
+          <View style={{ flex: 1, maxWidth: cardWidth }}>
+            <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+          </View>
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            {...refreshTint}
+            onRefresh={() => {
+              setRefreshing(true);
+              load(0, "replace");
+            }}
+          />
+        }
+        onEndReachedThreshold={0.5}
+        onEndReached={() => {
+          if (!hasMore || loadingMore || !cars) return;
+          load(Math.floor(cars.length / 12), "append");
+        }}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator color={t.primary} />
             </View>
-          )}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              {...refreshTint}
-              onRefresh={() => {
-                setRefreshing(true);
-                load(0, "replace");
-              }}
-            />
-          }
-          onEndReachedThreshold={0.5}
-          onEndReached={() => {
-            if (!hasMore || loadingMore || !cars) return;
-            load(Math.floor(cars.length / 12), "append");
-          }}
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={{ paddingVertical: 20 }}>
-                <ActivityIndicator color={t.primary} />
-              </View>
-            ) : null
-          }
-        />
-      )}
+          ) : null
+        }
+      />
+
+      <Sheet visible={bookingOpen} onClose={() => setBookingOpen(false)} title="تفاصيل الرحلة">
+        <ScrollView contentContainerStyle={{ gap: 18, paddingBottom: 12 }}>
+          <View style={{ gap: 10 }}>
+            <FieldLabel>فرع الاستلام</FieldLabel>
+            <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 }}>
+              <Chip
+                label="جميع الفروع"
+                active={!draft.branchId}
+                onPress={() => setDraft((current) => ({ ...current, branchId: null }))}
+              />
+              {branches.map((branch) => (
+                <Chip
+                  key={branch.id}
+                  label={`${branch.name} — ${branch.city}`}
+                  active={draft.branchId === branch.id}
+                  onPress={() => setDraft((current) => ({ ...current, branchId: branch.id }))}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={{ gap: 10 }}>
+            <FieldLabel>تاريخ الاستلام والتسليم</FieldLabel>
+            <DateRangeCalendar range={draftRange} onChange={setDraftRange} minDate={todayIso()} />
+          </View>
+
+          <Button
+            label="عرض السيارات المتاحة"
+            fullWidth
+            disabled={!draftRange.end || draftRange.end <= draftRange.start}
+            onPress={() => {
+              if (!draftRange.end || draftRange.end <= draftRange.start) return;
+              setRange(draftRange);
+              setAppliedRange(draftRange);
+              setFilters((current) => ({ ...current, branchId: draft.branchId }));
+              setBookingOpen(false);
+            }}
+          />
+        </ScrollView>
+      </Sheet>
 
       <Sheet visible={filtersOpen} onClose={() => setFiltersOpen(false)} title="الفلاتر">
         <ScrollView contentContainerStyle={{ gap: 20, paddingBottom: 12 }}>
@@ -511,6 +587,29 @@ function FilterGroup({ label, children }: { label: string; children: React.React
       <FieldLabel>{label}</FieldLabel>
       <View style={{ flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 }}>{children}</View>
     </View>
+  );
+}
+
+function BookingField({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+  const { t } = useTheme();
+  return (
+    <Tappable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} style={{ flex: 1 }}>
+      <View
+        style={{
+          minHeight: 48,
+          borderWidth: 1,
+          borderColor: t.border,
+          borderRadius: radius.lg,
+          paddingHorizontal: 12,
+          justifyContent: "center",
+        }}
+      >
+        <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: t.textMuted, textAlign: "right" }}>{label}</Text>
+        <Text numberOfLines={1} style={{ fontFamily: fonts.bodySemiBold, fontSize: 12, color: t.text, textAlign: "right", marginTop: 1 }}>
+          {value}
+        </Text>
+      </View>
+    </Tappable>
   );
 }
 

@@ -44,12 +44,16 @@ export async function fetchCars({
   cheapest,
   nearest,
   coords,
+  startDate,
+  endDate,
 }: {
   page: number;
   filters: CarFilters;
   cheapest: boolean;
   nearest: boolean;
   coords: Coords | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }): Promise<{ rows: (CarCardData & { distance: number | null })[]; hasMore: boolean }> {
   let query = supabase
     .from("cars")
@@ -88,7 +92,27 @@ export async function fetchCars({
 
   const rows = (data ?? []) as unknown as CarCardData[];
 
-  const withDistance = rows.map((car) => ({
+  // The home search promises cars available for the requested trip, so the
+  // result must account for existing bookings and maintenance ranges—not
+  // merely the generic `available` fleet status.
+  let availableRows = rows;
+  if (startDate && endDate && endDate > startDate) {
+    const checks = await Promise.all(
+      rows.map(async (car) => {
+        const { data: ranges, error: rangesError } = await supabase.rpc("car_unavailable_ranges", {
+          p_car_id: car.id,
+        });
+        if (rangesError) throw rangesError;
+        const blocked = (ranges ?? []).some(
+          (range) => startDate < range.end_date && range.start_date < endDate,
+        );
+        return blocked ? null : car;
+      }),
+    );
+    availableRows = checks.filter((car): car is CarCardData => car !== null);
+  }
+
+  const withDistance = availableRows.map((car) => ({
     ...car,
     distance:
       coords && car.branch?.latitude != null && car.branch?.longitude != null
