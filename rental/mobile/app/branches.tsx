@@ -4,6 +4,7 @@ import { useRouter, useSegments } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, EmptyState, IconButton, Skeleton, useTabBarSpacing } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
+import { BranchMapCard } from "@/components/branch-map-card";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
 import { requestCoords, distanceKm, formatDistance, type Coords } from "@/lib/geo";
@@ -149,16 +150,9 @@ export default function BranchesScreen() {
                       onPress={() => Linking.openURL(`https://wa.me/${b.whatsapp!.replace(/[^0-9]/g, "")}`)}
                     />
                   ) : null}
-                  {b.latitude != null && b.longitude != null ? (
-                    <Button
-                      label="الموقع"
-                      variant="secondary"
-                      onPress={() =>
-                        Linking.openURL(`https://maps.google.com/?q=${b.latitude},${b.longitude}`)
-                      }
-                    />
-                  ) : null}
                 </View>
+
+                <BranchMapCard latitude={b.latitude} longitude={b.longitude} />
               </Card>
             );
           }}

@@ -35,6 +35,8 @@ export type CarDetail = {
     whatsapp: string | null;
     working_hours: string | null;
     deposit_note: string | null;
+    latitude: number | null;
+    longitude: number | null;
   } | null;
 };
 
@@ -58,7 +60,7 @@ export async function fetchCarDetail(carId: string): Promise<{
     supabase
       .from("cars")
       .select(
-        "id, make, model, year, category, transmission, fuel, seats, doors, color, daily_price, weekly_price, monthly_price, daily_km_limit, extra_km_fee, min_rental_days, max_rental_days, images, cover_image, features, description, confirmation_mode, rating_avg, rating_count, branch:branches(id, name, city, address, phone, whatsapp, working_hours, deposit_note)",
+        "id, make, model, year, category, transmission, fuel, seats, doors, color, daily_price, weekly_price, monthly_price, daily_km_limit, extra_km_fee, min_rental_days, max_rental_days, images, cover_image, features, description, confirmation_mode, rating_avg, rating_count, branch:branches(id, name, city, address, phone, whatsapp, working_hours, deposit_note, latitude, longitude)",
       )
       .eq("id", carId)
       .maybeSingle(),

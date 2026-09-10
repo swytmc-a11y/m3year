@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth";
 import { fetchCarDetail, type CarDetail, type CarAddon } from "@/lib/car-detail";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { RatingStars } from "@/components/rating";
+import { BranchMapCard } from "@/components/branch-map-card";
 import { fetchCarReviews, formatReviewDate, type Review } from "@/lib/reviews";
 import {
   CAR_CATEGORY_LABELS,
@@ -339,6 +340,8 @@ export default function CarDetailScreen() {
                   </Text>
                 </View>
               ) : null}
+
+              <BranchMapCard latitude={branch.latitude} longitude={branch.longitude} />
 
               <View style={{ flexDirection: "row-reverse", gap: 10 }}>
                 {branch.phone ? (

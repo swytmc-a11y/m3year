@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { BranchLocationPicker } from "@/components/admin/branch-location-picker";
 import { CONFIRMATION_MODE_OPTIONS } from "@/lib/cars/constants";
 import type { ActionState } from "@/lib/action-state";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -34,23 +35,10 @@ export function BranchForm({
         <Field label="المدينة" name="city" defaultValue={branch?.city} required error={errors.city?.[0]} />
         <Field label="العنوان" name="address" defaultValue={branch?.address ?? ""} error={errors.address?.[0]} />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="خط العرض (Latitude)"
-            name="latitude"
-            defaultValue={branch?.latitude?.toString() ?? ""}
-            dir="ltr"
-            hint="من خرائط جوجل — يُستخدم لترتيب «الأقرب لي»"
-            error={errors.latitude?.[0]}
-          />
-          <Field
-            label="خط الطول (Longitude)"
-            name="longitude"
-            defaultValue={branch?.longitude?.toString() ?? ""}
-            dir="ltr"
-            error={errors.longitude?.[0]}
-          />
-        </div>
+        <BranchLocationPicker initialLat={branch?.latitude ?? null} initialLng={branch?.longitude ?? null} />
+        {errors.latitude?.[0] || errors.longitude?.[0] ? (
+          <p className="text-[12px] text-admin-danger">{errors.latitude?.[0] ?? errors.longitude?.[0]}</p>
+        ) : null}
       </Card>
 
       <Card className="border-admin-border bg-admin-surface flex flex-col gap-5 p-5 sm:p-6">
