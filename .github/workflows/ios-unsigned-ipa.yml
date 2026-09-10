@@ -25,29 +25,29 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: mobile/package-lock.json
+          cache-dependency-path: rental/mobile/package-lock.json
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
       - name: Install JS dependencies
-        working-directory: mobile
+        working-directory: rental/mobile
         run: npm install --legacy-peer-deps
 
       - name: Generate native iOS project
-        working-directory: mobile
+        working-directory: rental/mobile
         run: npx expo prebuild --platform ios --clean --no-install
 
       # A stale Metro/babel transform cache can bake `undefined` in place of
       # EXPO_PUBLIC_* values, producing a bundle that throws at module load
       # and hard-aborts the app on launch. Start every build from a clean one.
       - name: Clear bundler caches
-        working-directory: mobile
+        working-directory: rental/mobile
         run: rm -rf node_modules/.cache "$TMPDIR/metro-cache" "$TMPDIR/haste-map-"* 2>/dev/null || true
 
       - name: Install CocoaPods
-        working-directory: mobile/ios
+        working-directory: rental/mobile/ios
         run: |
           if [ -f Gemfile ]; then
             bundle install
@@ -58,7 +58,7 @@ jobs:
 
       - name: Resolve workspace and scheme
         id: xc
-        working-directory: mobile/ios
+        working-directory: rental/mobile/ios
         run: |
           workspace=$(ls -d *.xcworkspace | head -n1)
           # The app scheme matches the generated .xcodeproj name (e.g. mayar),
@@ -72,7 +72,7 @@ jobs:
           xcodebuild -workspace "$workspace" -list || true
 
       - name: Archive unsigned app
-        working-directory: mobile/ios
+        working-directory: rental/mobile/ios
         run: |
           xcodebuild \
             -workspace "${{ steps.xc.outputs.workspace }}" \
@@ -89,7 +89,7 @@ jobs:
             archive
 
       - name: Package unsigned .ipa
-        working-directory: mobile/ios
+        working-directory: rental/mobile/ios
         run: |
           set -e
           app_path=$(find build/Miyar.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -n1)

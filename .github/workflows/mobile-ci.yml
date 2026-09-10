@@ -3,24 +3,24 @@ name: mobile-ci
 on:
   push:
     paths:
-      - "mobile/**"
+      - "rental/mobile/**"
   pull_request:
     paths:
-      - "mobile/**"
+      - "rental/mobile/**"
 
 jobs:
   typecheck-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: mobile
+        working-directory: rental/mobile
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: mobile/package-lock.json
+          cache-dependency-path: rental/mobile/package-lock.json
       - run: npm install --legacy-peer-deps
       - run: npm run typecheck
       - run: npm test
