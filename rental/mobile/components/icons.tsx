@@ -146,6 +146,14 @@ export function ChevronBackIcon({ color, size = 16 }: { color: ColorValue; size?
   );
 }
 
+export function CloseIcon({ color, size = 16 }: { color: ColorValue; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 6l12 12M18 6L6 18" stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export function HeartIcon({ color, size = 16, filled = false }: { color: ColorValue; size?: number; filled?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

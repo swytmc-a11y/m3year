@@ -34,6 +34,8 @@ import { fetchHomeFeed, copyFor, type HomeFeed } from "@/lib/home-feed";
 import { listFavoriteIds, toggleFavorite } from "@/lib/favorites";
 import { fetchCurrentRental, type MyBooking } from "@/lib/bookings-data";
 import { CurrentRentalCard } from "@/components/current-rental";
+import { PhoneVerifyBanner } from "@/components/phone-verify-banner";
+import { activateSignupCredit } from "@/lib/referrals";
 import { todayIso } from "@/lib/dates";
 import { CAR_CATEGORY_OPTIONS, type CarCategory } from "@/lib/constants";
 import { countAr, CARS_NOUN } from "@/lib/arabic";
@@ -74,6 +76,8 @@ export default function HomeScreen() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentRental, setCurrentRental] = useState<MyBooking | null>(null);
+  const [needsPhoneVerify, setNeedsPhoneVerify] = useState(false);
+  const [phoneBannerDismissed, setPhoneBannerDismissed] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -111,22 +115,29 @@ export default function HomeScreen() {
       setFavorites(new Set());
       setUnreadCount(0);
       setCurrentRental(null);
+      setNeedsPhoneVerify(false);
       return;
     }
     let active = true;
     (async () => {
-      const [ids, { count }, rental] = await Promise.all([
+      const [ids, { count }, rental, credit] = await Promise.all([
         listFavoriteIds(),
         supabase
           .from("notifications")
           .select("id", { count: "exact", head: true })
           .is("read_at", null),
         fetchCurrentRental(),
+        // Safe to call every launch — activate_signup_credit grants the
+        // welcome bonus at most once and no-ops otherwise (see _layout.tsx's
+        // useSignupCredit, which owns actually claiming it). This call only
+        // reads the "reason" back to know whether to show the banner below.
+        activateSignupCredit(null),
       ]);
       if (!active) return;
       setFavorites(new Set(ids));
       setUnreadCount(count ?? 0);
       setCurrentRental(rental);
+      setNeedsPhoneVerify(credit?.reason === "phone_required");
     })();
     return () => {
       active = false;
@@ -260,6 +271,15 @@ export default function HomeScreen() {
           />
         }
       >
+        {/* First thing on screen, ahead of even the current-rental card —
+            an unclaimed 50 SAR is worth more attention than anything else
+            here, but only while it's actually still on offer. */}
+        {needsPhoneVerify && !phoneBannerDismissed ? (
+          <View style={{ paddingHorizontal: 18 }}>
+            <PhoneVerifyBanner onDismiss={() => setPhoneBannerDismissed(true)} />
+          </View>
+        ) : null}
+
         {/* A customer who already has the car leads with their rental, not
             with a shelf of cars to book. */}
         {currentRental ? <CurrentRentalCard booking={currentRental} /> : null}
