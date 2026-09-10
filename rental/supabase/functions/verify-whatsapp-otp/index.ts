@@ -257,8 +257,22 @@ async function handleRequest(req: Request): Promise<Response> {
 
   if (signUpError || !signUpData.user) {
     console.error("[verify-whatsapp-otp] signUp failed", signUpError);
-    const message = signUpError?.message.includes("already registered")
-      ? "هذا البريد الإلكتروني مسجّل مسبقًا."
+    // Reached here only when THIS phone has no account of its own, so a
+    // rejected email means it belongs to a different account already — a
+    // byte-identical repeat is GoTrue's own "already registered"; a
+    // same-address-different-case repeat is caught instead by the
+    // case-insensitive unique index in handle_new_user(), whose trigger
+    // exception sometimes reaches the client as GoTrue's generic wrapper
+    // text rather than its own message. Nothing else in that trigger can
+    // raise, so the wrapper is treated the same way rather than shown as an
+    // unexplained failure.
+    const known = signUpError?.message ?? "";
+    const emailTaken =
+      known.includes("already registered") ||
+      known.includes("مسجّل مسبقًا") ||
+      known.includes("Database error saving new user");
+    const message = emailTaken
+      ? "هذا البريد الإلكتروني مسجَّل لحساب آخر. سجّل الدخول به، ثم وثّق رقمك من الإعدادات."
       : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.";
     return json({ error: message }, 500);
   }

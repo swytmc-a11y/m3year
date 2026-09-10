@@ -16,6 +16,26 @@ import { supabase } from "@/lib/supabase";
 import { signUpSchema } from "@/lib/validations";
 import { fonts, radius } from "@/theme";
 
+const EMAIL_TAKEN_MESSAGE = "هذا البريد الإلكتروني مسجّل مسبقًا. سجّل الدخول به بدلًا من ذلك.";
+
+/**
+ * A duplicate email can surface two different ways: GoTrue's own "User
+ * already registered" for a byte-identical repeat, or — for a same address
+ * submitted in a different letter case, which GoTrue's own unique index
+ * does not catch — a rejection from the handle_new_user() trigger instead.
+ * A trigger-raised exception during signUp sometimes reaches the client as
+ * GoTrue's generic wrapper text rather than the trigger's own message, so
+ * that wrapper is treated as the same case here rather than shown as an
+ * unexplained failure — nothing else in that trigger can raise.
+ */
+function isEmailAlreadyRegistered(message: string): boolean {
+  return (
+    message.includes("already registered") ||
+    message.includes("مسجّل مسبقًا") ||
+    message.includes("Database error saving new user")
+  );
+}
+
 export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTheme();
@@ -60,11 +80,7 @@ export default function SignUpScreen() {
 
     if (signUpError) {
       console.error("[auth] signUp failed", signUpError);
-      setError(
-        signUpError.message.includes("already registered")
-          ? "هذا البريد الإلكتروني مسجّل مسبقًا."
-          : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.",
-      );
+      setError(isEmailAlreadyRegistered(signUpError.message) ? EMAIL_TAKEN_MESSAGE : "تعذّر إنشاء الحساب الآن. حاول مرة أخرى.");
       return;
     }
 
