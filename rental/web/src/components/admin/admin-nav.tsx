@@ -48,6 +48,7 @@ const GROUPS: NavGroup[] = [
     label: "التسويق",
     links: [
       { href: "/admin/banners", label: "البنرات" },
+      { href: "/admin/curation", label: "تخصيص الرئيسية" },
       { href: "/admin/coupons", label: "رموز الخصم" },
     ],
   },

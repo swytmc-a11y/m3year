@@ -818,6 +818,42 @@ export type Database = {
           },
         ]
       }
+      content_block_cars: {
+        Row: {
+          block_slug: string
+          car_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          block_slug: string
+          car_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          block_slug?: string
+          car_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_block_cars_block_slug_fkey"
+            columns: ["block_slug"]
+            isOneToOne: false
+            referencedRelation: "content_blocks"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "content_block_cars_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_blocks: {
         Row: {
           slug: string
