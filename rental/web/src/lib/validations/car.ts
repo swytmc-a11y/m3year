@@ -69,6 +69,12 @@ export const carFormSchema = z
     doors: optionalNumber("عدد الأبواب", { min: 1, max: 10, int: true }),
     color: optionalText,
 
+    // How many physical units of this car this branch has — the fleet
+    // capacity a booking draws down from. Defaults to 1 so a car added
+    // without touching this field behaves exactly as every car did before
+    // this field existed.
+    quantity: requiredNumber("الكمية", { min: 0, max: 999, int: true }),
+
     daily_price: requiredNumber("السعر اليومي", { min: 1 }),
     weekly_price: optionalNumber("السعر الأسبوعي", { min: 1 }),
     monthly_price: optionalNumber("السعر الشهري", { min: 1 }),

@@ -30,7 +30,9 @@ export type CreateBookingInput = {
  * much of it this booking may take, is not the client's to decide.
  *
  * If the dates were taken in the meantime the database refuses the insert
- * outright — the exclusion constraint, not a check this code performs.
+ * outright — a trigger checking the car's remaining fleet capacity for the
+ * requested range, not a check this code performs (see
+ * check_booking_capacity in 0046_car_fleet_quantity.sql).
  */
 export async function createBooking(
   input: CreateBookingInput,
@@ -81,7 +83,7 @@ export async function createBooking(
 
   if (error) {
     const message = error.message ?? "";
-    if (message.includes("bookings_no_overlap") || message.includes("exclusion")) {
+    if (message.includes("car_unavailable_full") || message.includes("exclusion")) {
       return { error: "حُجزت هذه السيارة في التواريخ المختارة قبل قليل. اختر فترة أخرى." };
     }
     if (message.includes("car_unavailable_maintenance")) {

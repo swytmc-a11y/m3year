@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { setCarStatus } from "@/app/actions/cars";
+import { setCarStatus, adjustCarQuantity } from "@/app/actions/cars";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CarStatusBadge } from "@/components/cars/status-badge";
@@ -193,6 +193,34 @@ export default async function AdminCarsPage({
                     </div>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-1.5 rounded-lg border border-admin-border px-1.5 py-1">
+                        <form action={adjustCarQuantity}>
+                          <input type="hidden" name="id" value={car.id} />
+                          <input type="hidden" name="delta" value="-1" />
+                          <button
+                            type="submit"
+                            disabled={car.quantity <= 0}
+                            aria-label="إنقاص الكمية"
+                            className="flex h-6 w-6 items-center justify-center rounded text-admin-text hover:bg-admin-bg disabled:opacity-30"
+                          >
+                            −
+                          </button>
+                        </form>
+                        <span className="min-w-[1.5em] text-center font-mono text-[13px] font-bold text-admin-text">
+                          {car.quantity}
+                        </span>
+                        <form action={adjustCarQuantity}>
+                          <input type="hidden" name="id" value={car.id} />
+                          <input type="hidden" name="delta" value="1" />
+                          <button
+                            type="submit"
+                            aria-label="زيادة الكمية"
+                            className="flex h-6 w-6 items-center justify-center rounded text-admin-text hover:bg-admin-bg"
+                          >
+                            +
+                          </button>
+                        </form>
+                      </div>
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/admin/cars/${car.id}/edit`}>تعديل</Link>
                       </Button>

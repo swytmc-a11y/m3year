@@ -112,6 +112,17 @@ export function CarForm({
           <Field label="عدد الأبواب" name="doors" type="number" dir="ltr" defaultValue={car?.doors?.toString() ?? ""} error={errors.doors?.[0]} />
           <Field label="اللون" name="color" defaultValue={car?.color ?? ""} error={errors.color?.[0]} />
         </div>
+
+        <Field
+          label="الكمية في هذا الفرع"
+          name="quantity"
+          type="number"
+          dir="ltr"
+          defaultValue={(car?.quantity ?? 1).toString()}
+          required
+          hint="عدد السيارات الفعلية من هذا الموديل في هذا الفرع — تُحجز الأخيرة منها فقط عندما لا تبقى وحدة متاحة للتواريخ المطلوبة."
+          error={errors.quantity?.[0]}
+        />
       </Card>
 
       {/* ------------------------------------------------- pricing ------ */}

@@ -226,7 +226,7 @@ function useSignupCredit() {
       if (credit.welcome > 0) {
         setBonusAmount(credit.welcome);
       } else if (credit.reason === "phone_required") {
-        const { error } = await supabase.rpc("maybe_nudge_phone_verification", {});
+        const { error } = await supabase.rpc("maybe_nudge_phone_verification");
         if (error) console.error("[wallet] nudge seed failed", error);
       }
     })();

@@ -28,7 +28,7 @@ export async function activateSignupCredit(
   code?: string | null,
 ): Promise<ActivationResult | null> {
   const { data, error } = await supabase.rpc("activate_signup_credit", {
-    p_code: code ?? null,
+    p_code: code ?? undefined,
   });
   if (error) {
     console.error("[referrals] activate failed", error);
@@ -38,7 +38,7 @@ export async function activateSignupCredit(
 }
 
 export async function fetchReferralSummary(): Promise<ReferralSummary | null> {
-  const { data, error } = await supabase.rpc("my_referral_summary", {});
+  const { data, error } = await supabase.rpc("my_referral_summary");
   if (error) {
     console.error("[referrals] summary failed", error);
     return null;

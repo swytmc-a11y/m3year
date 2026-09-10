@@ -19,6 +19,7 @@ function parseCarForm(formData: FormData) {
     seats: formData.get("seats"),
     doors: formData.get("doors"),
     color: formData.get("color"),
+    quantity: formData.get("quantity") || "1",
     daily_price: formData.get("daily_price"),
     weekly_price: formData.get("weekly_price"),
     monthly_price: formData.get("monthly_price"),
@@ -190,6 +191,43 @@ export async function setCarStatus(formData: FormData) {
     p_entity_type: "car",
     p_entity_id: carId,
     p_metadata: { status },
+  });
+
+  revalidateCarSurfaces(carId);
+}
+
+/**
+ * The list page's quick +/- stepper — a fast way to correct the fleet count
+ * (a unit pulled in for repair, one added, a recount) without opening the
+ * full edit form. `delta` is `-1` or `1`; the clamp at 0 lives here rather
+ * than relying only on the `cars_quantity_non_negative` check, so a
+ * double-click at zero fails silently instead of round-tripping a
+ * constraint-violation error.
+ */
+export async function adjustCarQuantity(formData: FormData) {
+  await requireAdmin();
+  const carId = String(formData.get("id"));
+  const delta = Number(formData.get("delta"));
+  if (delta !== 1 && delta !== -1) return;
+
+  const supabase = await createClient();
+  const { data: current } = await supabase.from("cars").select("quantity").eq("id", carId).single();
+  if (!current) return;
+
+  const next = Math.max(0, current.quantity + delta);
+  if (next === current.quantity) return;
+
+  const { error } = await supabase.from("cars").update({ quantity: next }).eq("id", carId);
+  if (error) {
+    console.error("[cars] quantity change failed", error);
+    return;
+  }
+
+  await supabase.rpc("log_audit", {
+    p_action: "car.quantity_changed",
+    p_entity_type: "car",
+    p_entity_id: carId,
+    p_metadata: { from: current.quantity, to: next },
   });
 
   revalidateCarSurfaces(carId);

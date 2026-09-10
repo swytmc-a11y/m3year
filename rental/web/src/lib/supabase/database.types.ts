@@ -186,6 +186,116 @@ export type Database = {
           },
         ]
       }
+      booking_contracts: {
+        Row: {
+          booking_id: string
+          content_type: string | null
+          file_name: string
+          id: string
+          note: string | null
+          size_bytes: number | null
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          booking_id: string
+          content_type?: string | null
+          file_name: string
+          id?: string
+          note?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          booking_id?: string
+          content_type?: string | null
+          file_name?: string
+          id?: string
+          note?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_contracts_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_extensions: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          daily_rate: number
+          days_added: number
+          id: string
+          new_end_date: string
+          paid_at: string | null
+          payment_ref: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          previous_end_date: string
+          rate_tier: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          daily_rate: number
+          days_added: number
+          id?: string
+          new_end_date: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          previous_end_date: string
+          rate_tier: string
+          vat_amount: number
+          vat_rate: number
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          daily_rate?: number
+          days_added?: number
+          id?: string
+          new_end_date?: string
+          paid_at?: string | null
+          payment_ref?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          previous_end_date?: string
+          rate_tier?: string
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_extensions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           addons_total: number
@@ -210,6 +320,7 @@ export type Database = {
           delivery_zone_id: string | null
           discount_amount: number
           end_date: string
+          extensions_total: number
           id: string
           paid_at: string | null
           payment_ref: string | null
@@ -227,7 +338,6 @@ export type Database = {
           start_date: string
           status: Database["public"]["Enums"]["booking_status"]
           total: number
-          extensions_total: number
           updated_at: string
           vat_amount: number
           vat_rate: number
@@ -257,6 +367,7 @@ export type Database = {
           delivery_zone_id?: string | null
           discount_amount?: number
           end_date: string
+          extensions_total?: number
           id?: string
           paid_at?: string | null
           payment_ref?: string | null
@@ -274,7 +385,6 @@ export type Database = {
           start_date: string
           status?: Database["public"]["Enums"]["booking_status"]
           total: number
-          extensions_total?: number
           updated_at?: string
           vat_amount: number
           vat_rate: number
@@ -304,6 +414,7 @@ export type Database = {
           delivery_zone_id?: string | null
           discount_amount?: number
           end_date?: string
+          extensions_total?: number
           id?: string
           paid_at?: string | null
           payment_ref?: string | null
@@ -321,7 +432,6 @@ export type Database = {
           start_date?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total?: number
-          extensions_total?: number
           updated_at?: string
           vat_amount?: number
           vat_rate?: number
@@ -355,6 +465,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
             referencedColumns: ["id"]
           },
         ]
@@ -570,6 +687,7 @@ export type Database = {
           min_rental_days: number
           model: string
           monthly_price: number | null
+          quantity: number
           rating_avg: number | null
           rating_count: number
           seats: number
@@ -603,6 +721,7 @@ export type Database = {
           min_rental_days?: number
           model: string
           monthly_price?: number | null
+          quantity?: number
           rating_avg?: number | null
           rating_count?: number
           seats: number
@@ -636,6 +755,7 @@ export type Database = {
           min_rental_days?: number
           model?: string
           monthly_price?: number | null
+          quantity?: number
           rating_avg?: number | null
           rating_count?: number
           seats?: number
@@ -770,6 +890,50 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_zones: {
+        Row: {
+          branch_id: string | null
+          city: string
+          created_at: string
+          fee: number
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          sort_order: number
+        }
+        Insert: {
+          branch_id?: string | null
+          city: string
+          created_at?: string
+          fee: number
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          sort_order?: number
+        }
+        Update: {
+          branch_id?: string | null
+          city?: string
+          created_at?: string
+          fee?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zones_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           car_id: string
@@ -799,6 +963,96 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          addons_total: number
+          booking_id: string
+          buyer_name: string | null
+          buyer_phone: string | null
+          created_at: string
+          delivery_fee: number
+          discount_amount: number
+          extension_id: string | null
+          id: string
+          issued_at: string
+          lines: Json
+          number: string
+          qr_base64: string
+          rental_total: number
+          seller_address: string
+          seller_cr_number: string
+          seller_name: string
+          seller_vat_number: string
+          total: number
+          vat_amount: number
+          vat_rate: number
+          wallet_amount: number
+        }
+        Insert: {
+          addons_total: number
+          booking_id: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          created_at?: string
+          delivery_fee?: number
+          discount_amount: number
+          extension_id?: string | null
+          id?: string
+          issued_at?: string
+          lines?: Json
+          number: string
+          qr_base64: string
+          rental_total: number
+          seller_address: string
+          seller_cr_number: string
+          seller_name: string
+          seller_vat_number: string
+          total: number
+          vat_amount: number
+          vat_rate: number
+          wallet_amount: number
+        }
+        Update: {
+          addons_total?: number
+          booking_id?: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          created_at?: string
+          delivery_fee?: number
+          discount_amount?: number
+          extension_id?: string | null
+          id?: string
+          issued_at?: string
+          lines?: Json
+          number?: string
+          qr_base64?: string
+          rental_total?: number
+          seller_address?: string
+          seller_cr_number?: string
+          seller_name?: string
+          seller_vat_number?: string
+          total?: number
+          vat_amount?: number
+          vat_rate?: number
+          wallet_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_extension_id_fkey"
+            columns: ["extension_id"]
+            isOneToOne: true
+            referencedRelation: "booking_extensions"
             referencedColumns: ["id"]
           },
         ]
@@ -878,6 +1132,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      org_settings: {
+        Row: {
+          address: string
+          city: string
+          cr_number: string
+          email: string
+          id: boolean
+          phone: string
+          postal_code: string
+          seller_name: string
+          updated_at: string
+          vat_number: string
+        }
+        Insert: {
+          address?: string
+          city?: string
+          cr_number?: string
+          email?: string
+          id?: boolean
+          phone?: string
+          postal_code?: string
+          seller_name?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          cr_number?: string
+          email?: string
+          id?: boolean
+          phone?: string
+          postal_code?: string
+          seller_name?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Relationships: []
       }
       phone_otp_throttle: {
         Row: {
@@ -963,7 +1256,7 @@ export type Database = {
           license_number?: string | null
           national_id?: string | null
           phone?: string | null
-          referral_code?: string
+          referral_code: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1135,6 +1428,51 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          referred_bonus: number
+          referred_id: string
+          referrer_bonus: number
+          referrer_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          referred_bonus: number
+          referred_id: string
+          referrer_bonus: number
+          referrer_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          referred_bonus?: number
+          referred_id?: string
+          referrer_bonus?: number
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           author_id: string
@@ -1203,6 +1541,27 @@ export type Database = {
           },
         ]
       }
+      rpc_allowlist: {
+        Row: {
+          allow_anon: boolean
+          allow_authenticated: boolean
+          proname: string
+          reason: string
+        }
+        Insert: {
+          allow_anon?: boolean
+          allow_authenticated?: boolean
+          proname: string
+          reason: string
+        }
+        Update: {
+          allow_anon?: boolean
+          allow_authenticated?: boolean
+          proname?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       saved_searches: {
         Row: {
           created_at: string
@@ -1240,211 +1599,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      booking_contracts: {
-        Row: {
-          booking_id: string
-          content_type: string | null
-          file_name: string
-          id: string
-          note: string | null
-          size_bytes: number | null
-          storage_path: string
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          booking_id: string
-          content_type?: string | null
-          file_name: string
-          id?: string
-          note?: string | null
-          size_bytes?: number | null
-          storage_path: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          booking_id?: string
-          content_type?: string | null
-          file_name?: string
-          id?: string
-          note?: string | null
-          size_bytes?: number | null
-          storage_path?: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: []
-      }
-      booking_extensions: {
-        Row: {
-          amount: number
-          booking_id: string
-          created_at: string
-          daily_rate: number
-          days_added: number
-          id: string
-          new_end_date: string
-          paid_at: string | null
-          payment_ref: string | null
-          payment_status: Database["public"]["Enums"]["payment_status"]
-          previous_end_date: string
-          rate_tier: string
-          vat_amount: number
-          vat_rate: number
-        }
-        Insert: {
-          amount: number
-          booking_id: string
-          created_at?: string
-          daily_rate: number
-          days_added: number
-          id?: string
-          new_end_date: string
-          paid_at?: string | null
-          payment_ref?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"]
-          previous_end_date: string
-          rate_tier: string
-          vat_amount: number
-          vat_rate: number
-        }
-        Update: {
-          amount?: number
-          booking_id?: string
-          created_at?: string
-          daily_rate?: number
-          days_added?: number
-          id?: string
-          new_end_date?: string
-          paid_at?: string | null
-          payment_ref?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"]
-          previous_end_date?: string
-          rate_tier?: string
-          vat_amount?: number
-          vat_rate?: number
-        }
-        Relationships: []
-      }
-      delivery_zones: {
-        Row: {
-          branch_id: string | null
-          city: string
-          created_at: string
-          fee: number
-          id: string
-          is_active: boolean
-          name: string
-          note: string | null
-          sort_order: number
-        }
-        Insert: {
-          branch_id?: string | null
-          city: string
-          created_at?: string
-          fee: number
-          id?: string
-          is_active?: boolean
-          name: string
-          note?: string | null
-          sort_order?: number
-        }
-        Update: {
-          branch_id?: string | null
-          city?: string
-          created_at?: string
-          fee?: number
-          id?: string
-          is_active?: boolean
-          name?: string
-          note?: string | null
-          sort_order?: number
-        }
-        Relationships: []
-      }
-      invoices: {
-        Row: {
-          addons_total: number
-          booking_id: string
-          buyer_name: string | null
-          buyer_phone: string | null
-          created_at: string
-          delivery_fee: number
-          discount_amount: number
-          extension_id: string | null
-          id: string
-          issued_at: string
-          lines: Json
-          number: string
-          qr_base64: string
-          rental_total: number
-          seller_address: string
-          seller_cr_number: string
-          seller_name: string
-          seller_vat_number: string
-          total: number
-          vat_amount: number
-          vat_rate: number
-          wallet_amount: number
-        }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-      org_settings: {
-        Row: {
-          address: string
-          city: string
-          cr_number: string
-          email: string
-          id: boolean
-          phone: string
-          postal_code: string
-          seller_name: string
-          updated_at: string
-          vat_number: string
-        }
-        Insert: {
-          address?: string
-          city?: string
-          cr_number?: string
-          email?: string
-          id?: boolean
-          phone?: string
-          postal_code?: string
-          seller_name?: string
-          updated_at?: string
-          vat_number?: string
-        }
-        Update: {
-          address?: string
-          city?: string
-          cr_number?: string
-          email?: string
-          id?: boolean
-          phone?: string
-          postal_code?: string
-          seller_name?: string
-          updated_at?: string
-          vat_number?: string
-        }
-        Relationships: []
-      }
-      referrals: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          referred_bonus: number
-          referred_id: string
-          referrer_bonus: number
-          referrer_id: string
-        }
-        Insert: never
-        Update: never
-        Relationships: []
       }
       wallet_settings: {
         Row: {
@@ -1503,14 +1657,46 @@ export type Database = {
           note?: string | null
           user_id: string
         }
-        Update: never
-        Relationships: []
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["wallet_entry_kind"]
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      activate_signup_credit: { Args: { p_code?: string }; Returns: Json }
       audit_client_executable_functions: {
         Args: never
         Returns: {
@@ -1519,6 +1705,20 @@ export type Database = {
           needed_by: string
           problem: string
           routine: string
+        }[]
+      }
+      audit_internal_function_exposure: {
+        Args: never
+        Returns: {
+          reachable_by: string
+          routine: string
+        }[]
+      }
+      car_badges: {
+        Args: never
+        Returns: {
+          badge: string
+          car_id: string
         }[]
       }
       car_unavailable_ranges: {
@@ -1532,26 +1732,38 @@ export type Database = {
         Args: { p_end: string; p_start: string }
         Returns: string[]
       }
-      car_badges: {
-        Args: never
-        Returns: {
-          badge: string
-          car_id: string
-        }[]
+      coupon_discount_for: {
+        Args: { p_coupon_id: string; p_total: number }
+        Returns: number
       }
       coupon_redemptions: {
         Args: { p_coupon_id: string; p_customer_id?: string }
         Returns: number
       }
-      expire_stale_bookings: { Args: never; Returns: number }
-      home_feed: {
-        Args: { p_end?: string; p_start?: string }
-        Returns: Json
+      delivery_fee_for: {
+        Args: {
+          p_car: string
+          p_delivery_mode: string
+          p_return_mode: string
+          p_zone: string
+        }
+        Returns: number
       }
+      expire_stale_bookings: { Args: never; Returns: number }
       generate_booking_reference: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
+      home_feed: { Args: { p_end?: string; p_start?: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_blocked: { Args: never; Returns: boolean }
       is_documents_ready: { Args: never; Returns: boolean }
+      issue_invoice_for_booking: {
+        Args: { p_booking: string }
+        Returns: string
+      }
+      issue_invoice_for_extension: {
+        Args: { p_extension: string }
+        Returns: string
+      }
       log_audit: {
         Args: {
           p_action: string
@@ -1561,6 +1773,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      max_concurrent_units: {
+        Args: {
+          p_car_id: string
+          p_end: string
+          p_exclude_block_id?: string
+          p_exclude_booking_id?: string
+          p_start: string
+        }
+        Returns: number
+      }
+      maybe_nudge_phone_verification: { Args: never; Returns: boolean }
+      my_referral_summary: { Args: never; Returns: Json }
       quote_booking: {
         Args: {
           p_addon_ids?: string[]
@@ -1571,19 +1795,6 @@ export type Database = {
         }
         Returns: Json
       }
-      send_booking_reminders: { Args: never; Returns: number }
-      validate_coupon: {
-        Args: { p_code: string; p_customer_id?: string; p_total: number }
-        Returns: Json
-      }
-      activate_signup_credit: {
-        Args: { p_code?: string | null }
-        Returns: Json
-      }
-      my_referral_summary: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       quote_extension: {
         Args: { p_booking: string; p_new_end: string }
         Returns: Json
@@ -1592,20 +1803,42 @@ export type Database = {
         Args: { p_booking: string; p_new_end: string }
         Returns: Json
       }
-      wallet_balance: {
-        Args: { p_user?: string | null }
+      send_booking_reminders: { Args: never; Returns: number }
+      sync_booking_wallet_redemption: {
+        Args: { p_booking: string }
+        Returns: undefined
+      }
+      validate_coupon: {
+        Args: { p_code: string; p_customer_id?: string; p_total: number }
+        Returns: Json
+      }
+      wallet_available_for_booking: {
+        Args: { p_booking: string; p_user: string }
         Returns: number
       }
+      wallet_balance: { Args: { p_user?: string }; Returns: number }
+      wallet_redeemable: {
+        Args: {
+          p_booking: string
+          p_payable: number
+          p_requested: boolean
+          p_user: string
+        }
+        Returns: number
+      }
+      zatca_qr: {
+        Args: {
+          p_issued_at: string
+          p_seller_name: string
+          p_total: number
+          p_vat_amount: number
+          p_vat_number: string
+        }
+        Returns: string
+      }
+      zatca_tlv: { Args: { p_tag: number; p_value: string }; Returns: string }
     }
     Enums: {
-      wallet_entry_kind:
-        | "welcome_bonus"
-        | "referral_bonus"
-        | "booking_redeem"
-        | "booking_refund"
-        | "admin_credit"
-        | "admin_debit"
-        | "expiry"
       addon_pricing: "per_day" | "one_time"
       banner_render: "image" | "template"
       banner_target: "none" | "car" | "branch" | "category" | "coupon" | "url"
@@ -1633,6 +1866,14 @@ export type Database = {
         | "failed"
       transmission_type: "automatic" | "manual"
       user_role: "customer" | "admin"
+      wallet_entry_kind:
+        | "welcome_bonus"
+        | "referral_bonus"
+        | "booking_redeem"
+        | "booking_refund"
+        | "admin_credit"
+        | "admin_debit"
+        | "expiry"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1789,6 +2030,15 @@ export const Constants = {
       ],
       transmission_type: ["automatic", "manual"],
       user_role: ["customer", "admin"],
+      wallet_entry_kind: [
+        "welcome_bonus",
+        "referral_bonus",
+        "booking_redeem",
+        "booking_refund",
+        "admin_credit",
+        "admin_debit",
+        "expiry",
+      ],
     },
   },
 } as const
