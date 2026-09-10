@@ -14,6 +14,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "الرئيسية" }} />
+      <Tabs.Screen name="search/index" options={{ title: "البحث" }} />
       <Tabs.Screen name="bookings/index" options={{ title: "حجوزاتي" }} />
       <Tabs.Screen name="branches/index" options={{ title: "الفروع" }} />
       <Tabs.Screen name="profile/index" options={{ title: "حسابي" }} />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, FlatList, ActivityIndicator } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useSegments } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   Sheet,
   Skeleton,
   Tappable,
+  useTabBarSpacing,
   useToast,
 } from "@/components/kit";
 import { ChevronBackIcon, SearchIcon } from "@/components/icons";
@@ -52,6 +53,15 @@ export default function SearchScreen() {
   const { t } = useTheme();
   const { session } = useAuth();
   const toast = useToast();
+
+  // This screen is reachable two ways: as the search tab, and pushed onto
+  // the stack with dates/filters already chosen (from the home hero, a
+  // category rail, or a saved search). The tab instance has no back button
+  // to offer and has to leave room for the floating pill; the pushed one is
+  // the opposite on both counts.
+  const inTabs = useSegments()[0] === "(tabs)";
+  const tabSpacing = useTabBarSpacing();
+  const bottomClearance = inTabs ? tabSpacing : 0;
 
   const dates = useMemo(
     () => (params.from && params.to ? { start: params.from, end: params.to } : null),
@@ -205,9 +215,11 @@ export default function SearchScreen() {
           paddingVertical: 10,
         }}
       >
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
+        {inTabs ? null : (
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+        )}
 
         <View
           style={{
@@ -318,7 +330,7 @@ export default function SearchScreen() {
           keyExtractor={(c) => c.id}
           contentContainerStyle={{
             paddingHorizontal: 18,
-            paddingBottom: compare.length > 0 ? 96 : 24,
+            paddingBottom: (compare.length > 0 ? 96 : 24) + bottomClearance,
             gap: 14,
           }}
           renderItem={({ item }) => (
@@ -356,7 +368,7 @@ export default function SearchScreen() {
             position: "absolute",
             left: 18,
             right: 18,
-            bottom: 18,
+            bottom: 18 + bottomClearance,
             flexDirection: "row-reverse",
             alignItems: "center",
             justifyContent: "space-between",
@@ -368,7 +380,7 @@ export default function SearchScreen() {
           }}
         >
           <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.onCanvas }}>
-            {compare.length} للمقارنة
+            {countAr(compare.length, CARS_NOUN)} للمقارنة
           </Text>
           <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 8 }}>
             <Tappable onPress={() => setCompare([])} haptic="light" accessibilityRole="button">

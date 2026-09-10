@@ -6,6 +6,7 @@ import { Button, Card, EmptyState, IconButton, Tappable, useToast } from "@/comp
 import { ChevronBackIcon } from "@/components/icons";
 import {
   listSavedSearches,
+  createSavedSearch,
   deleteSavedSearch,
   setSavedSearchNotify,
   type SavedSearch,
@@ -131,8 +132,21 @@ export default function SavedSearchesScreen() {
                 <Tappable
                   onPress={async () => {
                     await deleteSavedSearch(item.id);
-                    toast("حُذف البحث.", "success");
                     await reload();
+                    // Undo re-creates the search rather than resurrecting the
+                    // deleted row, so it comes back at the top of the list —
+                    // nothing is lost, only its place in the order.
+                    toast("حُذف البحث.", "success", {
+                      label: "تراجع",
+                      onPress: async () => {
+                        const res = await createSavedSearch(item.name, item.filters);
+                        if (res.error) {
+                          toast(res.error, "error");
+                          return;
+                        }
+                        await reload();
+                      },
+                    });
                   }}
                   haptic="light"
                 >

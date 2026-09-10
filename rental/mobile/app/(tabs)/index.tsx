@@ -23,7 +23,7 @@ import {
   useTabBarSpacing,
   useToast,
 } from "@/components/kit";
-import { BellIcon } from "@/components/icons";
+import { BellIcon, HeartIcon } from "@/components/icons";
 import { CarCard, type FeedCar } from "@/components/car-card";
 import { Hero, SectionHeader, PromoCard, Rail, type FeedBanner } from "@/components/home-parts";
 import { DateRangeCalendar } from "@/components/date-range-calendar";
@@ -214,6 +214,13 @@ export default function HomeScreen() {
         }}
       >
         <Logo />
+        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 4 }}>
+        {/* Saving a car is a browsing habit, not an account setting — burying
+            it in the profile menu meant the list was three taps from the cars
+            it was made of. */}
+        <IconButton accessibilityLabel="المفضلة" onPress={() => router.push("/favorites")}>
+          <HeartIcon color={t.text} size={19} />
+        </IconButton>
         <IconButton accessibilityLabel="الإشعارات" onPress={() => router.push("/notifications")}>
           <BellIcon color={t.text} />
           {unreadCount > 0 ? (
@@ -230,6 +237,7 @@ export default function HomeScreen() {
             />
           ) : null}
         </IconButton>
+        </View>
       </View>
 
       <ScrollView

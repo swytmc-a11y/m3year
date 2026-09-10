@@ -109,6 +109,26 @@ export function BellIcon({ color, size = 18 }: { color: ColorValue; size?: numbe
   );
 }
 
+/**
+ * The tab-bar search glyph. Deliberately separate from `SearchIcon`, which is
+ * the small 15px mark that sits inside the search field: this one belongs to
+ * the tab set and has to share its 24-grid, 1.9px stroke and active fill or
+ * it reads as a foreign icon next to the other four.
+ */
+export function SearchTabIcon({ focused, color, size = 24, activeFill = "none" }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={11} cy={11} r={6.5} stroke={color} strokeWidth={STROKE} fill={focused ? activeFill : "none"} />
+      <Path
+        d="M20 20l-4.4-4.4"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 export function SearchIcon({ color, size = 15 }: { color: ColorValue; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

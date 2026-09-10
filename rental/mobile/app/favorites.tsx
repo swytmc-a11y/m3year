@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { View, Text, FlatList } from "react-native";
 import { useFocusEffect, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, EmptyState, IconButton, Skeleton, useTabBarSpacing } from "@/components/kit";
+import { Button, EmptyState, IconButton, Skeleton, useTabBarSpacing, useToast } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
 import { CarCard, type FeedCar } from "@/components/car-card";
 import { listFavoriteCars, toggleFavorite } from "@/lib/favorites";
@@ -14,6 +14,7 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
+  const toast = useToast();
   const { session, loading: authLoading } = useAuth();
   const [cars, setCars] = useState<FeedCar[] | null>(null);
 
@@ -71,7 +72,22 @@ export default function FavoritesScreen() {
                   await toggleFavorite(id);
                 } catch (err) {
                   console.error("[favorites] toggle failed", err);
+                  return;
                 }
+                // Removing from a list is one tap and the card is gone from
+                // the only screen that showed it, so the way back has to be
+                // right there.
+                toast("أُزيلت من المفضلة.", "success", {
+                  label: "تراجع",
+                  onPress: async () => {
+                    try {
+                      await toggleFavorite(id);
+                      setCars(await listFavoriteCars());
+                    } catch (err) {
+                      console.error("[favorites] undo failed", err);
+                    }
+                  },
+                });
               }}
             />
           )}

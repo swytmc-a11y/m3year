@@ -786,9 +786,18 @@ export function EmptyState({
 
 // ---- Toast ----
 type ToastKind = "success" | "error" | "info";
-type ToastState = { message: string; kind: ToastKind } | null;
+/**
+ * An optional way back out of what the toast is confirming. A destructive
+ * action that reports itself as done and offers no way back is the reason
+ * apps ask "are you sure?" for everything; an undo here is faster to use
+ * and cheaper to ignore than a confirmation dialog.
+ */
+export type ToastAction = { label: string; onPress: () => void };
+type ToastState = { message: string; kind: ToastKind; action?: ToastAction } | null;
 
-const ToastContext = createContext<(message: string, kind?: ToastKind) => void>(() => {});
+const ToastContext = createContext<
+  (message: string, kind?: ToastKind, action?: ToastAction) => void
+>(() => {});
 
 /** Fire a transient confirmation/error banner: `toast("تم الحفظ", "success")`. */
 export function useToast() {
@@ -801,9 +810,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const show = useCallback((message: string, kind: ToastKind = "info") => {
+  const show = useCallback((message: string, kind: ToastKind = "info", action?: ToastAction) => {
     if (timer.current) clearTimeout(timer.current);
-    setToast({ message, kind });
+    setToast({ message, kind, action });
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(
         kind === "error"
@@ -811,7 +820,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           : Haptics.NotificationFeedbackType.Success,
       ).catch(() => {});
     }
-    timer.current = setTimeout(() => setToast(null), 2600);
+    // An undo has to be readable, reached and tapped, which no one manages
+    // in the 2.6s that is plenty for "saved".
+    timer.current = setTimeout(() => setToast(null), action ? 5200 : 2600);
   }, []);
 
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
@@ -824,7 +835,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {toast ? (
         <Animated.View
           entering={FadeInDown.springify().damping(18).mass(0.6)}
-          pointerEvents="none"
+          // Without an action there is nothing to tap, so the banner stays
+          // out of the way of whatever is underneath it.
+          pointerEvents={toast.action ? "box-none" : "none"}
           style={{
             position: "absolute",
             left: 16,
@@ -832,14 +845,51 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             bottom: insets.bottom + 96,
             backgroundColor: bg,
             borderRadius: radius.lg,
+            flexDirection: "row-reverse",
+            alignItems: "center",
+            gap: 12,
             paddingHorizontal: 16,
-            paddingVertical: 12,
+            paddingVertical: toast.action ? 8 : 12,
             ...t.shadowLg,
           }}
         >
-          <Text style={{ fontFamily: fonts.bodySemiBold, fontSize: 12.5, color: t.white, textAlign: "center" }}>
+          <Text
+            style={{
+              flex: 1,
+              fontFamily: fonts.bodySemiBold,
+              fontSize: 12.5,
+              color: t.white,
+              textAlign: toast.action ? "right" : "center",
+            }}
+          >
             {toast.message}
           </Text>
+          {toast.action ? (
+            <Tappable
+              accessibilityRole="button"
+              haptic="light"
+              onPress={() => {
+                if (timer.current) clearTimeout(timer.current);
+                const run = toast.action!.onPress;
+                setToast(null);
+                run();
+              }}
+            >
+              <View
+                style={{
+                  minHeight: 36,
+                  justifyContent: "center",
+                  paddingHorizontal: 12,
+                  borderRadius: radius.pill,
+                  backgroundColor: `${t.white}26`,
+                }}
+              >
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 12.5, color: t.white }}>
+                  {toast.action.label}
+                </Text>
+              </View>
+            </Tappable>
+          ) : null}
         </Animated.View>
       ) : null}
     </ToastContext.Provider>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Linking } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, EmptyState, IconButton, Skeleton, useTabBarSpacing } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
@@ -26,6 +26,7 @@ export default function BranchesScreen() {
   const router = useRouter();
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
+  const inTabs = useSegments()[0] === "(tabs)";
   const [branches, setBranches] = useState<Branch[] | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [carCounts, setCarCounts] = useState<Record<string, number>>({});
@@ -70,9 +71,14 @@ export default function BranchesScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
       <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
+        {/* This screen is both the الفروع tab and a pushed screen reached
+            from the profile menu. A tab root has nothing behind it, so the
+            back arrow only belongs to the pushed instance. */}
+        {inTabs ? null : (
+          <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
+            <ChevronBackIcon color={t.text} />
+          </IconButton>
+        )}
         <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الفروع</Text>
       </View>
 

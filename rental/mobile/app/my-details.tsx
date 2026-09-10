@@ -50,9 +50,17 @@ export default function MyDetailsScreen() {
     setLoading(false);
   }, []);
 
+  // Only for a signed-in customer: without the guard a visitor who lands
+  // here fires a documents request that can only come back empty, and the
+  // screen redirects to sign-in a moment later anyway.
   useEffect(() => {
+    if (authLoading) return;
+    if (!session) {
+      setLoading(false);
+      return;
+    }
     load();
-  }, [load]);
+  }, [authLoading, session, load]);
 
   if (authLoading || loading) {
     return (
