@@ -80,7 +80,7 @@ jobs:
             -configuration ${{ inputs.configuration }} \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath build/Miyar.xcarchive \
+            -archivePath build/Sumu.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -92,7 +92,7 @@ jobs:
         working-directory: rental/mobile/ios
         run: |
           set -e
-          app_path=$(find build/Miyar.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -n1)
+          app_path=$(find build/Sumu.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -n1)
           if [ -z "$app_path" ]; then
             echo "No .app in archive; searching derived data..." >&2
             app_path=$(find build -maxdepth 6 -name "*.app" -path "*iphoneos*" | head -n1)
@@ -105,10 +105,17 @@ jobs:
           echo "Using app: $app_path"
           mkdir -p Payload
           cp -R "$app_path" Payload/
-          zip -r ../../miyar-unsigned.ipa Payload
+          # Absolute path via $GITHUB_WORKSPACE (the repo root GitHub Actions
+          # always sets) rather than a relative ../.. — that relative count
+          # was calibrated for the old 1-deep `mobile/ios` layout and quietly
+          # started writing one directory short of the root when this
+          # workflow moved to the 2-deep `rental/mobile/ios`, which is
+          # exactly why the previous run's upload-artifact step found nothing
+          # at the root and silently skipped uploading.
+          zip -r "$GITHUB_WORKSPACE/sumu-unsigned.ipa" Payload
 
       - uses: actions/upload-artifact@v4
         with:
-          name: miyar-unsigned-ipa
-          path: miyar-unsigned.ipa
+          name: sumu-unsigned-ipa
+          path: sumu-unsigned.ipa
           retention-days: 14
