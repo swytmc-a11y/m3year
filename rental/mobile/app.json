@@ -25,7 +25,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -67,8 +70,14 @@
     "extra": {
       "router": {},
       "supabaseUrl": "https://eaaayvxzohgcweyllsey.supabase.co",
-      "supabaseAnonKey": "sb_publishable_4rBDo5NWk9wG5jSfOuSwUg_UNu8GcLv"
+      "supabaseAnonKey": "sb_publishable_4rBDo5NWk9wG5jSfOuSwUg_UNu8GcLv",
+      "eas": {
+        "projectId": "2720d5f8-dc8d-4292-b46e-ac1333ebf3b3"
+      }
     },
-    "owner": "swe6mm"
+    "owner": "swe6mm",
+    "updates": {
+      "url": "https://u.expo.dev/2720d5f8-dc8d-4292-b46e-ac1333ebf3b3"
+    }
   }
 }
