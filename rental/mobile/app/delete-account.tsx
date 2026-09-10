@@ -71,14 +71,14 @@ export default function DeleteAccountScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+        <View style={{ width: "100%", maxWidth: 820, alignSelf: "center", flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
           <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
             <ChevronBackIcon color={t.text} />
           </IconButton>
           <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>حذف الحساب</Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 16 }} keyboardShouldPersistTaps="handled">
           <Card style={{ padding: 20, gap: 12 }}>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.danger, textAlign: "right" }}>
               هذا الإجراء نهائي ولا يمكن التراجع عنه

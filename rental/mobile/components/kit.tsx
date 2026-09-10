@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
   type PressableProps,
   type TextInputProps,
@@ -35,6 +36,76 @@ import { useTheme } from "@/contexts/theme";
 import { fonts, motion, radius, type ThemeTokens } from "@/theme";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+// ---- responsive page frame ----
+// Keeps every Smo screen comfortably readable on phones while preventing
+// cards and forms from stretching across the full browser window.
+export function ResponsiveContent({
+  children,
+  style,
+  maxWidth = 1180,
+  ...rest
+}: ViewProps & { maxWidth?: number }) {
+  const { width } = useWindowDimensions();
+  return (
+    <View
+      style={[
+        {
+          width: "100%",
+          maxWidth,
+          alignSelf: "center",
+          paddingHorizontal: width >= 900 ? 28 : 18,
+        },
+        style,
+      ]}
+      {...rest}
+    >
+      {children}
+    </View>
+  );
+}
+
+export function PageHeader({
+  title,
+  subtitle,
+  onBack,
+  trailing,
+}: {
+  title: string;
+  subtitle?: string;
+  onBack?: () => void;
+  trailing?: React.ReactNode;
+}) {
+  const { t } = useTheme();
+  return (
+    <ResponsiveContent
+      style={{
+        minHeight: 72,
+        flexDirection: "row-reverse",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 10,
+      }}
+    >
+      {onBack ? (
+        <IconButton accessibilityLabel="رجوع" onPress={onBack}>
+          <ChevronBackIcon color={t.text} />
+        </IconButton>
+      ) : null}
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: fonts.displayBold, fontSize: 18, color: t.text, textAlign: "right" }}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "right", marginTop: 2 }}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+    </ResponsiveContent>
+  );
+}
 
 // ---- press feedback ----
 //

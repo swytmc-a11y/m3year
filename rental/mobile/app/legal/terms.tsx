@@ -49,13 +49,13 @@ export default function TermsScreen() {
   const { t } = useTheme();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+      <View style={{ width: "100%", maxWidth: 820, alignSelf: "center", flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
         <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
           <ChevronBackIcon color={t.text} />
         </IconButton>
         <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الشروط والأحكام</Text>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 18, gap: 20 }}>
+      <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 20 }}>
         {SECTIONS.map((s) => (
           <View key={s.title} style={{ gap: 8 }}>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>

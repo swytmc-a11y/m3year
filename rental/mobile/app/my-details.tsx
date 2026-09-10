@@ -146,7 +146,7 @@ export default function MyDetailsScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
       >
         <Card style={{ padding: 18, gap: 8 }}>

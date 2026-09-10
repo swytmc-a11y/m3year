@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeIcon, ListIcon, StorefrontIcon, ProfileIcon } from "@/components/icons";
 import { Tappable } from "@/components/kit";
@@ -42,12 +42,14 @@ const LABELS: Record<string, string> = {
 export function FloatingTabBar({ state, navigation }: MinimalTabBarProps) {
   const { t } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const desktop = width >= 900;
 
   return (
     <View
       style={{
         position: "absolute",
-        bottom: 14 + insets.bottom,
+        bottom: (desktop ? 20 : 14) + insets.bottom,
         left: 0,
         right: 0,
         alignItems: "center",
@@ -57,10 +59,12 @@ export function FloatingTabBar({ state, navigation }: MinimalTabBarProps) {
       <View
         style={{
           flexDirection: "row",
-          gap: 4,
-          backgroundColor: t.surface,
+          gap: desktop ? 8 : 4,
+          backgroundColor: desktop ? t.text : t.surface,
           borderRadius: radius.pill,
-          padding: 6,
+          padding: desktop ? 8 : 6,
+          borderWidth: desktop ? 1 : 0,
+          borderColor: desktop ? `${t.primary}35` : "transparent",
           ...t.shadowLg,
         }}
       >
@@ -89,20 +93,20 @@ export function FloatingTabBar({ state, navigation }: MinimalTabBarProps) {
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 6,
-                  minHeight: 44,
-                  paddingHorizontal: focused ? 16 : 14,
+                  minHeight: desktop ? 48 : 44,
+                  paddingHorizontal: desktop ? 22 : focused ? 16 : 14,
                   borderRadius: radius.pill,
-                  backgroundColor: focused ? `${t.primary}1A` : "transparent",
+                  backgroundColor: focused ? (desktop ? t.primary : `${t.primary}1A`) : "transparent",
                 }}
               >
                 <Icon
                   focused={focused}
-                  color={focused ? t.primary : t.textMuted}
+                  color={focused ? (desktop ? t.onPrimary : t.primary) : desktop ? `${t.white}B8` : t.textMuted}
                   activeFill={`${t.primary}24`}
                   size={17}
                 />
-                {focused ? (
-                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 11.5, color: t.primary }}>
+                {focused || desktop ? (
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 11.5, color: focused ? (desktop ? t.onPrimary : t.primary) : `${t.white}B8` }}>
                     {label}
                   </Text>
                 ) : null}

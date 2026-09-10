@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, MenuCard, Tappable, useTabBarSpacing, useToast } from "@/components/kit";
@@ -16,6 +16,8 @@ export default function ProfileScreen() {
   const tabSpacing = useTabBarSpacing();
   const toast = useToast();
   const { session, user } = useAuth();
+  const { width } = useWindowDimensions();
+  const desktop = width >= 900;
 
   const [fullName, setFullName] = useState<string | null>(null);
   const [activeBookings, setActiveBookings] = useState(0);
@@ -55,7 +57,7 @@ export default function ProfileScreen() {
   if (!session) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-        <ScrollView contentContainerStyle={{ padding: 18, gap: 18, paddingBottom: tabSpacing }}>
+        <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 920, alignSelf: "center", paddingHorizontal: desktop ? 28 : 18, gap: 18, paddingBottom: tabSpacing }}>
           <View style={{ alignItems: "center", paddingVertical: 32, gap: 16 }}>
             <Logo />
             <Text
@@ -88,7 +90,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <ScrollView contentContainerStyle={{ padding: 18, gap: 18, paddingBottom: tabSpacing }}>
+      <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 980, alignSelf: "center", paddingHorizontal: desktop ? 28 : 18, paddingTop: desktop ? 26 : 18, gap: 18, paddingBottom: tabSpacing }}>
+        <View style={{ alignItems: "flex-end", gap: 3 }}>
+          <Text style={{ fontFamily: fonts.displayBold, fontSize: desktop ? 28 : 20, color: t.text }}>حسابي</Text>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted }}>كل تفاصيل رحلتك مع سمو في مكان واحد</Text>
+        </View>
         <Card style={{ padding: 20, gap: 16 }}>
           <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 14 }}>
             <View

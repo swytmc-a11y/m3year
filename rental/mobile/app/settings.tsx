@@ -90,7 +90,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+      <View style={{ width: "100%", maxWidth: 820, alignSelf: "center", flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
         <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
           <ChevronBackIcon color={t.text} />
         </IconButton>
@@ -100,7 +100,7 @@ export default function SettingsScreen() {
       {loading ? (
         <View style={{ flex: 1, backgroundColor: t.bg }} />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 18, gap: 16 }}>
+        <ScrollView contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 16 }}>
           <Card style={{ padding: 20, gap: 16 }}>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
               بيانات الحساب

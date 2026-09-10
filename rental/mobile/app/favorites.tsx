@@ -35,7 +35,7 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+      <View style={{ width: "100%", maxWidth: 820, alignSelf: "center", flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
         <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
           <ChevronBackIcon color={t.text} />
         </IconButton>
@@ -58,7 +58,7 @@ export default function FavoritesScreen() {
         <FlatList
           data={cars}
           keyExtractor={(c) => c.id}
-          contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: tabSpacing }}
+          contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 16, paddingBottom: tabSpacing }}
           renderItem={({ item, index }) => <CarCard car={item} index={index} />}
         />
       )}

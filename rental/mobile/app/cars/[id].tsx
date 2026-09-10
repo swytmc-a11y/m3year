@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Linking, useWindowDimensions } from "react-nati
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { Button, Card, IconButton, Skeleton, Tappable, useToast } from "@/components/kit";
-import { ChevronBackIcon, HeartIcon } from "@/components/icons";
+import { Button, Card, IconButton, PageHeader, ResponsiveContent, Skeleton, Tappable, useToast } from "@/components/kit";
+import { HeartIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import { fetchCarDetail, type CarDetail, type CarAddon } from "@/lib/car-detail";
@@ -27,6 +27,8 @@ export default function CarDetailScreen() {
   const toast = useToast();
   const { session } = useAuth();
   const { width } = useWindowDimensions();
+  const desktop = width >= 900;
+  const galleryWidth = Math.min(width - (desktop ? 56 : 0), 920);
 
   const [car, setCar] = useState<CarDetail | null>(null);
   const [addons, setAddons] = useState<CarAddon[]>([]);
@@ -82,18 +84,11 @@ export default function CarDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View
-        style={{
-          flexDirection: "row-reverse",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 18,
-          paddingVertical: 10,
-        }}
-      >
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
+      <PageHeader
+        title="تفاصيل السيارة"
+        subtitle="اختر سيارتك واحجزها بخطوات واضحة"
+        onBack={() => router.back()}
+        trailing={
         <IconButton
           accessibilityLabel={favorited ? "إزالة من المفضلة" : "إضافة للمفضلة"}
           onPress={async () => {
@@ -108,15 +103,21 @@ export default function CarDetailScreen() {
         >
           <HeartIcon color={favorited ? t.danger : t.textMuted} filled={favorited} />
         </IconButton>
-      </View>
+        }
+      />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          style={{ width: galleryWidth, alignSelf: "center", borderRadius: desktop ? radius.xl : 0 }}
+        >
             {images.map((source, index) => (
               <Image
                 key={index}
                 source={source}
-                style={{ width, aspectRatio: 16 / 9, backgroundColor: "#F0F3F0" }}
+                style={{ width: galleryWidth, aspectRatio: desktop ? 2.05 : 16 / 9, backgroundColor: "#F0F3F0" }}
                 contentFit="contain"
                 transition={200}
                 cachePolicy="memory-disk"
@@ -124,15 +125,21 @@ export default function CarDetailScreen() {
             ))}
         </ScrollView>
 
-        <View style={{ padding: 18, gap: 16 }}>
-          <View>
-            <Text style={{ fontFamily: fonts.displayBold, fontSize: 22, color: t.text, textAlign: "right" }}>
+        <ResponsiveContent maxWidth={920} style={{ paddingVertical: desktop ? 28 : 18, gap: 16 }}>
+          <View style={{ flexDirection: desktop ? "row-reverse" : "column", justifyContent: "space-between", alignItems: desktop ? "center" : "stretch", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: desktop ? 30 : 22, color: t.text, textAlign: "right" }}>
               {carTitle(car)}
             </Text>
             <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, marginTop: 4, textAlign: "right" }}>
               {CAR_CATEGORY_LABELS[car.category]}
               {branch ? ` · ${branch.name} — ${branch.city}` : ""}
             </Text>
+            </View>
+            <View style={{ backgroundColor: t.primary, borderRadius: radius.xl, paddingHorizontal: 18, paddingVertical: 12 }}>
+              <Text style={{ fontFamily: fonts.numericBold, fontSize: 19, color: t.onPrimary }}>{formatSar(Number(car.daily_price))}</Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 10.5, color: `${t.onPrimary}C0`, textAlign: "center" }}>لليوم شامل الضريبة</Text>
+            </View>
           </View>
 
           {/* Pricing tiers: the longer the rental, the lower the day rate. */}
@@ -265,7 +272,7 @@ export default function CarDetailScreen() {
               </View>
             </Card>
           ) : null}
-        </View>
+        </ResponsiveContent>
       </ScrollView>
 
       {/* Sticky booking bar: the price stays visible while the specs scroll. */}
@@ -287,23 +294,25 @@ export default function CarDetailScreen() {
           borderColor: t.border,
         }}
       >
-        <View>
-          <Text style={{ fontFamily: fonts.numericBold, fontSize: 18, color: t.text }}>
-            {formatSar(Number(car.daily_price))}
-          </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted }}>
-            لليوم · شامل الضريبة
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            label="احجز الآن"
-            fullWidth
-            onPress={() =>
-              session ? router.push(`/cars/${car.id}/book`) : router.push("/auth")
-            }
-          />
-        </View>
+        <ResponsiveContent maxWidth={920} style={{ flexDirection: "row-reverse", alignItems: "center", gap: 14, paddingHorizontal: 0 }}>
+          <View>
+            <Text style={{ fontFamily: fonts.numericBold, fontSize: 18, color: t.text }}>
+              {formatSar(Number(car.daily_price))}
+            </Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 11, color: t.textMuted }}>
+              لليوم · شامل الضريبة
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              label="احجز الآن"
+              fullWidth
+              onPress={() =>
+                session ? router.push(`/cars/${car.id}/book`) : router.push("/auth")
+              }
+            />
+          </View>
+        </ResponsiveContent>
       </View>
     </SafeAreaView>
   );

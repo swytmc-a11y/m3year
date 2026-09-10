@@ -65,7 +65,7 @@ export default function SavedSearchesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
+      <View style={{ width: "100%", maxWidth: 820, alignSelf: "center", flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
         <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
           <ChevronBackIcon color={t.text} />
         </IconButton>
@@ -86,7 +86,7 @@ export default function SavedSearchesScreen() {
         <FlatList
           data={rows}
           keyExtractor={(r) => r.id}
-          contentContainerStyle={{ padding: 18, gap: 12 }}
+          contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, gap: 12 }}
           renderItem={({ item }) => (
             <Card style={{ padding: 18, gap: 12 }}>
               <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>

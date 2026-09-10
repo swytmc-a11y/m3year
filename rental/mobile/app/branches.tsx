@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Linking } from "react-native";
+import { View, Text, FlatList, Linking, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, EmptyState, IconButton, Skeleton, useTabBarSpacing } from "@/components/kit";
-import { ChevronBackIcon } from "@/components/icons";
+import { Button, Card, EmptyState, PageHeader, Skeleton, useTabBarSpacing } from "@/components/kit";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
 import { requestCoords, type Coords } from "@/lib/cars-data";
@@ -26,6 +25,8 @@ export default function BranchesScreen() {
   const router = useRouter();
   const { t } = useTheme();
   const tabSpacing = useTabBarSpacing();
+  const { width } = useWindowDimensions();
+  const columns = width >= 1000 ? 3 : width >= 680 ? 2 : 1;
   const [branches, setBranches] = useState<Branch[] | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [carCounts, setCarCounts] = useState<Record<string, number>>({});
@@ -69,12 +70,7 @@ export default function BranchesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
-        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>الفروع</Text>
-      </View>
+      <PageHeader title="فروع سمو" subtitle="اختر أقرب فرع واستعرض السيارات المتاحة" onBack={() => router.back()} />
 
       {branches === null ? (
         <View style={{ padding: 18, gap: 14 }}>
@@ -86,9 +82,13 @@ export default function BranchesScreen() {
         <EmptyState title="لا توجد فروع" description="سنضيف فروعنا قريبًا." />
       ) : (
         <FlatList
+          key={columns}
           data={sorted}
+          numColumns={columns}
           keyExtractor={(row) => row.branch.id}
-          contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: tabSpacing }}
+          style={{ width: "100%", maxWidth: 1180, alignSelf: "center" }}
+          columnWrapperStyle={columns > 1 ? { gap: 12 } : undefined}
+          contentContainerStyle={{ paddingHorizontal: width >= 900 ? 28 : 18, gap: 12, paddingBottom: tabSpacing }}
           ListHeaderComponent={
             coords ? null : (
               <View style={{ marginBottom: 4 }}>
@@ -104,7 +104,7 @@ export default function BranchesScreen() {
           renderItem={({ item }) => {
             const b = item.branch;
             return (
-              <Card style={{ padding: 18, gap: 10 }}>
+              <Card style={{ padding: 18, gap: 10, flex: 1 }}>
                 <View style={{ flexDirection: "row-reverse", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>

@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { View, Text, ScrollView, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, CheckRow, IconButton, Skeleton, useToast } from "@/components/kit";
-import { ChevronBackIcon } from "@/components/icons";
+import { Button, Card, CheckRow, PageHeader, ResponsiveContent, Skeleton, useToast } from "@/components/kit";
 import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import {
@@ -166,16 +165,14 @@ export default function BookCarScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
-        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>
-          حجز {carTitle(car)}
-        </Text>
-      </View>
+      <PageHeader
+        title={`حجز ${carTitle(car)}`}
+        subtitle="اختر المدة والإضافات وسنحسب السعر النهائي فورًا"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <ResponsiveContent maxWidth={820} style={{ paddingTop: 8, gap: 16 }}>
         <Card style={{ padding: 18, gap: 14 }}>
           <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
             مدة الإيجار
@@ -333,6 +330,7 @@ export default function BookCarScreen() {
           disabled={!quote || Boolean(quoteError) || quoting}
           onPress={onSubmit}
         />
+        </ResponsiveContent>
       </ScrollView>
     </SafeAreaView>
   );

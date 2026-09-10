@@ -3,8 +3,7 @@ import { View, Text, ScrollView, Linking, Alert } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { Button, Card, IconButton, Skeleton, useToast } from "@/components/kit";
-import { ChevronBackIcon } from "@/components/icons";
+import { Button, Card, PageHeader, ResponsiveContent, Skeleton, useToast } from "@/components/kit";
 import { StatusPill } from "@/app/my-bookings";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
@@ -24,6 +23,7 @@ import {
   PAYMENT_STATUS_LABELS,
 } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
+import { carImageSource } from "@/lib/car-images";
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -130,14 +130,10 @@ export default function BookingDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
-        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>تفاصيل الحجز</Text>
-      </View>
+      <PageHeader title="تفاصيل الحجز" subtitle={`رقم الحجز ${booking.reference}`} onBack={() => router.back()} />
 
-      <ScrollView contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <ResponsiveContent maxWidth={820} style={{ paddingTop: 8, gap: 16 }}>
         <Card style={{ padding: 18, gap: 14 }}>
           <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
             {/* The reference is what branch staff search by over the phone,
@@ -149,9 +145,9 @@ export default function BookingDetailScreen() {
           </View>
 
           <View style={{ flexDirection: "row-reverse", gap: 14, alignItems: "center" }}>
-            {booking.car?.cover_image ? (
+            {booking.car ? (
               <Image
-                source={{ uri: booking.car.cover_image }}
+                source={carImageSource(booking.car)}
                 style={{ width: 96, height: 68, borderRadius: radius.lg, backgroundColor: t.surface2 }}
                 contentFit="cover"
                 cachePolicy="memory-disk"
@@ -260,6 +256,7 @@ export default function BookingDetailScreen() {
         {canCancel ? (
           <Button label="إلغاء الحجز" variant="danger" fullWidth loading={cancelling} onPress={onCancel} />
         ) : null}
+        </ResponsiveContent>
       </ScrollView>
     </SafeAreaView>
   );

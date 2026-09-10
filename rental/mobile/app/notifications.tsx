@@ -120,7 +120,7 @@ export default function NotificationsScreen() {
       <FlatList
         data={items ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 18, paddingTop: 4, gap: 10, flexGrow: 1 }}
+        contentContainerStyle={{ width: "100%", maxWidth: 820, alignSelf: "center", padding: 18, paddingTop: 4, gap: 10, flexGrow: 1 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} {...refreshTint} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.6}

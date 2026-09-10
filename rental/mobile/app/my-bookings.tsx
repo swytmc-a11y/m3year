@@ -1,15 +1,15 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, useWindowDimensions } from "react-native";
 import { useFocusEffect, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { Button, Card, EmptyState, IconButton, Skeleton, Tappable, useTabBarSpacing } from "@/components/kit";
-import { ChevronBackIcon } from "@/components/icons";
+import { Button, Card, EmptyState, PageHeader, Skeleton, Tappable, useTabBarSpacing } from "@/components/kit";
 import { useAuth } from "@/contexts/auth";
 import { useTheme } from "@/contexts/theme";
 import { listMyBookings, OPEN_STATUSES, type MyBooking } from "@/lib/bookings-data";
 import { BOOKING_STATUS_LABELS, formatSar, formatDateShort, carTitle } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
+import { carImageSource } from "@/lib/car-images";
 
 export default function MyBookingsScreen() {
   const router = useRouter();
@@ -17,6 +17,8 @@ export default function MyBookingsScreen() {
   const tabSpacing = useTabBarSpacing();
   const { session, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<MyBooking[] | null>(null);
+  const { width } = useWindowDimensions();
+  const columns = width >= 980 ? 2 : 1;
 
   useFocusEffect(
     useCallback(() => {
@@ -36,12 +38,7 @@ export default function MyBookingsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }} edges={["top"]}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingVertical: 10 }}>
-        <IconButton accessibilityLabel="رجوع" onPress={() => router.back()}>
-          <ChevronBackIcon color={t.text} />
-        </IconButton>
-        <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>حجوزاتي</Text>
-      </View>
+      <PageHeader title="حجوزاتي" subtitle="تابع حالة حجوزاتك ومدفوعاتك في مكان واحد" onBack={() => router.back()} />
 
       {rows === null ? (
         <View style={{ padding: 18, gap: 14 }}>
@@ -57,15 +54,19 @@ export default function MyBookingsScreen() {
         />
       ) : (
         <FlatList
+          key={columns}
           data={rows}
+          numColumns={columns}
           keyExtractor={(b) => b.id}
-          contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: tabSpacing }}
+          style={{ width: "100%", maxWidth: 1180, alignSelf: "center" }}
+          columnWrapperStyle={columns > 1 ? { gap: 12 } : undefined}
+          contentContainerStyle={{ paddingHorizontal: width >= 900 ? 28 : 18, gap: 12, paddingBottom: tabSpacing }}
           renderItem={({ item }) => (
-            <Tappable onPress={() => router.push(`/bookings/${item.id}`)} haptic="light">
+            <Tappable onPress={() => router.push(`/bookings/${item.id}`)} haptic="light" style={{ flex: 1 }}>
               <Card style={{ padding: 14, flexDirection: "row-reverse", gap: 14, alignItems: "center" }}>
-                {item.car?.cover_image ? (
+                {item.car ? (
                   <Image
-                    source={{ uri: item.car.cover_image }}
+                    source={carImageSource(item.car)}
                     style={{ width: 92, height: 64, borderRadius: radius.lg, backgroundColor: t.surface2 }}
                     contentFit="cover"
                     cachePolicy="memory-disk"
