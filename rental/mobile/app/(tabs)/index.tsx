@@ -399,7 +399,13 @@ export default function HomeScreen() {
         }
         renderItem={({ item, index }) => (
           <View style={{ flex: 1, maxWidth: cardWidth }}>
-            <CarCard car={item} index={index} distanceKm={nearest ? item.distance : null} />
+            <CarCard
+              car={item}
+              index={index}
+              distanceKm={nearest ? item.distance : null}
+              startDate={appliedRange.start}
+              endDate={appliedRange.end}
+            />
           </View>
         )}
         refreshControl={

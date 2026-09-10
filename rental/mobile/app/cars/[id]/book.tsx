@@ -35,7 +35,11 @@ function isoDay(offsetDays: number): string {
 const TIMES = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
 
 export default function BookCarScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, startDate: requestedStart, endDate: requestedEnd } = useLocalSearchParams<{
+    id: string;
+    startDate?: string;
+    endDate?: string;
+  }>();
   const router = useRouter();
   const { t } = useTheme();
   const toast = useToast();
@@ -47,12 +51,22 @@ export default function BookCarScreen() {
   const [docs, setDocs] = useState<CustomerDocuments | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [startDate, setStartDate] = useState(isoDay(1));
+  const validRequestedRange =
+    Boolean(requestedStart && requestedEnd) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(requestedStart!) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(requestedEnd!) &&
+    requestedEnd! > requestedStart! &&
+    requestedStart! >= isoDay(0);
+  const [startDate, setStartDate] = useState(() =>
+    validRequestedRange ? requestedStart! : isoDay(1),
+  );
   // Genuinely nullable: "no return date chosen yet" and "return date equals
   // pickup date" must stay distinguishable, or the calendar cannot tell a
   // fresh pickup pick from a completed range and starts a new selection on
   // every second tap instead of completing the one in progress.
-  const [endDate, setEndDate] = useState<string | null>(isoDay(4));
+  const [endDate, setEndDate] = useState<string | null>(() =>
+    validRequestedRange ? requestedEnd! : isoDay(4),
+  );
   const [pickupTime, setPickupTime] = useState("10:00");
   const [returnTime, setReturnTime] = useState("10:00");
   const [selected, setSelected] = useState<string[]>([]);

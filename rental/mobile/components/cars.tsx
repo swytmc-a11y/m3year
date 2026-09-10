@@ -44,17 +44,33 @@ export function CarCard({
   car,
   index = 0,
   distanceKm,
+  startDate,
+  endDate,
 }: {
   car: CarCardData;
   index?: number;
   distanceKm?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }) {
   const router = useRouter();
   const { t } = useTheme();
 
   return (
     <Animated.View entering={staggerEnter(Math.min(index, 8))}>
-      <Tappable onPress={() => router.push(`/cars/${car.id}`)} haptic="light">
+      <Tappable
+        onPress={() =>
+          router.push({
+            pathname: "/cars/[id]",
+            params: {
+              id: car.id,
+              ...(startDate ? { startDate } : {}),
+              ...(endDate ? { endDate } : {}),
+            },
+          })
+        }
+        haptic="light"
+      >
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <View style={{ backgroundColor: "#F0F3F0", paddingHorizontal: 18, paddingTop: 18 }}>
             <View

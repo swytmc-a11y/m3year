@@ -21,7 +21,11 @@ import { fonts, radius } from "@/theme";
 import { carImageSource } from "@/lib/car-images";
 
 export default function CarDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, startDate, endDate } = useLocalSearchParams<{
+    id: string;
+    startDate?: string;
+    endDate?: string;
+  }>();
   const router = useRouter();
   const { t } = useTheme();
   const toast = useToast();
@@ -307,9 +311,20 @@ export default function CarDetailScreen() {
             <Button
               label="احجز الآن"
               fullWidth
-              onPress={() =>
-                session ? router.push(`/cars/${car.id}/book`) : router.push("/auth")
-              }
+              onPress={() => {
+                if (!session) {
+                  router.push("/auth");
+                  return;
+                }
+                router.push({
+                  pathname: "/cars/[id]/book",
+                  params: {
+                    id: car.id,
+                    ...(startDate ? { startDate } : {}),
+                    ...(endDate ? { endDate } : {}),
+                  },
+                });
+              }}
             />
           </View>
         </ResponsiveContent>
