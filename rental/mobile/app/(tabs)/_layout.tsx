@@ -13,7 +13,7 @@ export default function TabsLayout() {
         animation: "shift",
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "السيارات" }} />
+      <Tabs.Screen name="index" options={{ title: "الرئيسية" }} />
       <Tabs.Screen name="bookings/index" options={{ title: "حجوزاتي" }} />
       <Tabs.Screen name="branches/index" options={{ title: "الفروع" }} />
       <Tabs.Screen name="profile/index" options={{ title: "حسابي" }} />

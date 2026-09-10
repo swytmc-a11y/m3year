@@ -33,6 +33,7 @@ import {
   type TransmissionType,
   type FuelType,
 } from "@/lib/constants";
+import { countAr, CARS_NOUN } from "@/lib/arabic";
 import { fonts, radius } from "@/theme";
 
 const PAGE_SIZE = 12;
@@ -45,6 +46,8 @@ export default function SearchScreen() {
     to?: string;
     branch?: string;
     category?: string;
+    /** A whole saved search, re-opened from the saved-searches screen. */
+    filters?: string;
   }>();
   const { t } = useTheme();
   const { session } = useAuth();
@@ -55,10 +58,23 @@ export default function SearchScreen() {
     [params.from, params.to],
   );
 
-  const [filters, setFilters] = useState<SearchFilters>({
-    ...EMPTY_SEARCH,
-    branchId: params.branch ?? null,
-    category: (params.category as CarCategory) ?? null,
+  // A saved search carries filters the individual query params can't express
+  // (free text, transmission, fuel, seats, price ceiling), so it arrives as
+  // one encoded object. Anything unreadable falls back to an empty search
+  // rather than taking the screen down.
+  const [filters, setFilters] = useState<SearchFilters>(() => {
+    if (params.filters) {
+      try {
+        return { ...EMPTY_SEARCH, ...(JSON.parse(params.filters) as Partial<SearchFilters>) };
+      } catch {
+        console.warn("[search] unreadable saved filters");
+      }
+    }
+    return {
+      ...EMPTY_SEARCH,
+      branchId: params.branch ?? null,
+      category: (params.category as CarCategory) ?? null,
+    };
   });
   const [draft, setDraft] = useState<SearchFilters>(filters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -262,7 +278,7 @@ export default function SearchScreen() {
         <Text
           style={{ fontFamily: fonts.numericBold, fontSize: 12, color: t.textMuted, textAlign: "right" }}
         >
-          {rows === null ? "جارٍ البحث..." : `${total} سيارة متاحة`}
+          {rows === null ? "جارٍ البحث..." : `${countAr(total, CARS_NOUN)} متاحة`}
           {dates ? " في تواريخك" : ""}
         </Text>
       </View>

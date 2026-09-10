@@ -24,6 +24,7 @@ import {
   type CustomerDocuments,
 } from "@/lib/customer-documents";
 import { formatSar, carTitle, RATE_TIER_LABELS } from "@/lib/constants";
+import { countAr, DAYS_NOUN } from "@/lib/arabic";
 import { fonts, radius } from "@/theme";
 
 /** yyyy-mm-dd for a date N days from today, in local time. */
@@ -226,7 +227,7 @@ export default function BookCarScreen() {
                   {startDate} ← {endDate}
                 </Text>
                 <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.primary }}>
-                  {selectedDays} {selectedDays === 1 ? "يوم" : selectedDays === 2 ? "يومان" : "أيام"}
+                  {countAr(selectedDays, DAYS_NOUN)}
                 </Text>
               </View>
             ) : (
@@ -362,7 +363,7 @@ export default function BookCarScreen() {
           ) : quote ? (
             <View style={{ gap: 8 }}>
               <Line
-                label={`${quote.days} يوم × ${formatSar(quote.daily_rate)} (${RATE_TIER_LABELS[quote.rate_tier]})`}
+                label={`${countAr(quote.days, DAYS_NOUN)} × ${formatSar(quote.daily_rate)} (${RATE_TIER_LABELS[quote.rate_tier]})`}
                 value={formatSar(quote.rental_total)}
               />
               {quote.addons.map((a) => (

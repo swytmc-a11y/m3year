@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { View, Text, ScrollView, Linking, Alert } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, ScrollView, Linking, Alert, AppState } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -23,6 +23,7 @@ import {
   RATE_TIER_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "@/lib/constants";
+import { countAr, DAYS_NOUN } from "@/lib/arabic";
 import { fonts, radius } from "@/theme";
 
 export default function BookingDetailScreen() {
@@ -44,6 +45,18 @@ export default function BookingDetailScreen() {
     setAddons(a);
     setLoading(false);
   }, [id]);
+
+  // Payment happens on the provider's own page in an external browser, so
+  // the app is backgrounded while it completes. Coming back does not
+  // re-focus this screen in the navigator's sense, so without this the
+  // customer returns to the very screen that told them the status would be
+  // updated and still sees "pay now".
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") reload();
+    });
+    return () => sub.remove();
+  }, [reload]);
 
   useFocusEffect(
     useCallback(() => {
@@ -174,7 +187,7 @@ export default function BookingDetailScreen() {
           </Text>
           <Row label="الاستلام" value={`${formatDate(booking.start_date)} · ${booking.pickup_time.slice(0, 5)}`} />
           <Row label="التسليم" value={`${formatDate(booking.end_date)} · ${booking.return_time.slice(0, 5)}`} />
-          <Row label="عدد الأيام" value={`${booking.days}`} />
+          <Row label="المدة" value={countAr(booking.days, DAYS_NOUN)} />
         </Card>
 
         <Card style={{ padding: 18, gap: 10 }}>
@@ -182,7 +195,7 @@ export default function BookingDetailScreen() {
             الفاتورة
           </Text>
           <Row
-            label={`${booking.days} يوم × ${formatSar(Number(booking.daily_rate))} (${RATE_TIER_LABELS[booking.rate_tier]})`}
+            label={`${countAr(booking.days, DAYS_NOUN)} × ${formatSar(Number(booking.daily_rate))} (${RATE_TIER_LABELS[booking.rate_tier]})`}
             value={formatSar(Number(booking.rental_total))}
           />
           {addons.map((a) => (

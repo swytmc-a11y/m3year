@@ -79,7 +79,7 @@ export default function SavedSearchesScreen() {
         <EmptyState
           title="لا يوجد بحث محفوظ"
           description="احفظ بحثك من شاشة التصفّح لننبّهك عند توفّر سيارة مطابقة."
-          action={<Button label="تصفّح السيارات" onPress={() => router.push("/")} />}
+          action={<Button label="تصفّح السيارات" onPress={() => router.push("/search")} />}
         />
       ) : (
         <FlatList
@@ -88,12 +88,30 @@ export default function SavedSearchesScreen() {
           contentContainerStyle={{ padding: 18, gap: 12 }}
           renderItem={({ item }) => (
             <Card style={{ padding: 18, gap: 12 }}>
-              <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
-                {item.name}
-              </Text>
-              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
-                {describe(item)}
-              </Text>
+              {/* A saved search you cannot re-run is only half a feature:
+                  tapping it re-opens the browse screen with these exact
+                  filters applied. */}
+              <Tappable
+                onPress={() =>
+                  router.push({
+                    pathname: "/search",
+                    params: { filters: JSON.stringify(item.filters ?? {}) },
+                  })
+                }
+                haptic="light"
+              >
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text, textAlign: "right" }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                    {describe(item)}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: t.primary, textAlign: "right" }}>
+                    عرض النتائج
+                  </Text>
+                </View>
+              </Tappable>
 
               <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
                 <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 10 }}>

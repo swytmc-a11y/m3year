@@ -5,6 +5,7 @@ import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
 import { formatDateShort } from "@/lib/constants";
 import { daysBetween } from "@/lib/dates";
+import { countAr, DAYS_NOUN } from "@/lib/arabic";
 
 /**
  * The hero: a dark canvas carrying the headline and the search widget.
@@ -103,7 +104,7 @@ export function Hero({
               textAlign: "right",
             }}
           >
-            {daysBetween(dates.start, dates.end)} أيام
+            {countAr(daysBetween(dates.start, dates.end), DAYS_NOUN)}
           </Text>
         ) : null}
 

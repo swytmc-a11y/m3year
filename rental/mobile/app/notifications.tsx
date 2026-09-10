@@ -19,9 +19,21 @@ const AR_MONTHS_SHORT = [
   "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
 ];
 
+// Today and yesterday are the common cases and read better as words. An
+// older notification keeps its date, and one from another year keeps its
+// year too — without it, a notification from last October is indistinguishable
+// from this October's.
 function formatWhen(iso: string): string {
   const d = new Date(iso);
-  return `${d.getDate()} ${AR_MONTHS_SHORT[d.getMonth()]}`;
+  const now = new Date();
+  const dayStart = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const daysAgo = Math.round((dayStart(now) - dayStart(d)) / 86400000);
+
+  if (daysAgo === 0) return "اليوم";
+  if (daysAgo === 1) return "أمس";
+
+  const date = `${d.getDate()} ${AR_MONTHS_SHORT[d.getMonth()]}`;
+  return d.getFullYear() === now.getFullYear() ? date : `${date} ${d.getFullYear()}`;
 }
 
 // Where each notification category leads. The payload carries the ids, so

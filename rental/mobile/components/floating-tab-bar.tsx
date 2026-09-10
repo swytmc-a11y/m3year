@@ -28,7 +28,7 @@ const ICONS: Record<string, typeof HomeIcon> = {
 };
 
 const LABELS: Record<string, string> = {
-  index: "السيارات",
+  index: "الرئيسية",
   "bookings/index": "حجوزاتي",
   "branches/index": "الفروع",
   "profile/index": "حسابي",

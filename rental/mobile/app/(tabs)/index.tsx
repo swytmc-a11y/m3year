@@ -34,6 +34,7 @@ import { fetchHomeFeed, copyFor, type HomeFeed } from "@/lib/home-feed";
 import { listFavoriteIds, toggleFavorite } from "@/lib/favorites";
 import { todayIso } from "@/lib/dates";
 import { CAR_CATEGORY_OPTIONS, type CarCategory } from "@/lib/constants";
+import { countAr, CARS_NOUN } from "@/lib/arabic";
 import { fonts, radius } from "@/theme";
 
 type Branch = { id: string; name: string; city: string };
@@ -368,7 +369,7 @@ export default function HomeScreen() {
                   textAlign: "center",
                 }}
               >
-                {feed.total_available ?? 0} سيارة متاحة
+                {countAr(feed.total_available ?? 0, CARS_NOUN)} متاحة
                 {dates ? " في التواريخ المختارة" : ""} · كل الأسعار شاملة الضريبة
               </Text>
             </View>

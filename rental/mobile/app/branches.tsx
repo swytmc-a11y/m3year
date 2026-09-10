@@ -7,6 +7,7 @@ import { ChevronBackIcon } from "@/components/icons";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/theme";
 import { requestCoords, distanceKm, formatDistance, type Coords } from "@/lib/geo";
+import { countAr, CARS_NOUN } from "@/lib/arabic";
 import { fonts, radius } from "@/theme";
 
 type Branch = {
@@ -128,7 +129,7 @@ export default function BranchesScreen() {
                 ) : null}
 
                 <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "right" }}>
-                  {carCounts[b.id] ?? 0} سيارة متاحة
+                  {countAr(carCounts[b.id] ?? 0, CARS_NOUN)} متاحة
                 </Text>
 
                 <View style={{ flexDirection: "row-reverse", gap: 10 }}>
