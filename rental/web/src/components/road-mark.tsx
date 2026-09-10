@@ -1,27 +1,21 @@
 /**
- * The سمو mark: a road in perspective, its verges converging and the centre
- * line receding — each dash shorter and thinner than the last.
+ * The سمو mark, cropped from the brand identity sheet (public/brand) rather
+ * than redrawn — a flat black silhouette, since the marketing site and admin
+ * panel are light-surface only (no dark mode to invert against, unlike the
+ * mobile app's LogoMark).
  *
- * Kept in sync with the app's components/logo.tsx by hand; both draw the
- * same 24×24 geometry.
+ * A plain `<img>` rather than next/image: it's a small fixed nav icon
+ * bundled with the app, not page content that needs responsive srcsets.
  */
 export function RoadMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/brand/mark-flat.png"
+      alt=""
       className={className}
-      width="1em"
-      height="1em"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
+      style={{ width: "1em", height: "1em", objectFit: "contain" }}
       aria-hidden="true"
-    >
-      <path d="M5 20.5 L10.2 5.5" strokeWidth={2} />
-      <path d="M19 20.5 L13.8 5.5" strokeWidth={2} />
-      <path d="M12 20.6 L12 16.9" strokeWidth={2} />
-      <path d="M12 14.7 L12 12.1" strokeWidth={1.6} />
-      <path d="M12 10.3 L12 8.9" strokeWidth={1.2} />
-    </svg>
+    />
   );
 }

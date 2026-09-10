@@ -8,9 +8,9 @@ import {
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LogoMark } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field, Tappable } from "@/components/kit";
+import { LogoMarkColor } from "@/components/logo";
 import { WalletBonusModal } from "@/components/wallet-bonus-modal";
 import { useTheme } from "@/contexts/theme";
 import { completeWhatsAppSignupSchema, phoneSchema, whatsappOtpCodeSchema } from "@/lib/validations";
@@ -148,7 +148,7 @@ export default function AuthScreen() {
                 ...t.shadowSm,
               }}
             >
-              <LogoMark size={52} />
+              <LogoMarkColor size={52} />
             </View>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>سمو</Text>
             <Text style={{ fontFamily: fonts.body, fontSize: 13, color: t.textMuted, textAlign: "center" }}>

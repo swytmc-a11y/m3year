@@ -9,7 +9,7 @@ import {
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LogoMark } from "@/components/logo";
+import { LogoMarkColor } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field } from "@/components/kit";
 import { useTheme } from "@/contexts/theme";
@@ -107,7 +107,7 @@ export default function ResetPasswordScreen() {
                 ...t.shadowSm,
               }}
             >
-              <LogoMark size={52} />
+              <LogoMarkColor size={52} />
             </View>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 28, color: t.text }}>سمو</Text>
           </FadeInView>

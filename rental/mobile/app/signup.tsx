@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LogoMark } from "@/components/logo";
+import { LogoMarkColor } from "@/components/logo";
 import { FadeInView } from "@/components/motion";
 import { Button, Field, Tappable } from "@/components/kit";
 import { useTheme } from "@/contexts/theme";
@@ -115,7 +115,7 @@ export default function SignUpScreen() {
                 ...t.shadowSm,
               }}
             >
-              <LogoMark size={44} />
+              <LogoMarkColor size={44} />
             </View>
             <Text style={{ fontFamily: fonts.displayBold, fontSize: 22, color: t.text }}>انضم إلى سمو</Text>
           </FadeInView>

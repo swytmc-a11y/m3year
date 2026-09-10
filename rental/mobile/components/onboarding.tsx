@@ -3,7 +3,7 @@ import { View, Text, ScrollView, useWindowDimensions, StyleSheet } from "react-n
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { Button, Tappable } from "@/components/kit";
-import { LogoMark } from "@/components/logo";
+import { LogoMarkColor } from "@/components/logo";
 import { SearchIcon, CalculatorIcon, ShieldIcon, StorefrontIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { fonts, radius } from "@/theme";
@@ -76,7 +76,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     <Animated.View entering={FadeIn.duration(220)} style={[StyleSheet.absoluteFill, { backgroundColor: t.bg }]}>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 4 }}>
-          <LogoMark size={34} />
+          <LogoMarkColor size={34} />
         </View>
 
         <ScrollView

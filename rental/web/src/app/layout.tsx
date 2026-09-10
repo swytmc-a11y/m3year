@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: { icon: "/icon.png", apple: "/icon.png" },
   robots: { index: true, follow: true },
 };
 

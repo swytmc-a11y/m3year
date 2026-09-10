@@ -9,7 +9,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { LogoMark } from "@/components/logo";
+import { LogoMarkColor } from "@/components/logo";
 import { useTheme } from "@/contexts/theme";
 import { fonts } from "@/theme";
 
@@ -50,7 +50,7 @@ export function AppSplash({ onDone }: { onDone: () => void }) {
     <Animated.View style={[styles.fill, { backgroundColor: t.bg }, fillStyle]} pointerEvents="none">
       <View style={styles.center}>
         <Animated.View style={[{ alignItems: "center", gap: 18 }, contentStyle]}>
-          <LogoMark size={96} />
+          <LogoMarkColor size={96} />
           <Text style={[styles.wordmark, { color: t.text }]}>سمو</Text>
           <Text style={[styles.tagline, { color: t.textMuted }]}>تأجير سيارات بسعر واضح</Text>
         </Animated.View>

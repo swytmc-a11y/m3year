@@ -42,7 +42,7 @@
           "imageWidth": 160,
           "dark": {
             "backgroundColor": "#0B0B0C",
-            "image": "./assets/splash-icon.png",
+            "image": "./assets/splash-icon-dark.png",
             "imageWidth": 160
           }
         }
