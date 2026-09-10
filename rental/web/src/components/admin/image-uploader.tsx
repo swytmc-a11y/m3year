@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeCarImage } from "@/lib/normalize-car-image";
 import { Button } from "@/components/ui/button";
 
 const BUCKET = "car-images";
@@ -34,11 +35,15 @@ export function ImageUploader({ name, defaultValue }: { name: string; defaultVal
         setError(`${file.name}: الحجم يتجاوز ٥ ميجابايت.`);
         continue;
       }
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${crypto.randomUUID()}.${ext}`;
+      // Every card frames its photo the same way (contain-fit inside a
+      // fixed box), which only looks consistent car-to-car when every
+      // stored photo already shares the same canvas — so every upload is
+      // redrawn onto one before it ever reaches storage.
+      const normalized = await normalizeCarImage(file);
+      const path = `${crypto.randomUUID()}.png`;
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
-        .upload(path, file, { cacheControl: "31536000", upsert: false });
+        .upload(path, normalized, { cacheControl: "31536000", upsert: false, contentType: "image/png" });
 
       if (uploadError) {
         console.error("[image-uploader] upload failed", uploadError);
@@ -121,7 +126,7 @@ export function ImageUploader({ name, defaultValue }: { name: string; defaultVal
           {uploading ? "جارٍ الرفع..." : "رفع صور"}
         </Button>
         <span className="text-[12px] text-admin-text-muted">
-          JPG أو PNG أو WebP · حتى ٥ ميجابايت للصورة
+          JPG أو PNG أو WebP · حتى ٥ ميجابايت للصورة · تُضبط الأبعاد تلقائيًا لتتناسق كل الصور
         </span>
       </div>
 
