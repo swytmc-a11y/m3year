@@ -73,3 +73,26 @@ export const OPEN_STATUSES: BookingStatus[] = [
   "confirmed",
   "active",
 ];
+
+/**
+ * The rental the customer is living right now, or the next one they are
+ * about to collect.
+ *
+ * This is what the home screen leads with: someone who already has the car
+ * does not want a shelf of cars to book, they want the return date, the
+ * branch's number and a way to keep it longer.
+ */
+export async function fetchCurrentRental(): Promise<MyBooking | null> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(SELECT)
+    .in("status", ["confirmed", "active"])
+    .order("start_date", { ascending: true })
+    .limit(1);
+
+  if (error) {
+    console.error("[bookings] current rental failed", error);
+    return null;
+  }
+  return ((data ?? [])[0] as unknown as MyBooking) ?? null;
+}

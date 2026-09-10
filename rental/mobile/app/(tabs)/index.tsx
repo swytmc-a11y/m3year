@@ -32,6 +32,8 @@ import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
 import { fetchHomeFeed, copyFor, type HomeFeed } from "@/lib/home-feed";
 import { listFavoriteIds, toggleFavorite } from "@/lib/favorites";
+import { fetchCurrentRental, type MyBooking } from "@/lib/bookings-data";
+import { CurrentRentalCard } from "@/components/current-rental";
 import { todayIso } from "@/lib/dates";
 import { CAR_CATEGORY_OPTIONS, type CarCategory } from "@/lib/constants";
 import { countAr, CARS_NOUN } from "@/lib/arabic";
@@ -71,6 +73,7 @@ export default function HomeScreen() {
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentRental, setCurrentRental] = useState<MyBooking | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -107,20 +110,23 @@ export default function HomeScreen() {
     if (!session) {
       setFavorites(new Set());
       setUnreadCount(0);
+      setCurrentRental(null);
       return;
     }
     let active = true;
     (async () => {
-      const [ids, { count }] = await Promise.all([
+      const [ids, { count }, rental] = await Promise.all([
         listFavoriteIds(),
         supabase
           .from("notifications")
           .select("id", { count: "exact", head: true })
           .is("read_at", null),
+        fetchCurrentRental(),
       ]);
       if (!active) return;
       setFavorites(new Set(ids));
       setUnreadCount(count ?? 0);
+      setCurrentRental(rental);
     })();
     return () => {
       active = false;
@@ -254,6 +260,10 @@ export default function HomeScreen() {
           />
         }
       >
+        {/* A customer who already has the car leads with their rental, not
+            with a shelf of cars to book. */}
+        {currentRental ? <CurrentRentalCard booking={currentRental} /> : null}
+
         <View style={{ paddingHorizontal: 18, paddingTop: 4 }}>
           <Hero
             title={hero.title}

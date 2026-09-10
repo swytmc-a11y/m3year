@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Linking, Alert, AppState } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { Button, Card, IconButton, Skeleton, useToast } from "@/components/kit";
+import { Button, Card, IconButton, MenuCard, Skeleton, useToast } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
 import { StatusPill } from "@/app/my-bookings";
 import { useAuth } from "@/contexts/auth";
@@ -16,6 +16,8 @@ import {
   type BookingAddonLine,
 } from "@/lib/bookings-data";
 import { cancelMyBooking, startBookingPayment } from "@/lib/booking-actions";
+import { listBookingInvoices, type Invoice } from "@/lib/invoices";
+import { fetchBookingContract, contractUrl, type BookingContract } from "@/lib/contracts";
 import {
   formatSar,
   formatDate,
@@ -35,14 +37,23 @@ export default function BookingDetailScreen() {
 
   const [booking, setBooking] = useState<MyBooking | null>(null);
   const [addons, setAddons] = useState<BookingAddonLine[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [contract, setContract] = useState<BookingContract | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [paying, setPaying] = useState(false);
 
   const reload = useCallback(async () => {
-    const [b, a] = await Promise.all([fetchBooking(id), fetchBookingAddons(id)]);
+    const [b, a, inv, c] = await Promise.all([
+      fetchBooking(id),
+      fetchBookingAddons(id),
+      listBookingInvoices(id),
+      fetchBookingContract(id),
+    ]);
     setBooking(b);
     setAddons(a);
+    setInvoices(inv);
+    setContract(c);
     setLoading(false);
   }, [id]);
 
@@ -62,10 +73,17 @@ export default function BookingDetailScreen() {
     useCallback(() => {
       let active = true;
       (async () => {
-        const [b, a] = await Promise.all([fetchBooking(id), fetchBookingAddons(id)]);
+        const [b, a, inv, c] = await Promise.all([
+          fetchBooking(id),
+          fetchBookingAddons(id),
+          listBookingInvoices(id),
+          fetchBookingContract(id),
+        ]);
         if (!active) return;
         setBooking(b);
         setAddons(a);
+        setInvoices(inv);
+        setContract(c);
         setLoading(false);
       })();
       return () => {
@@ -102,6 +120,7 @@ export default function BookingDetailScreen() {
   }
 
   const canCancel = OPEN_STATUSES.includes(booking.status);
+  const canExtend = booking.status === "confirmed" || booking.status === "active";
   const needsPayment =
     booking.status === "pending_payment" && booking.payment_status === "unpaid";
 
@@ -268,6 +287,48 @@ export default function BookingDetailScreen() {
               الدفع عبر صفحة آمنة من مزوّد الدفع. بعد إتمامه ارجع للتطبيق وستجد الحالة محدّثة.
             </Text>
           </View>
+        ) : null}
+
+        {/* Everything the rental produced as paper: the tax invoice for the
+            booking, one more for each paid extension, and the signed
+            contract once the branch has handed the car over. */}
+        {invoices.length > 0 || contract ? (
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+              المستندات
+            </Text>
+            <MenuCard
+              items={[
+                ...invoices.map((inv) => ({
+                  label: inv.extension_id
+                    ? `فاتورة التمديد ${inv.number}`
+                    : `الفاتورة الضريبية ${inv.number}`,
+                  onPress: () => router.push(`/invoice/${inv.id}`),
+                })),
+                ...(contract
+                  ? [
+                      {
+                        label: "عقد الإيجار",
+                        onPress: async () => {
+                          const url = await contractUrl(contract.storage_path);
+                          if (url) await Linking.openURL(url);
+                          else toast("تعذّر فتح العقد.", "error");
+                        },
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </View>
+        ) : null}
+
+        {canExtend ? (
+          <Button
+            label="تمديد الحجز"
+            variant="secondary"
+            fullWidth
+            onPress={() => router.push(`/bookings/${booking!.id}/extend`)}
+          />
         ) : null}
 
         {canCancel ? (

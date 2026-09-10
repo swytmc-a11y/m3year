@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, TextInput } from "react-native";
+import { View, Text, ScrollView, TextInput, Switch } from "react-native";
 import { useLocalSearchParams, useRouter, Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Card, CheckRow, IconButton, Skeleton, useToast } from "@/components/kit";
+import { Button, Card, CheckRow, Chip, IconButton, Skeleton, useToast } from "@/components/kit";
 import { ChevronBackIcon } from "@/components/icons";
 import { useTheme } from "@/contexts/theme";
 import { useAuth } from "@/contexts/auth";
@@ -16,6 +16,14 @@ import {
   type UnavailableRange,
 } from "@/lib/car-detail";
 import { createBooking } from "@/lib/booking-actions";
+import {
+  listDeliveryZones,
+  estimateDeliveryFee,
+  EMPTY_DELIVERY,
+  type DeliveryZone,
+  type DeliveryChoice,
+} from "@/lib/delivery";
+import { fetchWalletBalance, fetchWalletSettings, type WalletSettings } from "@/lib/wallet";
 import { DateRangeCalendar } from "@/components/date-range-calendar";
 import { daysBetween } from "@/lib/dates";
 import {
@@ -73,9 +81,36 @@ export default function BookCarScreen() {
   // couponInput is what is being typed; appliedCoupon is what the quote was
   // priced with. Keeping them apart stops every keystroke from re-pricing.
   const [couponInput, setCouponInput] = useState("");
+
+  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [delivery, setDelivery] = useState<DeliveryChoice>(EMPTY_DELIVERY);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletSettings, setWalletSettings] = useState<WalletSettings | null>(null);
+  const [useWallet, setUseWallet] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Delivery zones depend on which branch owns the car, and the wallet on
+  // who is signed in, so both load once the car is known.
+  useEffect(() => {
+    if (!car?.branch?.id) return;
+    let active = true;
+    (async () => {
+      const [z, b, s] = await Promise.all([
+        listDeliveryZones(car.branch!.id),
+        fetchWalletBalance(),
+        fetchWalletSettings(),
+      ]);
+      if (!active) return;
+      setZones(z);
+      setWalletBalance(b);
+      setWalletSettings(s);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [car?.branch?.id]);
 
   useEffect(() => {
     let active = true;
@@ -148,6 +183,23 @@ export default function BookCarScreen() {
     return <Redirect href={`/my-details?next=/cars/${id}/book`} />;
   }
 
+  // What the delivery and the wallet will add and take off. Both are shown
+  // here and decided by the server on insert; this only has to agree with it.
+  const deliveryFee = estimateDeliveryFee(delivery, zones);
+  const payableBeforeWallet = quote ? quote.total + deliveryFee : 0;
+  const walletEligible =
+    useWallet &&
+    walletBalance > 0 &&
+    payableBeforeWallet >= (walletSettings?.min_booking_total_to_redeem ?? 0);
+  const walletApplied = walletEligible
+    ? Math.min(
+        walletBalance,
+        payableBeforeWallet,
+        (payableBeforeWallet * (walletSettings?.max_redeem_percent ?? 100)) / 100,
+      )
+    : 0;
+  const grandTotal = Math.max(payableBeforeWallet - walletApplied, 0);
+
   async function onSubmit() {
     // A quote only ever exists for a complete, valid range, so endDate is
     // guaranteed non-null here — but TypeScript can't see that correlation.
@@ -166,6 +218,8 @@ export default function BookCarScreen() {
       couponCode: quote.coupon?.valid ? quote.coupon.code : null,
       note: note.trim() || null,
       confirmationMode: car.confirmation_mode,
+      delivery,
+      useWallet,
     });
     setSubmitting(false);
 
@@ -293,6 +347,112 @@ export default function BookCarScreen() {
           />
         </Card>
 
+        {zones.length > 0 ? (
+          <Card style={{ padding: 18, gap: 14 }}>
+            <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+              الاستلام والتسليم
+            </Text>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                الاستلام
+              </Text>
+              <View style={{ flexDirection: "row-reverse", gap: 8 }}>
+                <Chip
+                  label="من الفرع"
+                  active={delivery.deliveryMode === "branch"}
+                  onPress={() => setDelivery((d) => ({ ...d, deliveryMode: "branch" }))}
+                />
+                <Chip
+                  label="وصّلوها لي"
+                  active={delivery.deliveryMode === "delivery"}
+                  onPress={() => setDelivery((d) => ({ ...d, deliveryMode: "delivery" }))}
+                />
+              </View>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                التسليم
+              </Text>
+              <View style={{ flexDirection: "row-reverse", gap: 8 }}>
+                <Chip
+                  label="أعيدها للفرع"
+                  active={delivery.returnMode === "branch"}
+                  onPress={() => setDelivery((d) => ({ ...d, returnMode: "branch" }))}
+                />
+                <Chip
+                  label="استلموها مني"
+                  active={delivery.returnMode === "pickup"}
+                  onPress={() => setDelivery((d) => ({ ...d, returnMode: "pickup" }))}
+                />
+              </View>
+            </View>
+
+            {/* Only asked for once a leg actually needs an address — a form
+                that demands one for a counter pickup is asking for nothing. */}
+            {delivery.deliveryMode === "delivery" || delivery.returnMode === "pickup" ? (
+              <View style={{ gap: 10 }}>
+                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: t.textMuted, textAlign: "right" }}>
+                  المنطقة
+                </Text>
+                <View style={{ flexDirection: "row-reverse", gap: 8, flexWrap: "wrap" }}>
+                  {zones.map((z) => (
+                    <Chip
+                      key={z.id}
+                      label={`${z.name} · ${formatSar(z.fee)}`}
+                      active={delivery.zoneId === z.id}
+                      onPress={() => setDelivery((d) => ({ ...d, zoneId: z.id }))}
+                    />
+                  ))}
+                </View>
+                <TextInput
+                  value={delivery.address}
+                  onChangeText={(v) => setDelivery((d) => ({ ...d, address: v }))}
+                  placeholder="العنوان بالتفصيل"
+                  placeholderTextColor={t.textMuted}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: t.border,
+                    borderRadius: radius.lg,
+                    padding: 12,
+                    fontFamily: fonts.body,
+                    fontSize: 13,
+                    color: t.text,
+                    textAlign: "right",
+                    backgroundColor: t.surface,
+                  }}
+                />
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
+
+        {walletBalance > 0 ? (
+          <Card style={{ padding: 18, gap: 8 }}>
+            <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
+                  استخدم رصيد المحفظة
+                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 12, color: t.textMuted, textAlign: "right", marginTop: 2 }}>
+                  رصيدك {formatSar(walletBalance)}
+                </Text>
+              </View>
+              <Switch
+                value={useWallet}
+                onValueChange={setUseWallet}
+                trackColor={{ true: t.primary, false: t.border }}
+              />
+            </View>
+            {useWallet && !walletEligible ? (
+              <Text style={{ fontFamily: fonts.body, fontSize: 11.5, color: t.textMuted, textAlign: "right", lineHeight: 19 }}>
+                الحد الأدنى لاستخدام الرصيد {formatSar(walletSettings?.min_booking_total_to_redeem ?? 0)}.
+              </Text>
+            ) : null}
+          </Card>
+        ) : null}
+
         <Card style={{ padding: 18, gap: 10 }}>
           <Text style={{ fontFamily: fonts.displayBold, fontSize: 14, color: t.text, textAlign: "right" }}>
             رمز الخصم
@@ -385,14 +545,35 @@ export default function BookCarScreen() {
                   </Text>
                 </View>
               ) : null}
-              <Line label="منها ضريبة القيمة المضافة" value={formatSar(quote.vat_amount)} muted />
+              {deliveryFee > 0 ? (
+                <Line label="التوصيل والاستلام" value={formatSar(deliveryFee)} muted />
+              ) : null}
+              {/* Recomputed rather than taken from the quote: the quote was
+                  priced before delivery was added and the wallet applied, so
+                  its own vat_amount no longer describes this total. VAT here
+                  is inclusive, matching how the server extracts it. */}
+              <Line
+                label="منها ضريبة القيمة المضافة"
+                value={formatSar(grandTotal - grandTotal / (1 + quote.vat_rate))}
+                muted
+              />
+              {walletApplied > 0 ? (
+                <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: t.success }}>
+                    من رصيد المحفظة
+                  </Text>
+                  <Text style={{ fontFamily: fonts.numericBold, fontSize: 14, color: t.success }}>
+                    −{formatSar(walletApplied)}
+                  </Text>
+                </View>
+              ) : null}
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
               <View style={{ flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center" }}>
                 <Text style={{ fontFamily: fonts.displayBold, fontSize: 15, color: t.text }}>
                   الإجمالي شامل الضريبة
                 </Text>
                 <Text style={{ fontFamily: fonts.numericBold, fontSize: 20, color: t.text }}>
-                  {formatSar(quote.total)}
+                  {formatSar(grandTotal)}
                 </Text>
               </View>
             </View>

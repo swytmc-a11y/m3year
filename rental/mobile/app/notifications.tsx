@@ -12,12 +12,8 @@ import {
   markAllNotificationsRead,
   type AppNotification,
 } from "@/lib/notifications";
+import { AR_MONTHS_SHORT } from "@/lib/constants";
 import { fonts, radius } from "@/theme";
-
-const AR_MONTHS_SHORT = [
-  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
-];
 
 // Today and yesterday are the common cases and read better as words. An
 // older notification keeps its date, and one from another year keeps its

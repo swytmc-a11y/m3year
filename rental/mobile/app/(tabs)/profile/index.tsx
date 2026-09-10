@@ -136,6 +136,8 @@ export default function ProfileScreen() {
         <MenuCard
           items={[
             { label: "حجوزاتي", onPress: () => router.push("/my-bookings") },
+            { label: "محفظتي", onPress: () => router.push("/wallet") },
+            { label: "ادعُ صديقًا", onPress: () => router.push("/invite") },
             { label: "بياناتي ومستنداتي", onPress: () => router.push("/my-details") },
             { label: "المفضلة", onPress: () => router.push("/favorites") },
             { label: "عمليات البحث المحفوظة", onPress: () => router.push("/saved-searches") },

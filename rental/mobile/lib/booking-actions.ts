@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Quote } from "@/lib/car-detail";
+import type { DeliveryChoice } from "@/lib/delivery";
 
 export type CreateBookingInput = {
   carId: string;
@@ -12,6 +13,9 @@ export type CreateBookingInput = {
   couponCode: string | null;
   note: string | null;
   confirmationMode: "instant" | "manual";
+  delivery: DeliveryChoice;
+  /** Asks the server to spend whatever wallet credit the rules allow. */
+  useWallet: boolean;
 };
 
 /**
@@ -21,7 +25,9 @@ export type CreateBookingInput = {
  * are not what gets stored: a trigger reprices the row from quote_booking()
  * on insert and overwrites them, so a request forged outside the app cannot
  * name its own price. The coupon is sent as a code for the same reason —
- * the server decides whether it applies and what it is worth.
+ * the server decides whether it applies and what it is worth, and the wallet
+ * is sent as a yes/no rather than an amount: how much credit exists, and how
+ * much of it this booking may take, is not the client's to decide.
  *
  * If the dates were taken in the meantime the database refuses the insert
  * outright — the exclusion constraint, not a check this code performs.
@@ -58,6 +64,14 @@ export async function createBooking(
       total: q.total,
       coupon_code: input.couponCode ?? null,
       customer_note: input.note,
+      delivery_mode: input.delivery.deliveryMode,
+      return_mode: input.delivery.returnMode,
+      delivery_zone_id: input.delivery.zoneId,
+      delivery_address:
+        input.delivery.deliveryMode === "branch" && input.delivery.returnMode === "branch"
+          ? null
+          : input.delivery.address.trim(),
+      wallet_requested: input.useWallet,
       // Payment comes next; until it lands the booking holds the dates only
       // for the configured window, after which the sweep releases them.
       status: "pending_payment",
